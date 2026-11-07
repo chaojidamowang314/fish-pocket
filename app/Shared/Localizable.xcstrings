@@ -1839,6 +1839,36 @@
         }
       }
     },
+    "介绍" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        }
+      }
+    },
+    "从 npm、Git 仓库或本地文件夹安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install from npm, a Git repository or a local folder"
+          }
+        }
+      }
+    },
+    "从本地文件夹安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install from a Local Folder"
+          }
+        }
+      }
+    },
     "从第 %lld 行开始显示" : {
       "localizations" : {
         "en" : {
@@ -2541,6 +2571,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All %lld Files"
+          }
+        }
+      }
+    },
+    "全部插件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All Plugins"
           }
         }
       }
@@ -3745,6 +3785,16 @@
         }
       }
     },
+    "去发现" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discover"
+          }
+        }
+      }
+    },
     "参数" : {
       "localizations" : {
         "en" : {
@@ -3791,6 +3841,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Discover"
+          }
+        }
+      }
+    },
+    "发现插件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discover Plugins"
           }
         }
       }
@@ -4885,12 +4945,32 @@
         }
       }
     },
+    "它的开关在「设置 → 插件 → 实验性插件」" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn it on in “Settings → Plugins → Experimental Plugins”."
+          }
+        }
+      }
+    },
     "安装" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Install"
+          }
+        }
+      }
+    },
+    "安装 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install %@"
           }
         }
       }
@@ -5455,6 +5535,16 @@
         }
       }
     },
+    "已停用：插件没有生效" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabled: the plugin isn’t active"
+          }
+        }
+      }
+    },
     "已允许运行安装脚本：%@" : {
       "localizations" : {
         "en" : {
@@ -5547,6 +5637,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enabled"
+          }
+        }
+      }
+    },
+    "已启用，但没有在运行" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enabled, but not running"
+          }
+        }
+      }
+    },
+    "已启用，正在运行。它的界面可在网页版中查看。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enabled and running. Its interface is available in the Web UI."
           }
         }
       }
@@ -6061,6 +6171,16 @@
         }
       }
     },
+    "市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Market"
+          }
+        }
+      }
+    },
     "并行工具调用数" : {
       "localizations" : {
         "en" : {
@@ -6097,6 +6217,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Toggle"
+          }
+        }
+      }
+    },
+    "开启" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn On"
           }
         }
       }
@@ -6621,6 +6751,26 @@
         }
       }
     },
+    "恢复预置市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Preset Market"
+          }
+        }
+      }
+    },
+    "恢复预置市场，或添加其他索引。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore the preset market, or add another index."
+          }
+        }
+      }
+    },
     "恢复默认" : {
       "localizations" : {
         "en" : {
@@ -6667,6 +6817,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open"
+          }
+        }
+      }
+    },
+    "打开「发现」时，App 会访问这里列出的地址。左滑可移除。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you open Discover, the app visits the addresses listed here. Swipe left to remove one."
           }
         }
       }
@@ -6727,6 +6887,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open Browser"
+          }
+        }
+      }
+    },
+    "打开网页版" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Web UI"
           }
         }
       }
@@ -6827,6 +6997,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Command failed"
+          }
+        }
+      }
+    },
+    "按 App Store 审核要求，插件自带的界面不会出现在 App 的原生界面中，但插件本身可能仍在运行。要查看它的界面，请打开网页版（设置 → 高级 → 网页版）。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Under App Store review rules, a plugin’s own interface doesn’t appear in the app’s native UI, though the plugin itself may still be running. To see its interface, open the Web UI (Settings → Advanced → Web UI)."
           }
         }
       }
@@ -7021,6 +7201,16 @@
         }
       }
     },
+    "插件在本机以你的权限运行。请确认你信任它的来源。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run on this device with your permissions. Make sure you trust the source."
+          }
+        }
+      }
+    },
     "插件安装中…" : {
       "localizations" : {
         "en" : {
@@ -7091,6 +7281,16 @@
         }
       }
     },
+    "插件市场已关闭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugin Market Is Off"
+          }
+        }
+      }
+    },
     "插件状态更新" : {
       "localizations" : {
         "en" : {
@@ -7101,12 +7301,42 @@
         }
       }
     },
+    "插件界面" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugin UI"
+          }
+        }
+      }
+    },
+    "插件界面不在 App 里显示" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugin UI Isn’t Shown in the App"
+          }
+        }
+      }
+    },
     "插件管理所需，不能停用或卸载" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plugin management needs it; it cannot be switched off or uninstalled."
+          }
+        }
+      }
+    },
+    "插件自带的界面不会在 App 里显示，可在网页版中查看。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A plugin’s own interface isn’t shown in the app. You can view it in the Web UI."
           }
         }
       }
@@ -7167,6 +7397,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Steering failed. Try again."
+          }
+        }
+      }
+    },
+    "搜索 %@ 个插件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search %@ plugins"
           }
         }
       }
@@ -7257,6 +7497,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search models…"
+          }
+        }
+      }
+    },
+    "搜索结果" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search Results"
           }
         }
       }
@@ -8023,6 +8273,16 @@
         }
       }
     },
+    "无法读取插件市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t Load Plugin Market"
+          }
+        }
+      }
+    },
     "无法读取此索引" : {
       "localizations" : {
         "en" : {
@@ -8039,6 +8299,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couldn’t Read Index Sources"
+          }
+        }
+      }
+    },
+    "无法读取说明文档" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t Load Documentation"
           }
         }
       }
@@ -8671,6 +8941,16 @@
         }
       }
     },
+    "有新版本，查看已安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update Available · View Installed"
+          }
+        }
+      }
+    },
     "有未保存的修改" : {
       "localizations" : {
         "en" : {
@@ -8991,12 +9271,32 @@
         }
       }
     },
+    "来源" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source"
+          }
+        }
+      }
+    },
     "来源列表已截断" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Source list truncated"
+          }
+        }
+      }
+    },
+    "来自 %@。插件由社区作者发布，Fish Pocket 不审核。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@. Plugins are published by community authors and aren’t reviewed by Fish Pocket."
           }
         }
       }
@@ -9037,6 +9337,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "View %@"
+          }
+        }
+      }
+    },
+    "查看 README" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View README"
           }
         }
       }
@@ -9161,6 +9471,16 @@
         }
       }
     },
+    "查看已安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View Installed"
+          }
+        }
+      }
+    },
     "查看目标" : {
       "localizations" : {
         "en" : {
@@ -9277,6 +9597,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Check for Updates"
+          }
+        }
+      }
+    },
+    "检查网络后再试一次。已经安装的插件不受影响。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check your connection and try again. Installed plugins aren’t affected."
           }
         }
       }
@@ -9489,6 +9819,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preparing installation…"
+          }
+        }
+      }
+    },
+    "正在准备插件市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing Plugin Market"
           }
         }
       }
@@ -10245,6 +10585,16 @@
         }
       }
     },
+    "没有说明文档" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Documentation"
+          }
+        }
+      }
+    },
     "波浪号" : {
       "localizations" : {
         "en" : {
@@ -10845,6 +11195,16 @@
         }
       }
     },
+    "相关插件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Related Plugins"
+          }
+        }
+      }
+    },
     "相机" : {
       "localizations" : {
         "en" : {
@@ -11323,6 +11683,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Indexes come from third parties. Add only sources you trust: plugins installed from them run with your permissions"
+          }
+        }
+      }
+    },
+    "索引由第三方提供。只添加你信任的来源：其中的插件安装后以你的权限运行。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indexes come from third parties. Add only sources you trust: plugins from them run with your permissions once installed."
           }
         }
       }
@@ -13069,6 +13439,16 @@
         }
       }
     },
+    "还没有安装任何插件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No plugins installed yet"
+          }
+        }
+      }
+    },
     "还没有安装任何插件。" : {
       "localizations" : {
         "en" : {
@@ -13595,6 +13975,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choose Provider"
+          }
+        }
+      }
+    },
+    "选择插件所在的文件夹，App 会复制一份再安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the plugin’s folder. The app installs a copy of it."
           }
         }
       }
@@ -14131,6 +14521,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prerelease"
+          }
+        }
+      }
+    },
+    "预置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset"
           }
         }
       }

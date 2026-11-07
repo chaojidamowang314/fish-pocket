@@ -259,7 +259,7 @@ private struct StoreReadmePage: View {
 
     private func load() async {
         failed = false
-        let language = Locale.preferredLanguages.first?.hasPrefix("zh") == true ? "zh" : "en"
+        let language = AppLanguage.isChinese ? "zh" : "en"
         do {
             let detail = try await app.client.call("pluginMarket/readEntryDetail", [
                 "url": .string(url),
