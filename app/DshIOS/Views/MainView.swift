@@ -5,7 +5,7 @@ import SwiftUI
 /// regular width it is the split view's sidebar. With nothing selected — at
 /// launch, after archiving — a blank session in the current workspace opens.
 struct MainView: View {
-    enum Sheet: String, Identifiable { case settings, plugins, schedules, signIn, cordis; var id: String { rawValue } }
+    enum Sheet: String, Identifiable { case settings, plugins, store, schedules, signIn, cordis; var id: String { rawValue } }
 
     @Environment(AppModel.self) private var app
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -16,6 +16,9 @@ struct MainView: View {
     @AppStorage("dsh.currentWorkspace") private var workspaceId = ""
     @State private var selection: String?
     @State private var sheet: Sheet?
+    /// In regular width the plugin store takes the conversation's place beside the sidebar.
+    @State private var storeOpen = false
+    @State private var webOpen = false
     /// The sidebar, in regular width.
     @State private var sidebar = NavigationSplitViewVisibility.all
     @State private var windowWidth: CGFloat = 0
@@ -69,10 +72,34 @@ struct MainView: View {
         scenePhase == .active && onboarding == nil && sheet == nil
     }
 
-    var body: some View {
+    /// The width's own layout, with the way into the plugin store.
+    private var layout: some View {
         Group {
             if sizeClass == .regular { split } else { drawerLayout }
         }
+        // The drawer and the new conversation page, which have no way to the store themselves.
+        .onChange(of: app.pluginStoreRequest) { _, token in
+            guard token != nil, scenePhase != .background else { return }
+            app.pluginStoreRequest = nil
+            openPlugins()
+        }
+        .onChange(of: app.webRequest) { _, token in
+            guard token != nil, scenePhase != .background else { return }
+            app.webRequest = nil
+            webOpen = true
+        }
+        .fullScreenCover(isPresented: $webOpen) { WebFallbackView() }
+        // A window narrowed past the sidebar has no place beside it for the store.
+        .onChange(of: sizeClass) { _, size in
+            if size != .regular, storeOpen {
+                storeOpen = false
+                sheet = .store
+            }
+        }
+    }
+
+    var body: some View {
+        layout
         .tint(Palette.ink)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { windowWidth = $0 }
         .focusedSceneValue(\.windowCommands, windowCommands)
@@ -136,12 +163,13 @@ struct MainView: View {
             setDrawer(false)
         }
         #if DEBUG
-        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|schedules|signin|support`.
+        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support`.
         .task {
             switch UserDefaults.standard.string(forKey: "dshOpen") {
             case "drawer": drawerOpen = true
             case "settings": sheet = .settings
             case "plugins": sheet = .plugins
+            case "store": openPlugins()
             case "schedules": sheet = .schedules
             case "signin": sheet = .signIn
             case "support": supportDialog = true
@@ -154,6 +182,7 @@ struct MainView: View {
                 switch sheet {
                 case .settings: SettingsView()
                 case .plugins: SheetStack { PluginsView() }
+                case .store: SheetStack { PluginStoreView() }
                 case .schedules: SheetStack { SchedulesView(openSession: open(session:)) }
                 case .signIn: SignInSheet()
                 case .cordis: CordisPanelView(currentSession: selection)
@@ -236,7 +265,11 @@ struct MainView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .toolbar(removing: .sidebarToggle)
         } detail: {
-            NavigationStack { conversation(openDrawer: toggleSidebar) }
+            if storeOpen {
+                NavigationStack { PluginStoreView(openSidebar: toggleSidebar) }
+            } else {
+                NavigationStack { conversation(openDrawer: toggleSidebar) }
+            }
         }
         // Side by side at any width: the sidebar never floats over the conversation.
         .navigationSplitViewStyle(.balanced)
@@ -246,6 +279,7 @@ struct MainView: View {
         WindowCommands(
             newConversation: {
                 sheet = nil
+                storeOpen = false
                 newConversation(in: workspace)
                 setDrawer(false)
             },
@@ -349,6 +383,12 @@ struct MainView: View {
         setDrawer(false)
     }
 
+    /// 插件, from the sidebar or the new conversation page.
+    private func openPlugins() {
+        setDrawer(false)
+        if sizeClass == .regular { storeOpen = true } else { sheet = .store }
+    }
+
     private func setDrawer(_ open: Bool) {
         if open { dismissKeyboard() }
         withAnimation(.snappy(duration: 0.25)) { drawerOpen = open }
@@ -359,8 +399,9 @@ struct MainView: View {
             selection: selection,
             workspace: workspace,
             rowFrames: rowFrames,
-            select: { id in selection = id; setDrawer(false) },
-            newConversation: { workspace in workspaceId = workspace.id; newConversation(in: workspace); setDrawer(false) },
+            pluginsSelected: storeOpen,
+            select: { id in storeOpen = false; selection = id; setDrawer(false) },
+            newConversation: { workspace in storeOpen = false; workspaceId = workspace.id; newConversation(in: workspace); setDrawer(false) },
             openSettings: { sheet = .settings },
             openSchedules: { sheet = .schedules },
             openCordis: { sheet = .cordis },

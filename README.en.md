@@ -108,7 +108,7 @@ We took the 50 most-downloaded community DSH plugins as a sample and ran each on
 
 - [x] Sample-test compatibility of popular community plugins
 - [ ] Define plugin compatibility tiers and an adaptation guide ([#4](https://github.com/imsai-sh/fish-pocket/issues/4))
-- [ ] Bundle a third-party plugin store ([#5](https://github.com/imsai-sh/fish-pocket/issues/5))
+- [x] Bundle a third-party plugin store ([#5](https://github.com/imsai-sh/fish-pocket/issues/5))
 - [ ] Move the bash interpreter off the engine thread
 
 ## Contributing

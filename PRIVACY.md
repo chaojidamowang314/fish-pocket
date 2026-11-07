@@ -20,7 +20,7 @@ Fish Pocket 是独立的开源社区项目，与深度求索（DeepSeek）不存
 
 - **模型服务商：** 你发送的消息、附件，以及智能体为回答你而读取的文件内容和命令输出，都会发给你选择的模型服务商（默认是 DeepSeek，也可以配置其他服务商）。使用 DeepSeek 官方服务时，请求还带有 App 在本机生成的匿名 ID 和会话 ID。这些数据如何处理，由服务商的隐私政策决定。
 - **DeepSeek 账号：** 选择账号登录时，登录在 DeepSeek 的官方页面完成，App 读不到你的账号和密码，只保存授权令牌用于调用模型和查询余额。
-- **插件：** 安装插件时会访问 npm 仓库。已安装的插件和智能体运行的命令可以按你的操作访问网络。
+- **插件：** 打开插件市场时，App 会访问索引源里列出的地址，默认是 `api.dshfind.com`，并从索引指定的地址加载插件图标，目前是 GitHub。查看插件说明时会访问 npm 文件 CDN 或插件的代码仓库，安装插件时会访问 npm 仓库。这些请求不含你的对话或文件，但对方能看到你的 IP 地址。已安装的插件和智能体运行的命令可以按你的操作访问网络。
 - **内置浏览器：** 你访问的网站会收到常规的网络请求。
 - **更新检查：** App 会向 Apple 和 GitHub 查询最新版本，请求里不含你的个人信息。
 
@@ -48,7 +48,7 @@ These connections happen only when you use the related feature, and the data goe
 
 - **Model providers:** Your messages and attachments, along with file contents and command output the agent reads to answer you, are sent to the model provider you choose (DeepSeek by default, and other providers can be configured). Requests to DeepSeek's official service also carry an anonymous ID generated on your device and a session ID. How this data is handled is governed by the provider's privacy policy.
 - **DeepSeek account:** If you sign in with an account, sign-in happens on DeepSeek's own page. The app cannot read your credentials and stores only an authorization token used to call models and check your balance.
-- **Plugins:** Installing a plugin contacts the npm registry. Installed plugins and commands run by the agent can access the network as you direct them.
+- **Plugins:** Opening the plugin market contacts the addresses in your index sources, `api.dshfind.com` by default, and loads plugin icons from the addresses the index gives, currently GitHub. Viewing a plugin's documentation contacts npm file CDNs or the plugin's repository, and installing a plugin contacts the npm registry. These requests do not contain your conversations or files, but those services can see your IP address. Installed plugins and commands run by the agent can access the network as you direct them.
 - **Built-in browser:** Websites you visit receive ordinary network requests.
 - **Update check:** The app asks Apple and GitHub for the latest version. These requests contain no personal information.
 
