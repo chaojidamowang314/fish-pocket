@@ -181,8 +181,8 @@ private struct EngineTrouble: View {
             "\(deviceModel()) · iOS \(UIDevice.current.systemVersion)",
             headline,
         ]
-        if let since { lines.append("已等待 \(Int(Date().timeIntervalSince(since))) 秒") }
-        return lines.joined(separator: "\n") + "\n\n" + (log.isEmpty ? "（日志还是空的）" : log)
+        if let since { lines.append(String(localized: "已等待 \(Int(Date().timeIntervalSince(since))) 秒")) }
+        return lines.joined(separator: "\n") + "\n\n" + (log.isEmpty ? String(localized: "（日志还是空的）") : log)
     }
 
     /// `iPhone18,1` and the like. The marketing name is what someone writes by hand and
@@ -191,7 +191,7 @@ private struct EngineTrouble: View {
         // A simulator's `machine` is the Mac's architecture, which would name the wrong
         // device in a report; it says which one it stands in for in the environment.
         if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
-            return "\(simulated)（模拟器）"
+            return String(localized: "\(simulated)（模拟器）")
         }
         var system = utsname()
         uname(&system)

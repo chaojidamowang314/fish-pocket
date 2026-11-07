@@ -5,14 +5,21 @@ import Foundation
 // task-timing.js) so the native card parses, describes and formats rules the
 // same way the web one does.
 
-/// The `schedule.manager` copy (with the shared frequency fragments) this app uses, zh only like the rest of the UI.
+/// The `schedule.manager` copy (with the shared frequency fragments) this app uses, in the UI's
+/// language: the official client's own zh and en dictionaries, Chinese for anything a table lacks.
 enum ScheduleText {
-    static let locale = Locale(identifier: "zh-CN")
+    static var locale: Locale { AppLanguage.locale }
 
     static func t(_ key: String, _ params: [String: Any] = [:]) -> String {
-        var text = zh[key] ?? key
+        var text = (AppLanguage.isChinese ? nil : en[key]) ?? zh[key] ?? key
         for (name, value) in params { text = text.replacingOccurrences(of: "{\(name)}", with: "\(value)") }
         return text
+    }
+
+    /// `unit.hour` for a count: English has `hour` / `hours` (`unit.hour.one` / `.other`).
+    static func unit(_ name: String, count: Int) -> String {
+        if !AppLanguage.isChinese, let text = en["unit.\(name).\(count == 1 ? "one" : "other")"] { return text }
+        return t("unit.\(name)")
     }
 
     private static let zh: [String: String] = [
@@ -67,6 +74,65 @@ enum ScheduleText {
         "relative.future": "{value}{unit}后",
         "relative.overdue": "已逾期 {value}{unit}",
         "rule.zone.system": "（系统）",
+    ]
+
+    /// The official `en` entries for the same keys (`schedule.manager`, then the shared fragments).
+    private static let en: [String: String] = [
+        "frequency.once": "Once",
+        "frequency.every": "Every {value} {unit}",
+        "frequency.daily": "Daily at {time} ({timeZone})",
+        "frequency.dailyLocal": "Daily at {time}",
+        "frequency.weekly": "Weekly on {weekdays} at {time} ({timeZone})",
+        "frequency.weeklyLocal": "Weekly on {weekdays} at {time}",
+        "frequency.cron": "Custom ({timeZone})",
+        "frequency.cronLocal": "Custom",
+        "frequency.cronRule": "{rule} ({timeZone})",
+        "cron.list.join": ", ",
+        "cron.part.join": " ",
+        "cron.weekday.name": "{weekday}",
+        "cron.weekday.range": "{from}–{to}",
+        "cron.months": " in {months}",
+        "cron.day.every": "Every day{months}",
+        "cron.day.weekdays": "{weekdays}{months}",
+        "cron.day.monthDays": "Day {days} of every month{months}",
+        "cron.day.both": "Day {days} of every month or {weekdays}{months}",
+        "cron.day.bothStarred": "Day {days} of every month and {weekdays}{months}",
+        "cron.hours.range": "{from}–{to}",
+        "cron.hours.list": "{hours}",
+        "cron.time.everyMinute": "Every minute",
+        "cron.time.everyMinutes": "Every {step} minutes",
+        "cron.time.joinedEveryMinute": "every minute",
+        "cron.time.joinedEveryMinutes": "every {step} minutes",
+        "cron.time.everyHour": "Every hour",
+        "cron.time.joinedEveryHour": "every hour",
+        "cron.time.everyNHours": "Every {count} hours",
+        "cron.time.joinedEveryNHours": "every {count} hours",
+        "cron.time.hourlyAt": "Every hour at minute {minutes}",
+        "cron.time.joinedHourlyAt": "every hour at minute {minutes}",
+        "cron.time.hoursEveryMinute": "every minute during hours {hours}",
+        "cron.time.hoursEveryMinutes": "every {step} minutes during hours {hours}",
+        "cron.time.at": "at {times}",
+        "cron.time.hoursAt": "at minute {minutes} of hours {hours}",
+        "frequency.weekday.join": ", ",
+        "frequency.weekday.1": "Mon",
+        "frequency.weekday.2": "Tue",
+        "frequency.weekday.3": "Wed",
+        "frequency.weekday.4": "Thu",
+        "frequency.weekday.5": "Fri",
+        "frequency.weekday.6": "Sat",
+        "frequency.weekday.7": "Sun",
+        "unit.day.one": "day",
+        "unit.day.other": "days",
+        "unit.hour.one": "hour",
+        "unit.hour.other": "hours",
+        "unit.minute.one": "minute",
+        "unit.minute.other": "minutes",
+        "unit.second.one": "second",
+        "unit.second.other": "seconds",
+        "relative.now": "Due now",
+        "relative.future": "in {value} {unit}",
+        "relative.overdue": "{value} {unit} overdue",
+        "rule.zone.system": " (system)",
     ]
 }
 
@@ -212,8 +278,11 @@ enum Cron {
 
     private static func monthSuffix(_ values: [Int]) -> String {
         if values.count == 12 { return "" }
-        // `Intl.DateTimeFormat("zh-CN", {month: "long"})` names them 一月…十二月.
-        let names = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+        // `Intl.DateTimeFormat(locale, {month: "long"})`: 一月…十二月, January…December.
+        let formatter = DateFormatter()
+        formatter.locale = ScheduleText.locale
+        let names = formatter.standaloneMonthSymbols ?? formatter.monthSymbols ?? []
+        guard names.count == 12 else { return "" }
         return ScheduleText.t("cron.months", ["months": values.map { names[$0 - 1] }.joined(separator: ScheduleText.t("cron.list.join"))])
     }
 
@@ -399,7 +468,7 @@ enum ScheduleFormat {
         case "every":
             let seconds = record["everySeconds"].int ?? 0
             let unit = [("day", 86400), ("hour", 3600), ("minute", 60)].first { seconds > 0 && seconds % $0.1 == 0 } ?? ("second", 1)
-            return ScheduleText.t("frequency.every", ["value": seconds / unit.1, "unit": ScheduleText.t("unit.\(unit.0)")])
+            return ScheduleText.t("frequency.every", ["value": seconds / unit.1, "unit": ScheduleText.unit(unit.0, count: seconds / unit.1)])
         default:
             return ""
         }
@@ -444,7 +513,7 @@ enum ScheduleFormat {
         let seconds = abs(difference) / 1000
         let unit = [("day", 86400.0), ("hour", 3600.0), ("minute", 60.0)].first { seconds >= $0.1 } ?? ("second", 1.0)
         let value = max(1, Int(difference > 0 ? (seconds / unit.1).rounded(.up) : (seconds / unit.1).rounded(.down)))
-        return ScheduleText.t(difference > 0 ? "relative.future" : "relative.overdue", ["value": value, "unit": ScheduleText.t("unit.\(unit.0)")])
+        return ScheduleText.t(difference > 0 ? "relative.future" : "relative.overdue", ["value": value, "unit": ScheduleText.unit(unit.0, count: value)])
     }
 
     /// `11月4日 09:00 (3小时后)`.

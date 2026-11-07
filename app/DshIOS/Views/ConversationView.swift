@@ -1201,9 +1201,10 @@ private struct ApprovalReasonText: View {
             "read-only": String(localized: "仅可查看"),
         ]
         for (mode, name) in names {
+            let quoted = String(localized: "「\(name)」")
             // 「使用 danger-full-access 权限」: the name already says 权限.
-            text = text.replacingOccurrences(of: "\(mode) 权限", with: "「\(name)」")
-            text = text.replacingOccurrences(of: "(?<![\\w-])\(mode)(?![\\w-])", with: "「\(name)」", options: .regularExpression)
+            text = text.replacingOccurrences(of: "\(mode) 权限", with: quoted)
+            text = text.replacingOccurrences(of: "(?<![\\w-])\(mode)(?![\\w-])", with: quoted, options: .regularExpression)
         }
         return text
     }
