@@ -671,8 +671,8 @@ struct ComposerView: View {
     private func loadPhotos(_ items: [PhotosPickerItem]) async {
         var refusal: String?
         for item in items {
-            guard let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { continue }
-            if let reason = composer.addImage(image) { refusal = reason }
+            guard let data = try? await item.loadTransferable(type: Data.self) else { continue }
+            if let reason = composer.addImage(data: data) { refusal = reason }
         }
         photos = []
         if let refusal { app.showToast(refusal) }
