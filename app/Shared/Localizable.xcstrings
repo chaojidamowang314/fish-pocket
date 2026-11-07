@@ -13919,6 +13919,16 @@
         }
       }
     },
+    "退出 Fish Pocket 再重新打开，界面就会换成新的语言。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit and reopen Fish Pocket to see the interface in the new language."
+          }
+        }
+      }
+    },
     "退出登录" : {
       "localizations" : {
         "en" : {
@@ -14145,6 +14155,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Invalid configuration; not saved"
+          }
+        }
+      }
+    },
+    "重启 App 后生效" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takes Effect After Restart"
           }
         }
       }

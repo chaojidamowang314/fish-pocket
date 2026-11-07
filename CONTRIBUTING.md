@@ -34,7 +34,7 @@ iOS 部分的改动请至少在模拟器上跑一遍，并在 PR 里写明测过
 
 ## 界面语言
 
-原生界面用中文写，翻译放在 String Catalog [`app/Shared/Localizable.xcstrings`](app/Shared/Localizable.xcstrings) 里，源语言是 `zh-Hans`。目前有中文和英文，跟随系统语言，也可以在系统「设置 → Fish Pocket → 语言」里单独选（App 设置页的「语言」一行会跳过去，iOS 不允许 App 运行中自己切换）。都不匹配时显示英文。
+原生界面用中文写，翻译放在 String Catalog [`app/Shared/Localizable.xcstrings`](app/Shared/Localizable.xcstrings) 里，源语言是 `zh-Hans`。目前有中文和英文，跟随系统语言，也可以在 App 设置页的「语言」里单独选，重启 App 后生效。它和系统「设置 → Fish Pocket → 语言」写的是同一个设置，系统那一项只在系统语言列表里有两种以上语言时才出现。加语言时同步在 `AppLanguage.choices` 里加上它。都不匹配时显示英文。
 
 - **写界面文字：** 代码里直接写中文。`Text("设置")`、`Button("取消")` 这类 SwiftUI 字面量会自动进 Catalog；先存成 `String` 再显示的文字要写成 `String(localized: "…")`，不然不会被翻译。
 - **只翻界面：** 日志、注释和发给 Agent 的提示词不翻译。
