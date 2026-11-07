@@ -275,6 +275,7 @@ engine/plugins/ios-native/
 ```
 native/ios-native/
   dsh_ios_native.h          # ✅ 入口与各 caps_*.m 之间的内部接口
+  DshNativeCapabilities.h   # ✅ 能力表的只读视图，给 Swift 用（不含 node_api.h）
   ios_native.m              # ✅ N-API 入口、能力表、分发、policy 判断点、TSFN 回复
   caps_device.m             # ✅ UIDevice：型号、系统版本、电量、低电量、热状态、存储
   caps_notify.m             # ✅ UNUserNotificationCenter：本地通知
@@ -282,12 +283,15 @@ native/ios-native/
   caps_calendar.m           # ⬜ EventKit（一期）
   NativeBridge.swift        # ⬜ @objc 单例：需要 UI 的操作在主线程做（授权、写确认）
 
-app/DshIOS/Native/
-  NativeAudit.swift         # ⬜ 每次调用记一条，用户可查
-  Views/NativeDataViews.swift  # ⬜ 被拒后的引导 + 审计记录页
+app/DshIOS/
+  DshIOS-Bridging-Header.h      # ✅ 让 SwiftUI 读得到上面那张表
+  Views/NativeCapabilitiesView.swift  # ✅ 设置 →「本机能力」：清单 + 系统授权状态
+  Native/NativeAudit.swift      # ⬜ 每次调用记一条，用户可查
 ```
 
-零期为什么还没有 Swift 文件：这三个能力都不需要 UI，ObjC 直接够了。`NativeBridge.swift` 是一期（日历授权、写确认）才需要的那座桥。
+**能力清单只有一张表。** 设置页列的、N-API 分发用的、判定一次调用合不合法的，都是 `ios_native.m` 里那个 `CAPABILITIES` 数组：`DshNativeCapabilityList()` 是它的只读视图，经 bridging header 给 Swift。界面不许自己维护一份拷贝——两份清单迟早对不上，而对不上的那条缝就是绕过（§9.3）。页面的中文名和说明按能力 id 查，**查不到就显示 id**，所以原生加了能力而忘了加文案，页面会少个名字，但不会漏掉这项能力。
+
+零期的 Swift 只有这一页：三个能力本身都不需要 UI。`NativeBridge.swift` 是一期（日历授权、写确认）才需要的那座桥。
 
 **数据流**（以第三方插件读日历为例）
 
@@ -414,7 +418,7 @@ NSRemindersFullAccessUsageDescription
 
 | 期 | 内容 | 产出 |
 |---|---|---|
-| **零期** ✅ | 通道 + 不要权限的那批 | addon 骨架（N-API 入口、能力表、policy 判断点、ThreadSafeFunction 回复）、引擎插件与 `binding.mjs`、`device_info` / `notify` / `speak` 三个工具、`project.yml` 接入、SKILL.md 同步。**不碰任何授权机制**，用最低风险把整条链跑通 |
+| **零期** ✅ | 通道 + 不要权限的那批 | addon 骨架（N-API 入口、能力表、policy 判断点、ThreadSafeFunction 回复）、引擎插件与 `binding.mjs`、`device_info` / `notify` / `speak` 三个工具、设置 →「本机能力」页、`project.yml` 接入、SKILL.md 同步。**不碰任何授权机制**，用最低风险把整条链跑通 |
 | **一期** | 日历读 | `caps_calendar.m`（读）、系统权限请求与被拒引导 + deep link、Info.plist 文案、`calendar_list` 工具、绕过测试（§9.3）、四份文档同步 |
 | **二期** | 写 + 审计 | 新建走 `EKEventEditViewController`、改删走一次性 grant、审计记录与查看页 |
 | **三期** | 提醒 + 本地通知 | `reminders.*`、`notifications.post`，与 todo / schedule 的职责划分写进 SKILL.md |
@@ -439,7 +443,8 @@ NSRemindersFullAccessUsageDescription
 | `speak.say` | 返回 `{speaking:true, characters:6}`，TSFN 回调路径通 |
 | `notify.schedule` | 首次调用弹出系统通知授权弹窗（截图确认），授权后返回 id 与投递时间 |
 | **能力表拦截** | `device.wipe` → "capability 'device' has no operation 'wipe'"；`healthkit.read` → "unknown capability 'healthkit'"。§9.3 要的那道闸两个方向都生效 |
-| 引擎测试 | 106 项，0 失败（24 跳过） |
+| 引擎测试 | 106 项，0 失败（24 跳过）；合并 main 升级引擎到 0.2.2 后复跑 115 项，0 失败 |
+| 设置 →「本机能力」 | 列出三项（清单来自 addon 的表），通知那行实时显示系统授权状态（截图确认为「已允许」） |
 
 **没验证：**
 
@@ -447,6 +452,7 @@ NSRemindersFullAccessUsageDescription
 - 通知**真正送达**（只验证了排程成功，没等 60 秒看横幅）。
 - 朗读的**声音**（模拟器音频未核）。
 - 这些工具**被模型调用**的完整回合（验证走的是 addon 直调，没有发真实对话）。
+- 能力页的**「已关闭」状态**：`simctl privacy` 不支持 notifications，撤销不了通知授权，所以这一档只有代码逻辑，没实跑过。
 
 **过程中发现的两个坑**（与本次改动无关，但会绊到下一个人）：
 

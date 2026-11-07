@@ -24,6 +24,12 @@ struct SettingsView: View {
 
     private var mirror: SettingsMirror { app.settings }
 
+    /// 本机能力的数量，数的是 addon 的能力表本身（见 NativeCapability.all）。
+    private var nativeCapabilityCount: Int? {
+        let count = NativeCapability.all.count
+        return count > 0 ? count : nil
+    }
+
     private var engineRunning: Bool {
         if case .running = engine.phase { return true }
         return false
@@ -59,6 +65,9 @@ struct SettingsView: View {
                 Section {
                     NavigationLink { PluginsView() } label: { valueRow("插件", pluginCount.map { String(localized: "\($0) 个") } ?? "") }
                     NavigationLink { SchedulesView(openSession: openSession) } label: { valueRow("自动化", app.scheduleCount.map { String(localized: "\($0) 个") } ?? "") }
+                    NavigationLink { NativeCapabilitiesView() } label: {
+                        valueRow("本机能力", nativeCapabilityCount.map { String(localized: "\($0) 项") } ?? "")
+                    }
                 }
                 .groupedRow()
 

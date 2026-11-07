@@ -14,6 +14,7 @@
 // thread hop there themselves (dsh_native_on_main) and reply later, so every
 // call settles through the same threadsafe-function path.
 #import "dsh_ios_native.h"
+#import "DshNativeCapabilities.h"
 #import <node_api.h>
 
 #pragma mark - Capability table
@@ -26,13 +27,18 @@ typedef struct {
   /// which is what keeps a plugin calling us directly (process._linkedBinding
   /// is visible to any JS) from reaching something we have not built yet.
   const char *ops[8];
+  /// The iOS permission this capability needs, or NULL when it needs none.
+  /// Only for display in the app's capability list — the capability itself
+  /// still asks iOS at use time, and nothing here gates on this field.
+  const char *systemPermission;
 } dsh_capability;
 
-// Phase 0: nothing here needs a system permission or a user decision.
+// Phase 0: only `notify` needs anything from iOS, and that is the notification
+// prompt it raises on first use. None of these touch personal data.
 static const dsh_capability CAPABILITIES[] = {
-  {"device", dsh_native_device, {"info", NULL}},
-  {"notify", dsh_native_notify, {"schedule", "cancel", "pending", NULL}},
-  {"speak",  dsh_native_speak,  {"say", "stop", NULL}},
+  {"device", dsh_native_device, {"info", NULL}, NULL},
+  {"notify", dsh_native_notify, {"schedule", "cancel", "pending", NULL}, "notifications"},
+  {"speak",  dsh_native_speak,  {"say", "stop", NULL}, NULL},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -43,6 +49,30 @@ static const dsh_capability *find_capability(NSString *name) {
     if (strcmp(CAPABILITIES[i].capability, wanted) == 0) return &CAPABILITIES[i];
   }
   return NULL;
+}
+
+/// The capability's operations as an array, shared by both readers of the table.
+static NSArray<NSString *> *capability_ops(const dsh_capability *cap) {
+  NSMutableArray<NSString *> *ops = [NSMutableArray array];
+  for (size_t i = 0; i < sizeof(cap->ops) / sizeof(cap->ops[0]) && cap->ops[i] != NULL; i++) {
+    [ops addObject:@(cap->ops[i])];
+  }
+  return ops;
+}
+
+NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void) {
+  NSMutableArray *list = [NSMutableArray arrayWithCapacity:CAPABILITY_COUNT];
+  for (size_t i = 0; i < CAPABILITY_COUNT; i++) {
+    NSMutableDictionary *entry = [@{
+      @"id": @(CAPABILITIES[i].capability),
+      @"ops": capability_ops(&CAPABILITIES[i]),
+    } mutableCopy];
+    if (CAPABILITIES[i].systemPermission != NULL) {
+      entry[@"systemPermission"] = @(CAPABILITIES[i].systemPermission);
+    }
+    [list addObject:entry];
+  }
+  return list;
 }
 
 static BOOL capability_accepts(const dsh_capability *cap, NSString *op) {
@@ -228,11 +258,7 @@ static napi_value capabilities(napi_env env, napi_callback_info info) {
   (void)info;
   NSMutableDictionary *table = [NSMutableDictionary dictionary];
   for (size_t i = 0; i < CAPABILITY_COUNT; i++) {
-    NSMutableArray *ops = [NSMutableArray array];
-    for (size_t j = 0; j < sizeof(CAPABILITIES[i].ops) / sizeof(CAPABILITIES[i].ops[0]) && CAPABILITIES[i].ops[j] != NULL; j++) {
-      [ops addObject:@(CAPABILITIES[i].ops[j])];
-    }
-    table[@(CAPABILITIES[i].capability)] = ops;
+    table[@(CAPABILITIES[i].capability)] = capability_ops(&CAPABILITIES[i]);
   }
   NSData *json = [NSJSONSerialization dataWithJSONObject:table options:0 error:NULL];
   napi_value value;
