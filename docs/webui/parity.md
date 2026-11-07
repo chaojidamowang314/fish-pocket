@@ -69,6 +69,7 @@ C-49 `/goal` 气泡 · C-90 原子 chip · C-16 鲸鱼动画与流光 · C-30 �
 - S-78：文件变更时只显示横幅，不自动重载，保住滚动位置。
 - 首启引导：没有可用模型时不在启动时自动弹登录框，先进正常界面；发出第一条消息发现没有凭据时才弹（同一个登录 / API Key sheet）。
 - 同时开着网页版时，提问和审批都由 iOS 持有，不再转给网页。
+- **本机能力（官方 Web 没有）**：`device_info`、`notify`、`speak` 三个工具，走 `dsh_ios_native` addon（`native/ios-native`）。官方 Web 跑在桌面浏览器里，没有这些框架，所以这是本项目自有扩展而非对齐项。设计与后续分期见 [`../native-services.md`](../native-services.md)。
 
 **已知风险**
 

@@ -33,6 +33,8 @@ targets:
       - path: ../native/git
       # Images for the engine: ImageIO behind N-API, registered as the linked binding `dsh_image`.
       - path: ../native/image
+      # The iOS frameworks the agent may reach, behind N-API: linked binding `dsh_ios_native`.
+      - path: ../native/ios-native
       # The engine's filesystem view, for the Node entry points libc cannot reach: linked binding `dsh_root`.
       - path: ../native/root/binding.c
     dependencies:
@@ -46,6 +48,9 @@ targets:
       - sdk: Security.framework
       - sdk: ImageIO.framework
       - sdk: CoreGraphics.framework
+      # native/ios-native: local notifications and speech synthesis.
+      - sdk: UserNotifications.framework
+      - sdk: AVFoundation.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm
@@ -96,7 +101,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         HEADER_SEARCH_PATHS: ["$(SRCROOT)/../vendor/nodejs-mobile/ios/include/node", "$(SRCROOT)/../vendor/libgit2/ios-arm64/include"]
-        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DSH_GIT_LINKED=1", "DSH_IMAGE_LINKED=1"]
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DSH_GIT_LINKED=1", "DSH_IMAGE_LINKED=1", "DSH_IOS_NATIVE_LINKED=1"]
         # __FILE__ in native/git must not carry the build machine's home directory into the binary.
         OTHER_CFLAGS: ["$(inherited)", "-fmacro-prefix-map=$(SRCROOT:dir:standardizepath)=."]
   # The engine's filesystem view (native/root): libc's path functions, and libSystem re-exported.

@@ -121,6 +121,22 @@ The app has two interfaces onto the same engine and profile. The user normally w
 - `log --graph` draws a single column, and no branch lines. Submodules are not cloned.
 - Large clones take a while and print nothing until they finish.
 
+## Device capabilities
+
+You have tools onto the phone itself. They are not shell commands — there is no `apple-*` binary to run, and the shell cannot reach any of this.
+
+| Tool | What it does | Worth knowing |
+|---|---|---|
+| `device_info` | Model, iOS version, battery, low power mode, thermal state, free storage | Read it before long or storage-hungry work. Low power mode and a `serious`/`critical` thermal state are good reasons to stop and say so |
+| `notify` | Schedule, list and cancel local notifications | This is the right answer to "remind me in 20 minutes": it alerts the user with the app closed. The first use asks them to allow notifications; if they decline, iOS never asks again and only Settings can undo it, so say that rather than retrying |
+| `speak` | Read text aloud with the system voices | Returns when speech *starts*, not when it ends. Pass `language` when the text is not in the device language, or an English voice may read Chinese. Ending your turn does not stop the audio |
+
+These only exist inside the app. They are absent on a development machine, so do not write a plugin that assumes them without checking.
+
+**Not available yet:** calendar, reminders, health, location, contacts, photos. Do not claim you can read the user's schedule or health data — say it is not built yet.
+
 ## Not possible at all
 
 Tell the user plainly rather than attempting these: compiling native code, running containers or virtual machines, starting system services, background daemons that outlive the app, controlling other apps, or anything needing root. Work that needs them belongs on another machine.
+
+The device capabilities above are the exception to "controlling other apps": they are system frameworks the app is allowed to use, not other apps being driven.
