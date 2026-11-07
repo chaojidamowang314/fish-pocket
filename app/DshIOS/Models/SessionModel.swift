@@ -141,11 +141,16 @@ final class SessionModel {
             composer.observe(event)
             events.append(event)
             if timeline.apply(event) { publishTimeline() } else { publishTimelineState() }
-            // Only a live turn end prompts for quota; history replays never do.
-            if event["type"].string == "turn/end", let failure = TurnFailure(reason: event["data"]["reason"]) {
-                if failure.isQuota { app.account.reportQuota(code: failure.code ?? "QUOTA") }
-                // A key that stopped working is the conversation's card to explain; none at all is the first step.
-                if failure.credentialProblem == .missing { app.requestCredentials(.start) }
+            // Only a live turn end prompts for quota or support; history replays never do.
+            if event["type"].string == "turn/end" {
+                if let failure = TurnFailure(reason: event["data"]["reason"]) {
+                    if failure.isQuota { app.account.reportQuota(code: failure.code ?? "QUOTA") }
+                    // A key that stopped working is the conversation's card to explain; none at all is the first step.
+                    if failure.credentialProblem == .missing { app.requestCredentials(.start) }
+                } else if event["data"]["reason"]["kind"].string == "completed", subagentAddress == nil, hasReply,
+                          queued.isEmpty, composer.text.isEmpty {
+                    app.noteCompletedTurn()
+                }
             }
             switch event["type"].string {
             case "turn/end", "session/title", "tool/result", "user/message", "turn/start":
@@ -606,16 +611,19 @@ final class SessionModel {
     /// Where a fork "from here" cuts: the end of `turn`, if it has ended.
     func forkBoundary(turn: Int) -> Int? { timeline.turnEndSeq[turn] }
 
-    func loadAttachment(_ attachmentId: String) async -> Data? {
-        guard let value = try? await client.call("session/attachment", ["request": ["sessionId": .string(sessionId), "attachmentId": .string(attachmentId)]]),
+    /// `session/attachment` takes the whole stored ref since 0.2.2, not just its id.
+    func loadAttachment(_ attachment: Attachment) async -> Data? {
+        guard let ref = attachment.ref,
+              let value = try? await client.call("session/attachment", ["request": ["sessionId": .string(sessionId), "attachment": ref]]),
               let base64 = value["data"].string else { return nil }
         return Data(base64Encoded: base64)
     }
 
     /// A decoded attachment image; attachments are immutable, so each is read once per session.
-    func image(_ attachmentId: String) async -> UIImage? {
+    func image(_ attachment: Attachment) async -> UIImage? {
+        guard let attachmentId = attachment.attachmentId else { return nil }
         if let hit = imageCache.object(forKey: attachmentId as NSString) { return hit }
-        guard let data = await loadAttachment(attachmentId), let image = UIImage(data: data) else { return nil }
+        guard let data = await loadAttachment(attachment), let image = UIImage(data: data) else { return nil }
         imageCache.setObject(image, forKey: attachmentId as NSString)
         return image
     }

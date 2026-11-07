@@ -2,7 +2,7 @@ import SwiftUI
 
 /// One conversation: its title and session menu in the top bar, the workbench on
 /// the right, the timeline, and the composer. A blank session shows the
-/// new-conversation state (model picker on top, wordmark, workspace chip,
+/// new-conversation state (model picker on top, headline, workspace chip,
 /// suggestions, the large composer).
 struct ConversationView: View {
     let sessionId: String
@@ -39,7 +39,7 @@ struct ConversationView: View {
     @State private var approvalBatch: Set<String> = []
     @State private var keyboardUp = false
     @State private var composerFocused = false
-    /// The new-conversation page's free height: a short one drops the wordmark.
+    /// The new-conversation page's free height: a short one drops the headline.
     @State private var heroHeight: CGFloat = .infinity
     /// A status or composer sheet is up: approvals and questions present once it has gone
     /// (a second sheet can't stack on it, and one that failed to show would be lost).
@@ -111,6 +111,8 @@ struct ConversationView: View {
     @ViewBuilder
     private func content(_ model: SessionModel) -> some View {
         let blank = isBlank(model)
+        // A conversation that has started: the bar carries its title menu, not the model picker.
+        let started = !blank && model.subagentAddress == nil && !(!model.loaded && app.sessions[sessionId]?.blank == true)
         ScrollViewReader { proxy in
             ScrollView {
                 TimelineList(model: model)
@@ -205,16 +207,36 @@ struct ConversationView: View {
         .modifier(ComposerDrop(composer: model.composer, enabled: model.subagentReadOnly(parentAvailable: parentAvailable(model)) == nil))
         // Under the toolbar: what is inside an inspector's main view does not reach the navigation bar.
         .inspector(isPresented: workbenchShown(sizeClass == .regular)) {
-            workbenchPage(model).inspectorColumnWidth(min: 320, ideal: 420, max: 640)
+            // Only where it is shown: on a phone this content stays built while closed, and its
+            // toolbar lands in the conversation's bar.
+            if sizeClass == .regular {
+                workbenchPage(model).inspectorColumnWidth(min: 320, ideal: 420, max: 640)
+            }
         }
         // It names the window in the iPad app switcher. Not drawn while the title is the principal
         // item; with the title moved aside for the workbench it would show as a second one.
         .navigationTitle(titleBesideWorkbench ? "" : app.durableTitle(of: sessionId) ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Palette.background, for: .navigationBar)
+        // Stated, not left to the default: the workbench's files and changes hide the bar of
+        // their own stacks, and without this closing the sheet takes this bar along.
+        .toolbar(.visible, for: .navigationBar)
         .toolbar {
             if let openDrawer {
                 ToolbarItem(placement: .topBarLeading) { DrawerButton(action: openDrawer) }
+            }
+            // As the web keeps 新会话 in its sidebar, the bar keeps it one tap away: no drawer
+            // first. A blank conversation is already a new one, so it only shows on a started one.
+            if started {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        Haptics.tap()
+                        app.newSessionRequest = NewSessionRequest(workspaceId: app.workspace(of: sessionId)?.id)
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel("新会话")
+                }
             }
             if let parent = app.sessions[sessionId]?.parentId, model.subagentAddress != nil {
                 ToolbarItem(placement: .topBarLeading) {
@@ -227,8 +249,9 @@ struct ConversationView: View {
             } else {
                 ToolbarItem(placement: titlePlacement) {
                     SessionTitleMenu(
-                        sessionId: sessionId, streamTitle: model.title, catalog: presets,
-                        crowded: !app.subagentEntries(of: sessionId).isEmpty || jobs.visibleCount > 0 || !app.activeSchedules(of: sessionId).isEmpty
+                        // 新会话 sits beside the drawer button on every started conversation,
+                        // so on a phone the title always makes room for it.
+                        sessionId: sessionId, streamTitle: model.title, catalog: presets, crowded: true
                     ) { headerSheet = .logExport }
                 }
             }
@@ -338,13 +361,14 @@ struct ConversationView: View {
     // MARK: New conversation
 
     private func hero(_ model: SessionModel) -> some View {
-        let showsWordmark = !keyboardUp && heroHeight >= 220
+        let showsHeadline = !keyboardUp && heroHeight >= 220
         return VStack(spacing: 14) {
-            if showsWordmark {
-                Text("Fish Pocket").font(.system(size: 40, weight: .bold)).kerning(-1.2).foregroundStyle(Palette.ink)
+            if showsHeadline {
+                // The web's headline (`conversation.hero.headline`), so both shells greet the same way.
+                Text("探索未至之境").font(.system(size: 34, weight: .bold)).foregroundStyle(Palette.ink)
+                    .lineLimit(1).minimumScaleFactor(0.8)
                     .accessibilityAddTraits(.isHeader)
             }
-            Text("今天想做点什么？").font(.body).foregroundStyle(Palette.secondary)
             HStack(spacing: 8) {
                 Menu {
                     Section("工作区") {
@@ -377,7 +401,7 @@ struct ConversationView: View {
         .contentShape(Rectangle())
         .onTapGesture { dismissKeyboard() }
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { heroHeight = $0 }
-        .animation(.snappy(duration: 0.2), value: showsWordmark)
+        .animation(.snappy(duration: 0.2), value: showsHeadline)
     }
 
     /// Starter prompts; a tap fills the input, to send as is or to change first.

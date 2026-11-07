@@ -120,6 +120,8 @@ final class AppModel {
     var lastError: String?
     /// The single shell toast (S-128): a newer one replaces the current one.
     private(set) var toast: Toast?
+    /// Raised each time an ask for a Star or a share is due.
+    private(set) var supportMoment = 0
     /// Shell dialogs the root view presents.
     var archiveRequest: ArchiveRequest?
     var renameRequest: RenameRequest?
@@ -149,16 +151,6 @@ final class AppModel {
     private(set) var generation = 0
     /// Count of `emit`s seen per event name; read through `revision(_:)`.
     private(set) var eventCounts: [String: Int] = [:]
-    /// `ui-theme.preference`, shared with the web and desktop clients.
-    private(set) var themePreference = "system"
-
-    var colorScheme: ColorScheme? {
-        switch themePreference {
-        case "light": return .light
-        case "dark": return .dark
-        default: return nil
-        }
-    }
 
     @ObservationIgnored private var workspaceTask: Task<Void, Never>?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
@@ -199,9 +191,9 @@ final class AppModel {
     }
 
     /// Sessions of one workspace (nil: those in no workspace), as the web sidebar
-    /// derives them: subagents never, blank ones only while current, archived only
+    /// derives them: subagents and blank ones never, archived only
     /// when asked; pinned first, then most recently updated.
-    func sessions(in workspace: Workspace?, includeArchived: Bool = false, current: String? = nil) -> [SessionSummary] {
+    func sessions(in workspace: Workspace?, includeArchived: Bool = false) -> [SessionSummary] {
         let members: [SessionSummary]
         if let workspace {
             members = workspace.sessionIds.compactMap { sessions[$0] }
@@ -211,10 +203,8 @@ final class AppModel {
         }
         return members
             .filter { includeArchived || !archived.contains($0.id) }
-            .filter { !$0.isSubagent && (!$0.blank || $0.id == current) }
+            .filter { !$0.isSubagent && !$0.blank }
             .sorted { lhs, rhs in
-                if lhs.id == current && lhs.blank { return true }
-                if rhs.id == current && rhs.blank { return false }
                 let lp = pinned.firstIndex(of: lhs.id), rp = pinned.firstIndex(of: rhs.id)
                 if (lp != nil) != (rp != nil) { return lp != nil }
                 if let lp, let rp { return lp < rp }
@@ -264,13 +254,18 @@ final class AppModel {
 
     func dismissToast(_ id: UUID) { if toast?.id == id { toast = nil } }
 
+    /// A turn finished well; `MainView` decides whether this is the moment to ask (`SupportPrompt`).
+    func noteCompletedTurn() {
+        if SupportPrompt.noteCompletedTurn() { supportMoment += 1 }
+    }
+
     func workspace(of sessionId: String) -> Workspace? { workspaces.first { $0.sessionIds.contains(sessionId) } }
     func isArchived(_ id: String) -> Bool { archived.contains(id) }
 
     func reloadTheme() async {
         guard let value = try? await client.call("settings/describe") else { return }
         let theme = value["namespaces"].array.first { $0["ns"].string == "ui-theme" }
-        themePreference = theme?["value"]["preference"].string ?? "system"
+        UserDefaults.standard.set(theme?["value"]["preference"].string ?? "system", forKey: ThemePreference.key)
     }
 
     func refreshSessions() async {

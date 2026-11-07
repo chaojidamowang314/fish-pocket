@@ -10,7 +10,7 @@
   <b>不连电脑，不连服务器，不是网页套壳。引擎就跑在 App 里，每个页面都用 SwiftUI 重写。</b>
 </p>
 
-<p align="center">如果你也想把大肥鱼装进口袋，<a href="https://testflight.apple.com/join/2SCftb2M"><b>加入 TestFlight 公测</b></a>，再点个 ⭐ 支持一下吧。</p>
+<p align="center">如果你也想把大肥鱼装进口袋，<a href="https://testflight.apple.com/join/2SCftb2M"><b>加入 TestFlight 公测</b></a>（推荐，全球可用）或<a href="https://apps.apple.com/app/id6830703602">从 App Store 下载</a>（非中国大陆），再点个 ⭐ 支持一下吧。</p>
 
 <p align="center"><a href="README.en.md">English</a></p>
 
@@ -58,7 +58,10 @@ https://github.com/user-attachments/assets/d149b48d-ef15-4ba7-9fc3-2c627ea66ec0
 
 ## 快速开始
 
-直接安装：在 iPhone 或 iPad 上打开 [TestFlight 公测链接](https://testflight.apple.com/join/2SCftb2M)，需要 iOS 17 或更高版本。
+直接安装，需要 iOS 17 或更高版本：
+
+- **TestFlight（推荐，全球可用）**：在 iPhone 或 iPad 上打开 [TestFlight 公测链接](https://testflight.apple.com/join/2SCftb2M)。新版本最先发到这里，和开源仓库保持同步。
+- **App Store（非中国大陆）**：[在 App Store 下载](https://apps.apple.com/app/id6830703602)。目前只在中国大陆以外的地区上架。App Store 每个版本都要等审核，所以会比 TestFlight 和开源仓库晚一些。
 
 自己编译：你需要 macOS、Xcode 26、Node 24 和 `xcodegen`，构建 libgit2 还需要 `cmake` 或 `uv`。
 
@@ -89,9 +92,23 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
   </picture>
 </p>
 
+## 插件兼容性
+
+我们按下载量从 DSH 社区抽取了前 50 个第三方插件作为样本，在 iOS 引擎上逐个走完安装、启用、冷启动和卸载。**这只是抽样，不代表只支持这 50 个，其他插件同样可以安装。**
+
+| 结果 | 数量 |
+|---|---:|
+| 直接可用 | 42 |
+| 允许或跳过安装脚本、指定版本或重启 App 后可用 | 6 |
+| 暂不可用 | 2 |
+
+这里的“可用”指插件能被引擎加载，功能没有逐个试用。逐个插件的结果见 [#18](https://github.com/imsai-sh/fish-pocket/issues/18)。
+
 ## 路线图
 
-- [ ] 完善第三方插件支持
+- [x] 抽样测试社区热门插件的兼容性
+- [ ] 确定插件兼容分级和适配规范（[#4](https://github.com/imsai-sh/fish-pocket/issues/4)）
+- [ ] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
 - [ ] bash 解释器移出引擎线程
 
 ## 参与贡献
