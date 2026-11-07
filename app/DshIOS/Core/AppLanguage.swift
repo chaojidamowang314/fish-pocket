@@ -12,6 +12,11 @@ enum AppLanguage {
 
     static var locale: Locale { Locale(identifier: code) }
 
+    /// The language's name in itself (`简体中文`, `English`), for the settings row that leads to it.
+    static var name: String {
+        locale.localizedString(forIdentifier: code).map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? code
+    }
+
     /// `zh-hans` → `zh`: the key the engine's `{en, zh, …}` texts use.
     static var primary: String { String(code.lowercased().prefix { $0 != "-" && $0 != "_" }) }
 }
