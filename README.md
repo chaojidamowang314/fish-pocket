@@ -117,7 +117,7 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 
 ## 致谢
 
-**特别感谢 [DSH Go](https://github.com/ccch1mneyyy/dsh-go)**，是它启发我们做了这个 iOS 版本。
+**特别感谢 [DSH Go](https://github.com/ccch1mneyyy/dsh-go)**，是它启发我们做了这个 iOS 版本，但他只支持Android版本。
 
 Fish Pocket 还站在这些优秀项目的肩膀上。
 
