@@ -161,7 +161,14 @@ private struct InstallForm: View {
             Section {
                 Button { importing = true } label: {
                     HStack {
-                        Label("选择文件夹", systemImage: "folder").foregroundStyle(Palette.ink)
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("从本地文件夹安装").foregroundStyle(Palette.ink)
+                                Text("选择插件所在的文件夹，App 会复制一份再安装").font(.caption).foregroundStyle(Palette.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "folder").foregroundStyle(Palette.ink)
+                        }
                         Spacer()
                         if copying { ProgressView().controlSize(.small) }
                     }

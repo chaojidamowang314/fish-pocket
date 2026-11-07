@@ -132,6 +132,10 @@ final class AppModel {
     var pendingDrafts: [String: String] = [:]
     /// A session to open in the main view (set through `open(session:)`; the root view consumes it).
     var openRequest: (id: String, token: UUID)?
+    /// Open the plugin store (the root view consumes it).
+    var pluginStoreRequest: UUID?
+    /// Open the engine's web version, where plugin interfaces live (the root view consumes it).
+    var webRequest: UUID?
     /// A credential step to open (set through `requestCredentials`; the root view consumes it).
     var credentialRequest: (step: CredentialStep, token: UUID)?
     /// The session in the main view, kept by the root view (unread completions skip it).

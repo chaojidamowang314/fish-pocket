@@ -625,29 +625,34 @@ final class ComposerModel {
 
     // MARK: Attachments (C-104, C-105)
 
-    /// Add a picked or captured image: re-encoded as JPEG within the session's limits
-    /// (HEIC is not accepted). Returns the refusal to show, if any.
+    /// Add a captured image, which has no file bytes of its own: encoded once as JPEG, then added as bytes.
     @discardableResult
     func addImage(_ image: UIImage, name: String? = nil) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.9) else { return String(localized: "仅支持 PNG、JPG、WebP、GIF 格式的图片") }
+        return addImage(data: data, name: name)
+    }
+
+    /// Add a picked image by its file bytes: sent as they are when the session accepts them,
+    /// re-encoded only when the type (HEIC…) or a limit requires it (`DraftImage.prepare`).
+    /// Returns the refusal to show, if any.
+    @discardableResult
+    func addImage(data: Data, name: String? = nil) -> String? {
         let limits = imageLimits
         let images = attachments.filter(\.isImage)
         if images.count + 1 > limits.maxImagesPerMessage {
             return String(localized: "一条消息最多添加 \(limits.maxImagesPerMessage) 张图片")
         }
-        guard limits.mediaTypes.contains("image/jpeg") else { return String(localized: "仅支持 PNG、JPG、WebP、GIF 格式的图片") }
-        let side = CGFloat(min(2048, limits.maxImageDimension))
-        let scale = min(1, side / max(image.size.width, image.size.height))
-        let size = CGSize(width: (image.size.width * scale).rounded(), height: (image.size.height * scale).rounded())
-        let scaled = image.preparingThumbnail(of: size) ?? image
-        guard let jpeg = scaled.jpegData(compressionQuality: 0.85) else { return String(localized: "仅支持 PNG、JPG、WebP、GIF 格式的图片") }
-        if jpeg.count > limits.maxImageBytes {
-            return String(localized: "单张图片不能超过 \(ImageLimits.sizeText(limits.maxImageBytes))")
+        let image: DraftImage
+        switch DraftImage.prepare(data, name: name, index: images.count + 1, limits: limits) {
+        case .success(let prepared): image = prepared
+        case .failure(.tooLarge): return String(localized: "单张图片不能超过 \(ImageLimits.sizeText(limits.maxImageBytes))")
+        case .failure(.unreadable): return String(localized: "仅支持 PNG、JPG、WebP、GIF 格式的图片")
         }
-        if images.reduce(0, { $0 + $1.bytes }) + jpeg.count > limits.maxMessageImageBytes {
+        if images.reduce(0, { $0 + $1.bytes }) + image.data.count > limits.maxMessageImageBytes {
             return String(localized: "图片总大小超过 \(ImageLimits.sizeText(limits.maxMessageImageBytes))，请移除部分图片")
         }
-        let base = name.map { ($0 as NSString).deletingPathExtension } ?? "image-\(images.count + 1)"
-        attachments.append(DraftAttachment(name: base + ".jpg", bytes: jpeg.count, kind: .image(mediaType: "image/jpeg", data: jpeg.base64EncodedString(), preview: scaled)))
+        let preview = DraftImage.preview(image.data).map { UIImage(cgImage: $0) } ?? UIImage()
+        attachments.append(DraftAttachment(name: image.name, bytes: image.data.count, kind: .image(mediaType: image.mediaType, data: image.data.base64EncodedString(), preview: preview)))
         return nil
     }
 
@@ -660,8 +665,8 @@ final class ComposerModel {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             let type = UTType(filenameExtension: url.pathExtension)
-            if type?.conforms(to: .image) == true, let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                if let reason = addImage(image, name: url.lastPathComponent) { refusal = reason }
+            if type?.conforms(to: .image) == true, let data = try? Data(contentsOf: url), DraftImage.isImage(data) {
+                if let reason = addImage(data: data, name: url.lastPathComponent) { refusal = reason }
                 continue
             }
             // A private copy: the security-scoped URL may not outlive the picker, and retries reread it.
