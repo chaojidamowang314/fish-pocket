@@ -108,7 +108,7 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 
 - [x] 抽样测试社区热门插件的兼容性
 - [ ] 确定插件兼容分级和适配规范（[#4](https://github.com/imsai-sh/fish-pocket/issues/4)）
-- [ ] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
+- [x] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
 - [ ] bash 解释器移出引擎线程
 
 ## 参与贡献
