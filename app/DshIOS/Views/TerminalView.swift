@@ -181,7 +181,7 @@ final class TerminalConnection {
             for try await frame in duplex.items {
                 if Task.isCancelled { return }
                 guard handle(frame, attachment) else {
-                    fail("终端画面传输异常，请重新连接。")
+                    fail(String(localized: "终端画面传输异常，请重新连接。"))
                     return
                 }
                 // Let the screen draw and touches run between frames of a large output.
@@ -189,7 +189,7 @@ final class TerminalConnection {
             }
             if Task.isCancelled { return }
             writable = false
-            if !exited { fail("终端连接已结束，请重新连接。") }
+            if !exited { fail(String(localized: "终端连接已结束，请重新连接。")) }
         } catch {
             if Task.isCancelled { return }
             writable = false
@@ -213,7 +213,7 @@ final class TerminalConnection {
             retainTask = Task {
                 do {
                     for try await _ in frames { gate.open(nil) }
-                    gate.open(EngineError(code: "WS_CLOSED", message: "连接已断开", detail: .null))
+                    gate.open(EngineError(code: "WS_CLOSED", message: String(localized: "连接已断开"), detail: .null))
                 } catch {
                     gate.open(error)
                 }
@@ -308,7 +308,7 @@ final class TerminalConnection {
         guard writable, let attachment, !data.isEmpty else { return }
         var bytes = data.utf8.count
         if attachment.bufferedBytes + bytes > maxBufferedBytes {
-            fail("输入缓冲区已满，请重新连接后重试。")
+            fail(String(localized: "输入缓冲区已满，请重新连接后重试。"))
             return
         }
         var rest = Substring(data)

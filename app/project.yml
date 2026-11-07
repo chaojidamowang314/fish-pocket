@@ -4,6 +4,8 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
+  # The String Catalogs' source language: the UI is written in Chinese (Shared/Localizable.xcstrings).
+  developmentLanguage: zh-Hans
 packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
@@ -18,6 +20,9 @@ settings:
     # App Store and GitHub releases do bump it, or the update check never sees them.
     MARKETING_VERSION: "1.0.1"
     CURRENT_PROJECT_VERSION: "12"
+    # UI strings: SwiftUI literals and String(localized:) go to the String Catalog at build time.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 targets:
   DshIOS:
     type: application
@@ -56,7 +61,8 @@ targets:
         CFBundleDisplayName: Fish Pocket
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDevelopmentRegion: zh-Hans
+        # The fallback when none of the reader's languages is translated: English, not the Chinese source.
+        CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [zh-Hans, en]
         # Launch: the page colour and the mark, which the engine start-up screen keeps in place.
         UILaunchScreen:
@@ -125,6 +131,7 @@ targets:
       path: LiveActivity/Info.plist
       properties:
         CFBundleDisplayName: Fish Pocket
+        CFBundleDevelopmentRegion: en
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:

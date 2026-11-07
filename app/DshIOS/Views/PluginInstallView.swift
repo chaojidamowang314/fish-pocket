@@ -566,7 +566,7 @@ private struct InstallDone: View {
     private var notes: [String] {
         var notes: [String] = []
         if task.restartRequired {
-            notes.append(String(localized: "已安装，请重启 DSH 加载它。\(restartReasonText(task.restartReason))") + String(localized: "没有对话在运行时会自动重启引擎。"))
+            notes.append(String(localized: "已安装，请重启 DSH 加载它。\(restartReasonText(task.restartReason))").trimmingCharacters(in: .whitespaces) + String(localized: "没有对话在运行时会自动重启引擎。"))
         }
         if let installed = task.installedVersion, let inspected = task.subject?["version"].string, installed != inspected, (task.attempts?.registries.count ?? 1) <= 1 {
             let exact = "\(task.installed ?? task.spec)@\(inspected)"

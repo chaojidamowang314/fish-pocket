@@ -125,7 +125,7 @@ struct SchedulesView: View {
         .overlay { overlay }
         .groupedList()
         .searchable(text: $query, prompt: "搜索自动化任务")
-        .navigationTitle("自动化任务")
+        .navigationTitle(String(localized: "schedules.title", defaultValue: "自动化任务", comment: "The list page; the same words on a timeline card name one task"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if sessionId == nil {
@@ -216,7 +216,7 @@ private struct ScheduleRow: View {
         let armed = ScheduleRule.isArmed(record)
         let stopped = record["status"].string == "paused" ? String(localized: "已暂停") : String(localized: "已结束")
         VStack(alignment: .leading, spacing: 4) {
-            Text(record["title"].string ?? "任务").font(.callout).foregroundStyle(armed ? Palette.ink : Palette.secondary).lineLimit(2)
+            Text(record["title"].string ?? String(localized: "任务")).font(.callout).foregroundStyle(armed ? Palette.ink : Palette.secondary).lineLimit(2)
             Text(([armed ? nil : stopped, ScheduleFormat.frequency(record)].compactMap { $0 }).joined(separator: " · "))
                 .font(.footnote).foregroundStyle(Palette.secondary)
             if armed, let at = record["scheduledAt"].string {
@@ -697,7 +697,7 @@ private struct DeliveryHistoryView: View {
             let value = try await app.client.call("schedule/history", ["request": .object(request)])
             loading = false
             if let code = value["code"].string {
-                failure = code == "schedule_not_found" ? ("任务已不可用", nil, false) : ("记录已更新", nil, true)
+                failure = code == "schedule_not_found" ? (String(localized: "任务已不可用"), nil, false) : (String(localized: "记录已更新"), nil, true)
                 return
             }
             let page = value["records"].array
@@ -714,7 +714,7 @@ private struct DeliveryHistoryView: View {
         } catch let error as URLError where error.code == .cancelled {
         } catch {
             loading = false
-            failure = ("无法加载任务运行记录", before, false)
+            failure = (String(localized: "无法加载任务运行记录"), before, false)
         }
     }
 }

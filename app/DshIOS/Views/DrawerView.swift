@@ -13,7 +13,7 @@ struct DrawerView: View {
 
         var title: String {
             switch self {
-            case .pinned: String(localized: "置顶")
+            case .pinned: String(localized: "drawer.section.pinned", defaultValue: "置顶", comment: "Section header; the swipe action 置顶 is a verb")
             case .today: String(localized: "今天")
             case .week: String(localized: "本周")
             case .earlier: String(localized: "更早")

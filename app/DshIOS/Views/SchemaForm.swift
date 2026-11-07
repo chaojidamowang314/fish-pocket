@@ -135,8 +135,8 @@ func schemaText(_ value: JSON) -> String? {
     if let text = value.string { return text.isEmpty ? nil : text }
     let object = value.object
     guard !object.isEmpty else { return nil }
-    let preferred = (Locale.preferredLanguages.first ?? "zh").lowercased()
-    let primary = String(preferred.prefix { $0 != "-" && $0 != "_" })
+    let preferred = AppLanguage.code.lowercased()
+    let primary = AppLanguage.primary
     let candidates = [preferred, primary, primary == "zh" ? "zh-cn" : primary, "en", ""]
     for key in candidates {
         if let match = object.first(where: { $0.key.lowercased() == key })?.value.string, !match.isEmpty { return match }

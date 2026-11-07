@@ -181,19 +181,19 @@ private struct WorkbenchTerminal: View {
     private var statusLine: some View {
         if let connection, connection.phase != .missing {
             if connection.exited {
-                status("进程已退出（\(connection.info["exitCode"].int.map(String.init) ?? "—")）", "新建终端") { Task { await replace() } }
+                status(String(localized: "进程已退出（\(connection.info["exitCode"].int.map(String.init) ?? "—")）"), "新建终端") { Task { await replace() } }
             } else if connection.info["state"].string == "failed" {
-                status("终端错误：\(connection.info["error"].string ?? String(localized: "不可用"))", "新建终端") { Task { await replace() } }
+                status(String(localized: "终端错误：\(connection.info["error"].string ?? String(localized: "不可用"))"), "新建终端") { Task { await replace() } }
             } else {
                 switch connection.phase {
                 case .connecting:
-                    status("正在连接…", nil) {}
+                    status(String(localized: "正在连接…"), nil) {}
                 case .disconnected:
-                    status("连接已断开。", "重新连接") { connection.connect() }
+                    status(String(localized: "连接已断开。"), "重新连接") { connection.connect() }
                 case .failed(let message):
-                    status("终端错误：\(message)", "重试") { connection.connect() }
+                    status(String(localized: "终端错误：\(message)"), "重试") { connection.connect() }
                 case .connected where !connection.writable:
-                    status("此终端当前只读。", "接管输入") { connection.connect() }
+                    status(String(localized: "此终端当前只读。"), "接管输入") { connection.connect() }
                 default:
                     EmptyView()
                 }
@@ -217,7 +217,7 @@ private struct WorkbenchTerminal: View {
         Menu {
             ForEach(terminals, id: \.id) { terminal in
                 Button { attach(terminal.id) } label: {
-                    let title = terminal.exited ? "\(terminal.title)（已退出）" : terminal.title
+                    let title = terminal.exited ? String(localized: "\(terminal.title)（已退出）") : terminal.title
                     if terminal.id == current { Label(title, systemImage: "checkmark") } else { Text(title) }
                 }
             }

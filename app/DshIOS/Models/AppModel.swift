@@ -568,9 +568,8 @@ final class AppModel {
         if let string = value.string { return string }
         let object = value.object
         guard !object.isEmpty else { return nil }
-        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "zh"
-        if preferred.hasPrefix("zh"), let zh = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return zh }
-        return object[String(preferred.prefix(2))]?.string ?? object["en"]?.string ?? object[""]?.string ?? object.values.first?.string
+        if AppLanguage.isChinese, let zh = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return zh }
+        return object[AppLanguage.primary]?.string ?? object["en"]?.string ?? object[""]?.string ?? object.values.first?.string
     }
 
     /// Run a small action; a failure is a warning toast with the engine's message

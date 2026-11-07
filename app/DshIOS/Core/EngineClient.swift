@@ -40,7 +40,7 @@ final class EngineClient: NSObject, @unchecked Sendable, URLSessionTaskDelegate 
         guard let http = response as? HTTPURLResponse,
               let setCookie = http.value(forHTTPHeaderField: "Set-Cookie"),
               let pair = setCookie.split(separator: ";").first else {
-            throw EngineError(code: "AUTH", message: "引擎拒绝了登录令牌", detail: .null)
+            throw EngineError(code: "AUTH", message: String(localized: "引擎拒绝了登录令牌"), detail: .null)
         }
         cookieHeader = String(pair).trimmingCharacters(in: .whitespaces)
     }
@@ -72,14 +72,14 @@ final class EngineClient: NSObject, @unchecked Sendable, URLSessionTaskDelegate 
         let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard let reply = try? JSONDecoder().decode(JSON.self, from: data) else {
-            throw EngineError(code: "HTTP_\(status)", message: "\(method) 返回了无法解析的响应（HTTP \(status)）", detail: .null)
+            throw EngineError(code: "HTTP_\(status)", message: String(localized: "\(method) 返回了无法解析的响应（HTTP \(status)）"), detail: .null)
         }
         let result = reply["result"]
         if result["ok"].bool == true { return result["value"] }
         let error = result["error"].isNull ? reply["error"] : result["error"]
         throw EngineError(
             code: error["code"].string,
-            message: error["message"].string ?? "\(method) 调用失败",
+            message: error["message"].string ?? String(localized: "\(method) 调用失败"),
             detail: error
         )
     }

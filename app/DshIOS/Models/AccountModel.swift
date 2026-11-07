@@ -98,7 +98,7 @@ final class AccountModel {
     private var clientInfo: JSON {
         [
             "version": .string(Self.clientVersion),
-            "locale": .string(Bundle.main.preferredLocalizations.first ?? "zh-Hans"),
+            "locale": .string(AppLanguage.code),
             "timezoneOffsetSeconds": .number(Double(TimeZone.current.secondsFromGMT())),
         ]
     }
