@@ -18,7 +18,9 @@ struct NativeCapabilitiesView: View {
                     CapabilityRow(capability: capability, notificationStatus: notificationStatus)
                 }
             } footer: {
-                Text("这些能力对智能体和你装的插件一视同仁：插件和智能体走同一条路，App 不区分谁在调用。")
+                // 不含糊其辞：插件用的就是这些能力，而且 App 不区分谁在调用——
+                // 说清楚了，用户才知道该在装插件那一步把关。
+                Text("智能体和你装的第三方插件都能用这些能力，App 不区分谁在调用。装插件前请确认来源可信。")
             }
             .groupedRow()
 
@@ -71,6 +73,14 @@ struct NativeCapability: Identifiable {
             ops: entry["ops"] as? [String] ?? [],
             systemPermission: entry["systemPermission"] as? String
         )
+    }
+
+    /// 装插件前要告诉用户的那句话里，列出的能力名。
+    ///
+    /// 取自同一张能力表，所以一期把日历加进去之后，安装页的警告会自己跟着变——
+    /// 写死一份清单的话，迟早变成一句过期的承诺。
+    static var installWarningSummary: String {
+        all.map(\.title).joined(separator: "、")
     }
 
     /// 文案按 id 查；没有就退回 id 本身，这样新能力不会从列表里消失。

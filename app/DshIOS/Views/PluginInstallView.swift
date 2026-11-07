@@ -154,7 +154,7 @@ private struct InstallForm: View {
             } header: {
                 Text("包名或 GitHub 地址")
             } footer: {
-                Text("插件以你的权限运行，只安装信任的来源。")
+                Text("插件以你的权限运行，也能用本机能力（\(NativeCapability.installWarningSummary)）。只安装信任的来源。")
             }
             .groupedRow()
 

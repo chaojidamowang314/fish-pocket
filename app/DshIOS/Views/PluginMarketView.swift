@@ -586,8 +586,13 @@ private struct MarketInstallConfirm: View {
                     Text("此版本与当前 DSH 不兼容，但你已为它设置了兼容性豁免").font(.footnote).foregroundStyle(Palette.waiting)
                 }
             }
-            Label("插件在本机以你的权限运行。请确认你信任它的来源", systemImage: "exclamationmark.triangle")
-                .font(.footnote).foregroundStyle(Palette.secondary)
+            // 装插件是用户唯一一次能在代码进来之前说不的机会，所以这里要说全：
+            // 插件和智能体走同一条路，本机能力对它一样开放。
+            Label(
+                "插件在本机以你的权限运行，也能用本机能力（\(NativeCapability.installWarningSummary)）。请确认你信任它的来源",
+                systemImage: "exclamationmark.triangle"
+            )
+            .font(.footnote).foregroundStyle(Palette.secondary)
             Spacer(minLength: 0)
             HStack(spacing: 12) {
                 Button("取消") { dismiss() }.buttonStyle(.capsule(.outline))
