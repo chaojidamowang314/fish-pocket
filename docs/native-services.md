@@ -448,7 +448,8 @@ NSRemindersFullAccessUsageDescription
 
 **没验证：**
 
-- **真机**。模拟器不报电量（`batteryLevel` 返回 null，代码按未知处理），真机才有真值；通知投递、语音输出的实际效果也只有真机能确认。
+- ~~真机~~ **已在 iPhone 14 Pro Max / iOS 26.6.2 上验过**（2026-11-09）：addon 加载、能力表、`device.info` 返回真实数据（6 核、64 GB 可用、iOS 26.6.2、电量 100/charging）、未知能力被拒。通知投递和语音输出的实际效果仍未确认（没等横幅、没听声音）。
+- 真机上发现并修掉了一个模拟器藏住的 bug：`device.info` 第一次调用总报电量未知，而智能体通常只问一次。原因是打开电量监测用了 `dispatch_async` 就立刻读，且在 Node 线程上读 UIDevice。现在启动时预热 + 主线程读取，第一次就有值。
 - 通知**真正送达**（只验证了排程成功，没等 60 秒看横幅）。
 - 朗读的**声音**（模拟器音频未核）。
 - 这些工具**被模型调用**的完整回合（验证走的是 addon 直调，没有发真实对话）。
@@ -456,6 +457,7 @@ NSRemindersFullAccessUsageDescription
 
 **过程中发现的两个坑**（与本次改动无关，但会绊到下一个人）：
 
+- **debug inbox 会跳过已有 `.out` 的脚本**（`fs.existsSync(file + '.out')`）。在真机上复跑同名探针时，删本地副本没用——要删**设备上**那份，否则读到的是上一次的陈旧结果。这次就因此两度误判「修复没生效」。换个文件名是最省事的做法。
 - `DSH_IOS_DEBUG` 在这次的 Debug 构建里没生效，`CONTRIBUTING.md` 说的 `<data>/debug/*.mjs` 调试通道没运行。绕过办法是 `SIMCTL_CHILD_DSH_IOS_DEBUG=1 xcrun simctl launch …`，但那次也没跑起来，原因未追。最后是直接改模拟器上已安装 bundle 里的 JS 加 `console.log` 验证的（`ctx.logger.info` 不进 `engine.log`，只有 `console.*` 经 main.mjs 的 stdout tee 落盘）。
 - 授权弹窗未响应时被 `--terminate-running-process` 打断，会让后续请求直接拿到"已拒绝"。验证授权流程时别反复重启。
 
