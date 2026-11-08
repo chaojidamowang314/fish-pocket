@@ -16648,7 +16648,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El motor se reinicia automáticamente cuando no hay ninguna sesión en ejecución."
+            "value" : " El motor se reinicia automáticamente cuando no hay ninguna sesión en ejecución."
           }
         }
       }
