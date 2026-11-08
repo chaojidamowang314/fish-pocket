@@ -22044,6 +22044,12 @@
             "state" : "translated",
             "value" : "Quit and reopen Fish Pocket to see the interface in the new language."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cierra Fish Pocket y vuelve a abrirlo para ver la interfaz en el nuevo idioma."
+          }
         }
       }
     },
@@ -22421,6 +22427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Takes Effect After Restart"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se aplicará al reiniciar"
           }
         }
       }
