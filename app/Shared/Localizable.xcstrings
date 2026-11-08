@@ -1595,7 +1595,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El anfitrión informó un error."
+            "value" : "El Host informó un error."
           }
         }
       }
@@ -1697,7 +1697,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "https://api-docs.deepseek.com/zh-cn/guides/search"
+            "value" : "https://api-docs.deepseek.com/guides/search"
           }
         }
       }
@@ -6268,7 +6268,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permita solo paquetes en los que confíe."
+            "value" : "Permite solo paquetes en los que confíes."
           }
         }
       }
@@ -6524,7 +6524,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El Host no tiene ninguna instalación activa con esta identificación de solicitud. Consulte la lista de complementos antes de volver a intentarlo."
+            "value" : "El Host no tiene ninguna instalación activa con esta identificación de solicitud. Consulta la lista de complementos antes de volver a intentarlo."
           }
         }
       }
@@ -6748,7 +6748,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tiempo de espera del comando agotado"
+            "value" : "Tiempo de espera del comando"
           }
         }
       }
@@ -7228,7 +7228,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese una clave API para continuar."
+            "value" : "Ingresa una clave API para continuar."
           }
         }
       }
@@ -10130,7 +10130,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Esta sesión ya está en uso, posiblemente por otra instancia de DSH en ejecución (como la web dsh o la aplicación de escritorio). Salga de otras instancias de DSH en ejecución y vuelva a intentarlo."
+            "value" : "Esta sesión ya está en uso, posiblemente por otra instancia de DSH en ejecución (como la web dsh o la aplicación de escritorio). Sal de otras instancias de DSH en ejecución y vuelve a intentarlo."
           }
         }
       }
@@ -10418,7 +10418,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Las aprobaciones de guiones pendientes cambiaron; instálelo nuevamente para actualizarlos."
+            "value" : "Las aprobaciones de scripts pendientes cambiaron; vuelve a instalar para actualizarlas."
           }
         }
       }
@@ -10898,7 +10898,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Corriendo…"
+            "value" : "Ejecutando…"
           }
         }
       }
@@ -11874,7 +11874,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Algo salió mal. Verifique su conexión de red e inténtelo nuevamente."
+            "value" : "Algo salió mal. Verifica tu conexión de red e inténtalo nuevamente."
           }
         }
       }
@@ -14064,7 +14064,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Los scripts de instalación de una dependencia necesitan su permiso antes de que la instalación pueda continuar"
+            "value" : "Los scripts de instalación de una dependencia necesitan tu permiso antes de que la instalación pueda continuar"
           }
         }
       }
@@ -14368,7 +14368,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El resultado de la instalación no está disponible. Consulte la lista de complementos."
+            "value" : "El resultado de la instalación no está disponible. Consulta la lista de complementos."
           }
         }
       }
@@ -15740,7 +15740,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplicando configuración, espere..."
+            "value" : "Aplicando configuración, espera..."
           }
         }
       }
@@ -16920,7 +16920,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Agregue una clave API para comenzar"
+            "value" : "Agrega una clave API para comenzar"
           }
         }
       }
@@ -17448,7 +17448,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicie sesión en DeepSeek Harness para obtener su clave API dedicada"
+            "value" : "Inicia sesión en DeepSeek Harness para obtener tu clave API dedicada"
           }
         }
       }
@@ -17464,7 +17464,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilice su cuenta DeepSeek para comenzar."
+            "value" : "Usa tu cuenta DeepSeek para comenzar."
           }
         }
       }
@@ -17480,7 +17480,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicie sesión en su cuenta DeepSeek o agregue una clave API para comenzar. Sus proyectos y archivos se almacenan localmente."
+            "value" : "Inicia sesión en tu cuenta DeepSeek o agrega una clave API para comenzar. Tus proyectos y archivos se almacenan localmente."
           }
         }
       }
@@ -18228,7 +18228,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Espere al subagente"
+            "value" : "Espera al subagente"
           }
         }
       }
@@ -19376,7 +19376,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Agregue al menos un nivel además de Desactivado o desactive los niveles de razonamiento."
+            "value" : "Agrega al menos un nivel además de Off o desactiva los niveles de razonamiento."
           }
         }
       }
@@ -19824,7 +19824,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este complemento ya está instalado. Para actualizarlo, desinstálelo e instálelo nuevamente."
+            "value" : "Este complemento ya está instalado. Para actualizarlo, desinstálalo e instálalo nuevamente."
           }
         }
       }
@@ -19968,7 +19968,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese primero la URL base y luego busque."
+            "value" : "Ingresa primero la URL base y luego busca."
           }
         }
       }
@@ -20128,7 +20128,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pruebe con otra fuente de instalación."
+            "value" : "Prueba con otra fuente de instalación."
           }
         }
       }
@@ -20208,7 +20208,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese una clave API para continuar."
+            "value" : "Ingresa una clave API para continuar."
           }
         }
       }
@@ -20224,7 +20224,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese la clave API, o deje el campo vacío para conservar la almacenada."
+            "value" : "Ingresa la clave API, o deja el campo vacío para conservar la almacenada."
           }
         }
       }
@@ -20288,7 +20288,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Introduzca una dirección que comience con http:// o https://"
+            "value" : "Introduce una dirección que comience con http:// o https://"
           }
         }
       }
@@ -20336,7 +20336,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese una URL HTTP o HTTPS válida."
+            "value" : "Ingresa una URL HTTP o HTTPS válida."
           }
         }
       }
@@ -20368,7 +20368,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese un nombre o dirección de paquete válido."
+            "value" : "Ingresa un nombre o dirección de paquete válido."
           }
         }
       }
@@ -20912,7 +20912,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingrese su clave API"
+            "value" : "Ingresa tu clave API"
           }
         }
       }
@@ -21072,7 +21072,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Correr"
+            "value" : "Ejecutar"
           }
         }
       }
@@ -21088,7 +21088,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Corriendo"
+            "value" : "En ejecución"
           }
         }
       }
@@ -21488,7 +21488,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este perfil se ejecuta sin HMR; deténgalo y desinstale el paquete con el complemento dsh."
+            "value" : "Este perfil se ejecuta sin HMR; deténlo y desinstala el paquete con el comando dsh plugin."
           }
         }
       }
@@ -21520,7 +21520,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este paquete ya está instalado; desinstálelo antes de instalar otra versión."
+            "value" : "Este paquete ya está instalado; desinstálalo antes de instalar otra versión."
           }
         }
       }
@@ -21536,7 +21536,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este paquete no declara ningún paquete, por lo que no se puede administrar como un complemento."
+            "value" : "Este paquete no declara ningún bundle, por lo que no se puede administrar como un complemento."
           }
         }
       }
@@ -21552,7 +21552,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este paquete no declara ningún paquete, por lo que no se puede instalar como complemento: %@"
+            "value" : "Este paquete no declara ningún bundle, por lo que no se puede instalar como complemento: %@"
           }
         }
       }
@@ -21872,7 +21872,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Corriendo"
+            "value" : "En ejecución"
           }
         }
       }
@@ -22336,7 +22336,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Configure el proveedor oficial DeepSeek para comenzar a construir."
+            "value" : "Configura el proveedor oficial DeepSeek para comenzar a construir."
           }
         }
       }
@@ -22880,7 +22880,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Instalar scripts necesita permiso"
+            "value" : "Los scripts de instalación necesitan permiso"
           }
         }
       }
