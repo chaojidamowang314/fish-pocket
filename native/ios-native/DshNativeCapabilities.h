@@ -20,4 +20,10 @@
 /// unlisted.
 NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void);
 
+/// Warm up what the capabilities need before their first call. Right now that is
+/// battery monitoring: UIKit reports an unknown level for a moment after it is
+/// switched on, and the agent usually asks only once. Call this once, early,
+/// from the app's own startup; it is cheap and safe to call again.
+void DshNativePrepare(void);
+
 #endif

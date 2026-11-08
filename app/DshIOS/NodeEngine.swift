@@ -42,6 +42,9 @@ final class NodeEngine: ObservableObject {
         guard !started else { return }
         started = true
         startedAt = Date()
+        // 本机能力的预热（目前是电量监测）。放在引擎起来之前：UIKit 刚打开电量监测时
+        // 还报不出电量，而智能体问电量通常只问一次。
+        DshNativePrepare()
         guard EnginePaths.install() else {
             phase = .exited(-1)
             return
