@@ -6,19 +6,20 @@ import Foundation
 // same way the web one does.
 
 /// The `schedule.manager` copy (with the shared frequency fragments) this app uses, in the UI's
-/// language: the official client's own zh and en dictionaries, Chinese for anything a table lacks.
+/// language: the official client's own zh, en and es dictionaries, Chinese for anything a table lacks.
 enum ScheduleText {
     static var locale: Locale { AppLanguage.locale }
 
     static func t(_ key: String, _ params: [String: Any] = [:]) -> String {
-        var text = (AppLanguage.isChinese ? nil : en[key]) ?? zh[key] ?? key
+        let table = AppLanguage.isChinese ? zh : (AppLanguage.isSpanish ? es : en)
+        var text = table[key] ?? zh[key] ?? key
         for (name, value) in params { text = text.replacingOccurrences(of: "{\(name)}", with: "\(value)") }
         return text
     }
 
     /// `unit.hour` for a count: English has `hour` / `hours` (`unit.hour.one` / `.other`).
     static func unit(_ name: String, count: Int) -> String {
-        if !AppLanguage.isChinese, let text = en["unit.\(name).\(count == 1 ? "one" : "other")"] { return text }
+        if !AppLanguage.isChinese, let text = (AppLanguage.isSpanish ? es : en)["unit.\(name).\(count == 1 ? "one" : "other")"] { return text }
         return t("unit.\(name)")
     }
 
@@ -133,6 +134,66 @@ enum ScheduleText {
         "relative.future": "in {value} {unit}",
         "relative.overdue": "{value} {unit} overdue",
         "rule.zone.system": " (system)",
+    ]
+    /// The official `es` entries for the same keys (`schedule.manager`, then the shared fragments).
+    /// Taken from `@deepseek-ai/dsh-client-ui-schedule` 0.2.2-rc.1, with minimal fixes where the
+    /// official Spanish is objectively broken (see the PR description for the list).
+    private static let es: [String: String] = [
+        "frequency.once": "Una vez",
+        "frequency.every": "Cada {value} {unit}",
+        "frequency.daily": "Diariamente en {time} ({timeZone})",
+        "frequency.dailyLocal": "Diariamente en {time}",
+        "frequency.weekly": "Semanalmente en {weekdays} en {time} ({timeZone})",
+        "frequency.weeklyLocal": "Semanalmente en {weekdays} en {time}",
+        "frequency.cron": "Personalizado ({timeZone})",
+        "frequency.cronLocal": "Personalizado",
+        "frequency.cronRule": "{rule} ({timeZone})",
+        "cron.list.join": ", ",
+        "cron.part.join": " ",
+        "cron.weekday.name": "{weekday}",
+        "cron.weekday.range": "{from}–{to}",
+        "cron.months": " en {months}",
+        "cron.day.every": "Todos los días{months}",
+        "cron.day.weekdays": "{weekdays}{months}",
+        "cron.day.monthDays": "Día {days} de cada mes{months}",
+        "cron.day.both": "Día {days} de cada mes o {weekdays}{months}",
+        "cron.day.bothStarred": "Día {days} de cada mes y {weekdays}{months}",
+        "cron.hours.range": "{from}–{to}",
+        "cron.hours.list": "{hours}",
+        "cron.time.everyMinute": "cada minuto",
+        "cron.time.everyMinutes": "Cada {step} minutos",
+        "cron.time.joinedEveryMinute": "cada minuto",
+        "cron.time.joinedEveryMinutes": "cada {step} minutos",
+        "cron.time.everyHour": "cada hora",
+        "cron.time.joinedEveryHour": "cada hora",
+        "cron.time.everyNHours": "Cada {count} horas",
+        "cron.time.joinedEveryNHours": "cada {count} horas",
+        "cron.time.hourlyAt": "Cada hora al minuto {minutes}",
+        "cron.time.joinedHourlyAt": "cada hora al minuto {minutes}",
+        "cron.time.hoursEveryMinute": "cada minuto durante las horas {hours}",
+        "cron.time.hoursEveryMinutes": "cada {step} minutos durante las horas {hours}",
+        "cron.time.at": "en {times}",
+        "cron.time.hoursAt": "al minuto {minutes} de horas {hours}",
+        "frequency.weekday.join": ", ",
+        "frequency.weekday.1": "lun",
+        "frequency.weekday.2": "mar",
+        "frequency.weekday.3": "mié",
+        "frequency.weekday.4": "jue",
+        "frequency.weekday.5": "vie",
+        "frequency.weekday.6": "sáb",
+        "frequency.weekday.7": "dom",
+        "unit.day.one": "día",
+        "unit.day.other": "días",
+        "unit.hour.one": "hora",
+        "unit.hour.other": "horas",
+        "unit.minute.one": "minuto",
+        "unit.minute.other": "minutos",
+        "unit.second.one": "segundo",
+        "unit.second.other": "segundos",
+        "relative.now": "Vencimiento ahora",
+        "relative.future": "en {value} {unit}",
+        "relative.overdue": "{value} {unit} vencido",
+        "rule.zone.system": " (sistema)",
     ]
 }
 
