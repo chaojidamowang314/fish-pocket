@@ -5545,6 +5545,16 @@
         }
       }
     },
+    "已允许" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allowed"
+          }
+        }
+      }
+    },
     "已允许运行安装脚本：%@" : {
       "localizations" : {
         "en" : {
@@ -6891,6 +6901,16 @@
         }
       }
     },
+    "打开系统设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open System Settings"
+          }
+        }
+      }
+    },
     "打开网页版" : {
       "localizations" : {
         "en" : {
@@ -6961,6 +6981,16 @@
         }
       }
     },
+    "把文字念出来" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads text aloud"
+          }
+        }
+      }
+    },
     "拒绝" : {
       "localizations" : {
         "en" : {
@@ -7007,6 +7037,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Under App Store review rules, a plugin’s own interface doesn’t appear in the app’s native UI, though the plugin itself may still be running. To see its interface, open the Web UI (Settings → Advanced → Web UI)."
+          }
+        }
+      }
+    },
+    "按你的要求定时提醒你，App 关着也会响" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminds you at a time you set, even when the app is closed"
           }
         }
       }
@@ -7181,7 +7221,18 @@
         }
       }
     },
+    "插件以你的权限运行，也能用本机能力（%@）。只安装信任的来源。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run with your permissions and can use device capabilities (%@). Install only from sources you trust."
+          }
+        }
+      }
+    },
     "插件以你的权限运行，只安装信任的来源。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7192,6 +7243,7 @@
       }
     },
     "插件在本机以你的权限运行。请确认你信任它的来源" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7202,11 +7254,32 @@
       }
     },
     "插件在本机以你的权限运行。请确认你信任它的来源。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plugins run on this device with your permissions. Make sure you trust the source."
+          }
+        }
+      }
+    },
+    "插件在本机以你的权限运行，也能用本机能力（%@）。请确认你信任它的来源" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source"
+          }
+        }
+      }
+    },
+    "插件在本机以你的权限运行，也能用本机能力（%@）。请确认你信任它的来源。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source."
           }
         }
       }
@@ -8363,6 +8436,16 @@
         }
       }
     },
+    "无需授权" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No permission needed"
+          }
+        }
+      }
+    },
     "日期" : {
       "localizations" : {
         "en" : {
@@ -8537,6 +8620,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agents & Tools"
+          }
+        }
+      }
+    },
+    "智能体和你装的第三方插件都能用这些能力，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The agent and any third-party plugin you install can use these capabilities; the app does not distinguish between callers. Check where a plugin comes from before installing it."
           }
         }
       }
@@ -8961,6 +9054,16 @@
         }
       }
     },
+    "朗读" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech"
+          }
+        }
+      }
+    },
     "未分组" : {
       "localizations" : {
         "en" : {
@@ -9191,6 +9294,16 @@
         }
       }
     },
+    "本机能力" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device capabilities"
+          }
+        }
+      }
+    },
     "本轮已中断，未提交回答" : {
       "localizations" : {
         "en" : {
@@ -9227,6 +9340,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This turn failed"
+          }
+        }
+      }
+    },
+    "机型、系统版本、电量、存储空间" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model, iOS version, battery, free storage"
           }
         }
       }
@@ -11647,6 +11770,16 @@
         }
       }
     },
+    "系统授权只能在「设置」里改。iOS 的授权弹窗每个 App 只出现一次，拒绝之后也要回那里打开。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System permissions can only be changed in Settings. iOS shows its prompt once per app, so after a refusal that is the only way back."
+          }
+        }
+      }
+    },
     "系统提示词" : {
       "localizations" : {
         "en" : {
@@ -12405,6 +12538,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Records were updated."
+          }
+        }
+      }
+    },
+    "设备状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device status"
           }
         }
       }
@@ -13990,6 +14133,7 @@
       }
     },
     "选择文件夹" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14075,6 +14219,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "General"
+          }
+        }
+      }
+    },
+    "通知提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
           }
         }
       }
@@ -14551,6 +14705,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Frequency"
+          }
+        }
+      }
+    },
+    "首次使用时询问" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asks on first use"
           }
         }
       }
