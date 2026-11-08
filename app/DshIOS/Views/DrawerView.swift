@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// The left drawer (the iPad sidebar) does one thing: find a session. Search and
-/// new conversation on top, sessions by time with their workspace under the title
-/// (or, from the view menu, by workspace), 「已归档」 at the end of the list, and
-/// settings at the bottom (docs/design/README.md 4.2).
+/// The left drawer (the iPad sidebar) is for finding a session. Search, new conversation
+/// and 插件 on top, sessions by time with their workspace under the title (or, from the
+/// view menu, by workspace), 「已归档」 at the end of the list, and settings at the bottom
+/// (docs/design/README.md 4.2).
 struct DrawerView: View {
     enum GroupBy: String { case time, workspace }
 
@@ -13,7 +13,7 @@ struct DrawerView: View {
 
         var title: String {
             switch self {
-            case .pinned: String(localized: "置顶")
+            case .pinned: String(localized: "drawer.section.pinned", defaultValue: "置顶", comment: "Section header; the swipe action 置顶 is a verb")
             case .today: String(localized: "今天")
             case .week: String(localized: "本周")
             case .earlier: String(localized: "更早")
@@ -30,6 +30,8 @@ struct DrawerView: View {
     let workspace: Workspace?
     /// Tells the root view where session rows are: a swipe there is the row's.
     let rowFrames: DrawerRowFrames
+    /// The plugin store is what the window shows beside the sidebar.
+    var pluginsSelected = false
     let select: (String) -> Void
     let newConversation: (Workspace) -> Void
     let openSettings: () -> Void
@@ -64,6 +66,8 @@ struct DrawerView: View {
             VStack(spacing: 0) {
                 topBar
                 newConversationButton
+                pluginsRow
+                webRow
 
                 List {
                     if search.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -140,6 +144,43 @@ struct DrawerView: View {
         .padding(.horizontal, 16)
         .padding(.top, 8)
         .padding(.bottom, 6)
+    }
+
+    /// Plugins are found here rather than three levels down in settings.
+    private var pluginsRow: some View {
+        Button { Haptics.tap(); app.pluginStoreRequest = UUID() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "puzzlepiece.extension").font(.callout).foregroundStyle(Palette.ink).frame(width: 22)
+                Text("插件").font(.subheadline.weight(pluginsSelected ? .medium : .regular)).foregroundStyle(Palette.ink)
+                Spacer()
+                if !pluginsSelected { Text("发现").font(.footnote).foregroundStyle(Palette.secondary) }
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 46)
+            .background(pluginsSelected ? Palette.bubble : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.bottom, 2)
+    }
+
+    /// The web version: plugin interfaces are not shown natively, so it gets a row of its own.
+    private var webRow: some View {
+        Button { Haptics.tap(); app.webRequest = UUID() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "globe").font(.callout).foregroundStyle(Palette.ink).frame(width: 22)
+                Text("网页版").font(.subheadline).foregroundStyle(Palette.ink)
+                Spacer()
+                Text("插件界面").font(.footnote).foregroundStyle(Palette.secondary)
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 46)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.bottom, 2)
     }
 
     private var viewMenu: some View {

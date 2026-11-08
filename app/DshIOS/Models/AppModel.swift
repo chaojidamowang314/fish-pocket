@@ -132,6 +132,10 @@ final class AppModel {
     var pendingDrafts: [String: String] = [:]
     /// A session to open in the main view (set through `open(session:)`; the root view consumes it).
     var openRequest: (id: String, token: UUID)?
+    /// Open the plugin store (the root view consumes it).
+    var pluginStoreRequest: UUID?
+    /// Open the engine's web version, where plugin interfaces live (the root view consumes it).
+    var webRequest: UUID?
     /// A credential step to open (set through `requestCredentials`; the root view consumes it).
     var credentialRequest: (step: CredentialStep, token: UUID)?
     /// The session in the main view, kept by the root view (unread completions skip it).
@@ -564,9 +568,8 @@ final class AppModel {
         if let string = value.string { return string }
         let object = value.object
         guard !object.isEmpty else { return nil }
-        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "zh"
-        if preferred.hasPrefix("zh"), let zh = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return zh }
-        return object[String(preferred.prefix(2))]?.string ?? object["en"]?.string ?? object[""]?.string ?? object.values.first?.string
+        if AppLanguage.isChinese, let zh = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return zh }
+        return object[AppLanguage.primary]?.string ?? object["en"]?.string ?? object[""]?.string ?? object.values.first?.string
     }
 
     /// Run a small action; a failure is a warning toast with the engine's message

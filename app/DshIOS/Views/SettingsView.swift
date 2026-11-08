@@ -59,6 +59,8 @@ struct SettingsView: View {
                             Text("深色").tag("dark")
                         }
                     }
+                    // iOS sets an app's language in its own Settings page; an app cannot switch it while running.
+                    linkRow("语言", AppLanguage.name, URL(string: UIApplication.openSettingsURLString)!)
                 }
                 .groupedRow()
 

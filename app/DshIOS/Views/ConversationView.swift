@@ -408,6 +408,18 @@ struct ConversationView: View {
     private func suggestions(_ model: SessionModel) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                Button {
+                    Haptics.tap()
+                    app.pluginStoreRequest = UUID()
+                } label: {
+                    Label("发现插件", systemImage: "puzzlepiece.extension")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Palette.onInk)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                        .background(Palette.ink, in: Capsule())
+                        .hitTarget()
+                }
                 ForEach(Self.suggestions, id: \.self) { text in
                     Button {
                         Haptics.tap()
@@ -1201,9 +1213,10 @@ private struct ApprovalReasonText: View {
             "read-only": String(localized: "仅可查看"),
         ]
         for (mode, name) in names {
+            let quoted = String(localized: "「\(name)」")
             // 「使用 danger-full-access 权限」: the name already says 权限.
-            text = text.replacingOccurrences(of: "\(mode) 权限", with: "「\(name)」")
-            text = text.replacingOccurrences(of: "(?<![\\w-])\(mode)(?![\\w-])", with: "「\(name)」", options: .regularExpression)
+            text = text.replacingOccurrences(of: "\(mode) 权限", with: quoted)
+            text = text.replacingOccurrences(of: "(?<![\\w-])\(mode)(?![\\w-])", with: quoted, options: .regularExpression)
         }
         return text
     }

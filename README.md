@@ -107,8 +107,10 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 ## 路线图
 
 - [x] 抽样测试社区热门插件的兼容性
+- [x] 原生界面支持英文，搭好多语言框架
+- [ ] 更多界面语言，先做西班牙语（[#24](https://github.com/imsai-sh/fish-pocket/issues/24)）
 - [ ] 确定插件兼容分级和适配规范（[#4](https://github.com/imsai-sh/fish-pocket/issues/4)）
-- [ ] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
+- [x] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
 - [ ] bash 解释器移出引擎线程
 
 ## 参与贡献
@@ -117,7 +119,7 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 
 ## 致谢
 
-**特别感谢 [DSH Go](https://github.com/ccch1mneyyy/dsh-go)**，是它启发我们做了这个 iOS 版本。
+**特别感谢 [DSH Go](https://github.com/ccch1mneyyy/dsh-go)**，是它启发我们做了这个 iOS 版本，但他只支持Android版本。
 
 Fish Pocket 还站在这些优秀项目的肩膀上。
 

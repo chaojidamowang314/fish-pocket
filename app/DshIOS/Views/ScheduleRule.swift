@@ -22,14 +22,14 @@ enum RuleChoice: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .weekly: "每周"
-        case .weekdays: "周一至周五"
-        case .daily: "每天"
-        case .everyHour: "每 N 小时"
-        case .everyMinute: "每 N 分钟"
-        case .everySecond: "每 N 秒"
-        case .once: "仅一次"
-        case .cron: "自定义"
+        case .weekly: String(localized: "每周")
+        case .weekdays: String(localized: "周一至周五")
+        case .daily: String(localized: "每天")
+        case .everyHour: String(localized: "每 N 小时")
+        case .everyMinute: String(localized: "每 N 分钟")
+        case .everySecond: String(localized: "每 N 秒")
+        case .once: String(localized: "仅一次")
+        case .cron: String(localized: "自定义")
         }
     }
 
@@ -78,9 +78,9 @@ enum IntervalUnit: String {
 
     var label: String {
         switch self {
-        case .hour: "小时"
-        case .minute: "分钟"
-        case .second: "秒"
+        case .hour: String(localized: "小时")
+        case .minute: String(localized: "分钟")
+        case .second: String(localized: "秒")
         }
     }
 
@@ -89,17 +89,17 @@ enum IntervalUnit: String {
 
     var hint: String {
         switch self {
-        case .hour: "至少 1 小时。间隔自任务创建或上次修改规则时起计，不受时区影响"
-        case .minute: "至少 1 分钟。间隔自任务创建或上次修改规则时起计，不受时区影响"
-        case .second: "至少 60 秒。间隔自任务创建或上次修改规则时起计，不受时区影响"
+        case .hour: String(localized: "至少 1 小时。间隔自任务创建或上次修改规则时起计，不受时区影响")
+        case .minute: String(localized: "至少 1 分钟。间隔自任务创建或上次修改规则时起计，不受时区影响")
+        case .second: String(localized: "至少 60 秒。间隔自任务创建或上次修改规则时起计，不受时区影响")
         }
     }
 
     var invalid: String {
         switch self {
-        case .hour: "请输入至少 1 小时的间隔"
-        case .minute: "请输入至少 1 分钟的间隔"
-        case .second: "请输入至少 60 秒的间隔"
+        case .hour: String(localized: "请输入至少 1 小时的间隔")
+        case .minute: String(localized: "请输入至少 1 分钟的间隔")
+        case .second: String(localized: "请输入至少 60 秒的间隔")
         }
     }
 
@@ -250,20 +250,20 @@ enum ScheduleRule {
     /// Local validation before a save; the message of the first invalid field.
     static func draftError(_ shown: RuleValues, unit: IntervalUnit) -> String? {
         let title = shown.title.trimmed
-        if title.isEmpty || title.count > titleLimit { return "请输入不超过 120 个字符的任务名称" }
-        if shown.prompt.trimmed.isEmpty { return "请输入任务内容" }
+        if title.isEmpty || title.count > titleLimit { return String(localized: "请输入不超过 120 个字符的任务名称") }
+        if shown.prompt.trimmed.isEmpty { return String(localized: "请输入任务内容") }
         if shown.kind == .every {
             let valid = shown.draft.seconds.range(of: #"^\d+$"#, options: .regularExpression) != nil && (Int(shown.draft.seconds) ?? 0) >= 60
             return valid ? nil : unit.invalid
         }
         if shown.kind == .cron { return Cron.parse(shown.draft.expression) == nil ? cronInvalid : nil }
         if (shown.kind == .once && !validIsoDate(shown.draft.date)) || shown.draft.time.range(of: #"^\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$"#, options: .regularExpression) == nil {
-            return "请输入有效的日期和时间，或检查时间字段"
+            return String(localized: "请输入有效的日期和时间，或检查时间字段")
         }
         return nil
     }
 
-    static let cronInvalid = "请输入 5 字段的 cron 表达式，例如 0 9 * * 1-5"
+    static let cronInvalid = String(localized: "请输入 5 字段的 cron 表达式，例如 0 9 * * 1-5")
 
     /// Name and instruction to send, each only when it differs from the stored value.
     static func contentChange(_ shown: RuleValues, _ stored: RuleValues) -> [String: JSON] {
@@ -286,18 +286,18 @@ enum ScheduleRule {
     /// A rejected update, in the card's words (`ruleError`).
     static func errorMessage(_ code: String, unit: IntervalUnit) -> String {
         switch code {
-        case "schedule_conflict": return "任务在保存前已发生变化。当前显示已保存的规则，请重试"
-        case "schedule_not_found": return "此任务当前不可用"
-        case "subagent_session": return "此会话属于子 agent，永远不会收到投递的提醒"
-        case "invalid_time_zone": return "请输入有效的 IANA 时区，例如 Asia/Shanghai"
-        case "not_future": return "请选择未来的日期和时间"
+        case "schedule_conflict": return String(localized: "任务在保存前已发生变化。当前显示已保存的规则，请重试")
+        case "schedule_not_found": return String(localized: "此任务当前不可用")
+        case "subagent_session": return String(localized: "此会话属于子 agent，永远不会收到投递的提醒")
+        case "invalid_time_zone": return String(localized: "请输入有效的 IANA 时区，例如 Asia/Shanghai")
+        case "not_future": return String(localized: "请选择未来的日期和时间")
         case "frequency_too_high": return unit.invalid
-        case "invalid_prompt", "invalid_selector", "invalid_rule", "time_out_of_range": return "请输入有效的日期和时间，或检查时间字段"
+        case "invalid_prompt", "invalid_selector", "invalid_rule", "time_out_of_range": return String(localized: "请输入有效的日期和时间，或检查时间字段")
         default: return unknownError
         }
     }
 
-    static let unknownError = "无法确认规则是否已更新。当前显示已保存的规则"
+    static let unknownError = String(localized: "无法确认规则是否已更新。当前显示已保存的规则")
 
     /// Merge a refreshed record into a staged draft: fields the user changed keep
     /// the draft, untouched ones take the refreshed record (`mergeRuleDraft`).

@@ -118,21 +118,21 @@ enum ToolStyle {
 
     /// The web's row titles; they stay the same while running and once done.
     private static let titles: [String: String] = [
-        "bash": "运行命令", "pwsh": "运行命令", "read": "读取", "read_file": "读取", "read_image": "读取图片",
-        "write": "写入", "write_file": "写入", "edit": "编辑", "str_replace": "编辑", "str_replace_editor": "编辑", "multi_edit": "编辑",
-        "glob": "查找文件", "grep": "搜索文件内容", "web_search": "网页搜索", "web_fetch": "网页获取",
-        "todo_write": "更新任务清单", "ask_user_question": "提问", "skill": "加载技能",
-        "exit_plan_mode": "计划", "present": "交付文件", "run_code": "代码",
-        "subagent": "创建子智能体", "list_subagent_models": "查看可用模型", "list_agents": "查看子智能体", "send_message": "发送消息",
-        "interrupt_agent": "中断智能体", "wait_agent": "等待子智能体", "spawn_teammate": "创建队友",
-        "team_task_create": "创建团队任务", "team_task_get": "读取团队任务", "team_task_update": "更新团队任务", "team_task_list": "查看团队任务",
-        "job_list": "查看后台任务", "job_output": "读取任务输出", "job_kill": "取消后台任务",
-        "create_goal": "创建目标", "get_goal": "查看目标", "update_goal": "更新目标",
-        "schedule_create": "创建定时任务", "schedule_list": "查看定时任务", "schedule_delete": "删除定时任务", "schedule_update": "修改定时任务",
-        "workflow": "运行工作流", "ralph": "运行循环工作流", "lsp": "查询代码符号",
-        "session_event_read": "读取事件", "session_event_search": "搜索事件", "session_event_trace": "追踪事件",
-        "session_search": "搜索会话", "session_trace": "追踪会话",
-        "terminal_open": "创建终端", "terminal_read": "读取终端", "terminal_list": "查看终端", "terminal_signal": "发送终端信号", "terminal_close": "关闭终端",
+        "bash": String(localized: "运行命令"), "pwsh": String(localized: "运行命令"), "read": String(localized: "读取"), "read_file": String(localized: "读取"), "read_image": String(localized: "读取图片"),
+        "write": String(localized: "写入"), "write_file": String(localized: "写入"), "edit": String(localized: "编辑"), "str_replace": String(localized: "编辑"), "str_replace_editor": String(localized: "编辑"), "multi_edit": String(localized: "编辑"),
+        "glob": String(localized: "查找文件"), "grep": String(localized: "搜索文件内容"), "web_search": String(localized: "网页搜索"), "web_fetch": String(localized: "网页获取"),
+        "todo_write": String(localized: "更新任务清单"), "ask_user_question": String(localized: "提问"), "skill": String(localized: "加载技能"),
+        "exit_plan_mode": String(localized: "计划"), "present": String(localized: "交付文件"), "run_code": String(localized: "代码"),
+        "subagent": String(localized: "创建子智能体"), "list_subagent_models": String(localized: "查看可用模型"), "list_agents": String(localized: "查看子智能体"), "send_message": String(localized: "发送消息"),
+        "interrupt_agent": String(localized: "中断智能体"), "wait_agent": String(localized: "等待子智能体"), "spawn_teammate": String(localized: "创建队友"),
+        "team_task_create": String(localized: "创建团队任务"), "team_task_get": String(localized: "读取团队任务"), "team_task_update": String(localized: "更新团队任务"), "team_task_list": String(localized: "查看团队任务"),
+        "job_list": String(localized: "查看后台任务"), "job_output": String(localized: "读取任务输出"), "job_kill": String(localized: "取消后台任务"),
+        "create_goal": String(localized: "创建目标"), "get_goal": String(localized: "查看目标"), "update_goal": String(localized: "更新目标"),
+        "schedule_create": String(localized: "创建定时任务"), "schedule_list": String(localized: "查看定时任务"), "schedule_delete": String(localized: "删除定时任务"), "schedule_update": String(localized: "修改定时任务"),
+        "workflow": String(localized: "运行工作流"), "ralph": String(localized: "运行循环工作流"), "lsp": String(localized: "查询代码符号"),
+        "session_event_read": String(localized: "读取事件"), "session_event_search": String(localized: "搜索事件"), "session_event_trace": String(localized: "追踪事件"),
+        "session_search": String(localized: "搜索会话"), "session_trace": String(localized: "追踪会话"),
+        "terminal_open": String(localized: "创建终端"), "terminal_read": String(localized: "读取终端"), "terminal_list": String(localized: "查看终端"), "terminal_signal": String(localized: "发送终端信号"), "terminal_close": String(localized: "关闭终端"),
     ]
 
     static func title(for call: ToolCall) -> String { titles[call.displayName] ?? String(localized: "工具调用") }

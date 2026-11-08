@@ -161,7 +161,14 @@ private struct InstallForm: View {
             Section {
                 Button { importing = true } label: {
                     HStack {
-                        Label("选择文件夹", systemImage: "folder").foregroundStyle(Palette.ink)
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("从本地文件夹安装").foregroundStyle(Palette.ink)
+                                Text("选择插件所在的文件夹，App 会复制一份再安装").font(.caption).foregroundStyle(Palette.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "folder").foregroundStyle(Palette.ink)
+                        }
                         Spacer()
                         if copying { ProgressView().controlSize(.small) }
                     }
@@ -559,7 +566,7 @@ private struct InstallDone: View {
     private var notes: [String] {
         var notes: [String] = []
         if task.restartRequired {
-            notes.append(String(localized: "已安装，请重启 DSH 加载它。\(restartReasonText(task.restartReason))") + String(localized: "没有对话在运行时会自动重启引擎。"))
+            notes.append(String(localized: "已安装，请重启 DSH 加载它。\(restartReasonText(task.restartReason))").trimmingCharacters(in: .whitespaces) + String(localized: "没有对话在运行时会自动重启引擎。"))
         }
         if let installed = task.installedVersion, let inspected = task.subject?["version"].string, installed != inspected, (task.attempts?.registries.count ?? 1) <= 1 {
             let exact = "\(task.installed ?? task.spec)@\(inspected)"

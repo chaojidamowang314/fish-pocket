@@ -107,8 +107,10 @@ We took the 50 most-downloaded community DSH plugins as a sample and ran each on
 ## Roadmap
 
 - [x] Sample-test compatibility of popular community plugins
+- [x] English for the native UI, on a framework ready for more languages
+- [ ] More UI languages, starting with Spanish ([#24](https://github.com/imsai-sh/fish-pocket/issues/24))
 - [ ] Define plugin compatibility tiers and an adaptation guide ([#4](https://github.com/imsai-sh/fish-pocket/issues/4))
-- [ ] Bundle a third-party plugin store ([#5](https://github.com/imsai-sh/fish-pocket/issues/5))
+- [x] Bundle a third-party plugin store ([#5](https://github.com/imsai-sh/fish-pocket/issues/5))
 - [ ] Move the bash interpreter off the engine thread
 
 ## Contributing

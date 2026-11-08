@@ -108,7 +108,7 @@ struct TurnUsageSheet: View {
                 row("未缓存输入", count(usage.uncachedInput))
                 if let read = usage.cacheRead { row("缓存读取", count(read)) }
                 if let write = usage.cacheWrite { row("缓存写入", count(write)) }
-                row("输出", count(usage.output) + (usage.reasoning.map { "（其中推理 \(TimelineFormat.exact($0))）" } ?? ""))
+                row("输出", count(usage.output) + (usage.reasoning.map { String(localized: "（其中推理 \(TimelineFormat.exact($0))）") } ?? ""))
             }
         }
         .padding(EdgeInsets(top: 28, leading: 22, bottom: 22, trailing: 22))

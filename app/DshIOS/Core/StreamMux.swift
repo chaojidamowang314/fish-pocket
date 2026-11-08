@@ -148,6 +148,6 @@ final class StreamMux: NSObject, @unchecked Sendable, URLSessionWebSocketDelegat
     }
 
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        drop(webSocketTask, EngineError(code: "WS_CLOSED", message: "连接已断开", detail: .null))
+        drop(webSocketTask, EngineError(code: "WS_CLOSED", message: String(localized: "连接已断开"), detail: .null))
     }
 }

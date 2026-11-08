@@ -113,7 +113,7 @@ final class SettingsMirror {
         let result = reply["result"]
         guard result["ok"].bool == true else {
             let error = result["error"].isNull ? reply["error"] : result["error"]
-            throw EngineError(code: error["code"].string, message: error["message"].string ?? "settings/describe 调用失败", detail: error)
+            throw EngineError(code: error["code"].string, message: error["message"].string ?? String(localized: "settings/describe 调用失败"), detail: error)
         }
         var order: [String: [String: [String]]] = [:]
         if let ordered = OrderedJSONScanner.parse(data) {

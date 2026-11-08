@@ -100,9 +100,8 @@ func localized(_ json: JSON) -> String? {
     if let text = json.string { return text }
     let object = json.object
     guard !object.isEmpty else { return nil }
-    let zh = Locale.preferredLanguages.first?.hasPrefix("zh") == true
-    if zh, let text = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return text }
-    return object["en"]?.string ?? object["zh"]?.string ?? object.values.compactMap(\.string).first
+    if AppLanguage.isChinese, let text = object.first(where: { $0.key.lowercased().hasPrefix("zh") })?.value.string { return text }
+    return object[AppLanguage.primary]?.string ?? object["en"]?.string ?? object["zh"]?.string ?? object.values.compactMap(\.string).first
 }
 
 // MARK: - Management copy (P-12 / P-13)

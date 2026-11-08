@@ -68,7 +68,7 @@ struct RuleEditor: View {
         switch values.kind {
         case .every: return unit.hint
         case .cron: return Cron.parse(values.draft.expression).map(Cron.preview) ?? ScheduleRule.cronInvalid
-        case .once where !ScheduleRule.draftZone(task).stored: return "单次任务只保存触发时刻，不保存时区；日期和时间按所选时区换算"
+        case .once where !ScheduleRule.draftZone(task).stored: return String(localized: "单次任务只保存触发时刻，不保存时区；日期和时间按所选时区换算")
         default: return nil
         }
     }
@@ -203,12 +203,12 @@ struct CronRows: View {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .monthly: "每月"
-            case .weekly: "每周"
-            case .daily: "每天"
-            case .hourly: "每 N 小时"
-            case .minutely: "每 N 分钟"
-            case .raw: "Cron 表达式"
+            case .monthly: String(localized: "每月")
+            case .weekly: String(localized: "每周")
+            case .daily: String(localized: "每天")
+            case .hourly: String(localized: "每 N 小时")
+            case .minutely: String(localized: "每 N 分钟")
+            case .raw: String(localized: "Cron 表达式")
             }
         }
     }
@@ -268,14 +268,14 @@ struct CronRows: View {
             ClockRow(title: "时间", time: clock(hour, minute) { .daily(hour: $0, minute: $1) })
         case .hourly(let step, let minute):
             Stepper(value: Binding(get: { step }, set: { expression = Cron.expression(.hourly(step: $0, minute: minute)) }), in: 1...23) {
-                LabeledContent("重复间隔", value: "每 \(step) 小时")
+                LabeledContent("重复间隔", value: String(localized: "每 \(step) 小时"))
             }
             Stepper(value: Binding(get: { minute }, set: { expression = Cron.expression(.hourly(step: step, minute: $0)) }), in: 0...59) {
                 LabeledContent("在第几分钟", value: "\(minute)")
             }
         case .minutely(let step):
             Stepper(value: Binding(get: { step }, set: { expression = Cron.expression(.minutely(step: $0)) }), in: 1...59) {
-                LabeledContent("重复间隔", value: "每 \(step) 分钟")
+                LabeledContent("重复间隔", value: String(localized: "每 \(step) 分钟"))
             }
         case nil:
             TextField("Cron 表达式", text: $expression)
