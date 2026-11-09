@@ -64,6 +64,33 @@ test('an unreadable date is refused with the value in the message', () => {
   assert.throws(() => toEpochSeconds(20261109), /is not a date/);
 });
 
+test('a calendar write is refused before the addon when it cannot say what to write', async () => {
+  await assert.rejects(TOOLS.calendar.execute({ action: 'create' }, {}), /creating needs `title`/);
+  await assert.rejects(TOOLS.calendar.execute({ action: 'create', title: 'x' }, {}), /creating needs `start`/);
+  await assert.rejects(TOOLS.calendar.execute({ action: 'update' }, {}), /update needs the event's `id`/);
+  await assert.rejects(TOOLS.calendar.execute({ action: 'delete' }, {}), /delete needs the event's `id`/);
+  // An update that changes nothing would still raise a confirmation sheet, and
+  // a sheet that asks about nothing teaches the user to tap through them.
+  await assert.rejects(
+    TOOLS.calendar.execute({ action: 'update', id: 'abc' }, {}),
+    /needs at least one of title, start, end, location or notes/,
+  );
+});
+
+test('a cancelled write is never reported as done', () => {
+  const render = (action, value) => TOOLS.calendar.output.render({ action }, value)[0].text;
+
+  // The user had the last word in every one of these. The model reads this text
+  // and tells them what happened, so "cancelled" must never read as success.
+  assert.match(render('create', { saved: false, action: 'cancelled' }), /Nothing was added/);
+  assert.match(render('create', { saved: true, id: 'E1' }), /Added to their calendar \(id E1\)/);
+  assert.match(render('update', { saved: false }), /declined.*unchanged/i);
+  assert.match(render('update', { saved: true }), /updated/);
+  assert.match(render('update', { unchanged: true }), /already matches/);
+  assert.match(render('delete', { deleted: false }), /declined.*still there/i);
+  assert.match(render('delete', { deleted: true }), /deleted/);
+});
+
 test('the calendar tool checks its range before reaching the addon', async () => {
   await assert.rejects(
     TOOLS.calendar.execute({ action: 'list', from: '2026-11-09', to: '2026-11-08' }, {}),

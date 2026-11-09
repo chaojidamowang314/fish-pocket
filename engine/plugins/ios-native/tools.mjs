@@ -177,25 +177,45 @@ function renderEvent(event) {
 const calendar = defineTool({
   name: 'calendar',
   description:
-    'Read the events in the user\'s calendar on this device, or list which calendars they have. '
-    + 'Use it to answer anything about their schedule, to check whether they are free, and before '
-    + 'suggesting a time. Defaults to the next week when no range is given. The first use asks the '
-    + 'user to allow calendar access; this tool only reads, it cannot change or delete anything.',
+    'The calendar on this device: read the user\'s events, list their calendars, and — only with '
+    + 'their confirmation — add, change or delete an event. Use it to answer anything about their '
+    + 'schedule, to check whether they are free, and before suggesting a time. Reading defaults to '
+    + 'the next week. The first read asks them to allow calendar access.\n'
+    + 'Every write stops in front of the user: `create` opens the system event editor, `update` and '
+    + '`delete` ask them to confirm. They may cancel, and the result says so — never tell them '
+    + 'something was added or deleted without checking `saved`/`deleted` in the result first.',
   parameters: {
     action: {
       type: 'string',
-      enum: ['list', 'calendars'],
-      description: 'list the events in a date range, or list the calendars themselves',
+      enum: ['list', 'calendars', 'create', 'update', 'delete'],
+      description:
+        'list events in a date range, list the calendars themselves, or create, update or delete one event',
       required: true,
     },
     from: {
       type: 'string',
-      description: `start of the range, YYYY-MM-DD or a full ISO timestamp; defaults to now`,
+      description: `list: start of the range, YYYY-MM-DD or a full ISO timestamp; defaults to now`,
     },
     to: {
       type: 'string',
-      description: `end of the range, YYYY-MM-DD or a full ISO timestamp; defaults to ${DEFAULT_RANGE_DAYS} days after 'from'`,
+      description: `list: end of the range, YYYY-MM-DD or a full ISO timestamp; defaults to ${DEFAULT_RANGE_DAYS} days after 'from'`,
     },
+    id: {
+      type: 'string',
+      description: 'update/delete: the event, as `list` returned its id',
+    },
+    title: { type: 'string', description: 'create/update: the event title; required to create' },
+    start: {
+      type: 'string',
+      description: 'create/update: when it starts, YYYY-MM-DD or a full ISO timestamp; required to create',
+    },
+    end: {
+      type: 'string',
+      description: 'create/update: when it ends; defaults to an hour after `start` when creating',
+    },
+    allDay: { type: 'boolean', description: 'create: whether it takes the whole day' },
+    location: { type: 'string', description: 'create/update: where it is' },
+    notes: { type: 'string', description: 'create/update: free-text notes on the event' },
   },
   output: {
     schema: { type: 'json' },
@@ -209,6 +229,20 @@ const calendar = defineTool({
             .join('\n'),
         );
       }
+      // Writes: say plainly whether anything happened, because the user had the
+      // last word and "cancelled" must not be reported to them as done.
+      if (args.action === 'create') {
+        return text(value.saved
+          ? `Added to their calendar${value.id ? ` (id ${value.id})` : ''}.`
+          : 'They closed the event editor without adding it. Nothing was added.');
+      }
+      if (args.action === 'update') {
+        if (value.unchanged) return text('That event already matches; nothing to change.');
+        return text(value.saved ? 'They confirmed the change; the event is updated.' : 'They declined. The event is unchanged.');
+      }
+      if (args.action === 'delete') {
+        return text(value.deleted ? 'They confirmed; the event is deleted.' : 'They declined. The event is still there.');
+      }
       const events = value.events ?? [];
       if (events.length === 0) return text('No events in that range.');
       const lines = events.map(renderEvent);
@@ -220,6 +254,36 @@ const calendar = defineTool({
   },
   execute: async (args) => {
     if (args.action === 'calendars') return invoke('calendar', 'calendars');
+
+    if (args.action === 'create') {
+      if (!args.title) throw new Error('calendar: creating needs `title`');
+      if (!args.start) throw new Error('calendar: creating needs `start`');
+      return invoke('calendar', 'create', {
+        title: args.title,
+        start: toEpochSeconds(args.start),
+        ...(args.end === undefined ? {} : { end: toEpochSeconds(args.end) }),
+        ...(args.allDay === undefined ? {} : { allDay: args.allDay }),
+        ...(args.location === undefined ? {} : { location: args.location }),
+        ...(args.notes === undefined ? {} : { notes: args.notes }),
+      });
+    }
+
+    if (args.action === 'update' || args.action === 'delete') {
+      if (!args.id) throw new Error(`calendar: ${args.action} needs the event's \`id\``);
+      if (args.action === 'delete') return invoke('calendar', 'delete', { id: args.id });
+      const changes = {
+        ...(args.title === undefined ? {} : { title: args.title }),
+        ...(args.start === undefined ? {} : { start: toEpochSeconds(args.start) }),
+        ...(args.end === undefined ? {} : { end: toEpochSeconds(args.end) }),
+        ...(args.location === undefined ? {} : { location: args.location }),
+        ...(args.notes === undefined ? {} : { notes: args.notes }),
+      };
+      if (Object.keys(changes).length === 0) {
+        throw new Error('calendar: updating needs at least one of title, start, end, location or notes');
+      }
+      return invoke('calendar', 'update', { id: args.id, ...changes });
+    }
+
     const from = toEpochSeconds(args.from, Math.floor(Date.now() / 1000));
     const to = toEpochSeconds(args.to, from + DEFAULT_RANGE_DAYS * 86400);
     if (to <= from) throw new Error("calendar: 'to' must be after 'from'");

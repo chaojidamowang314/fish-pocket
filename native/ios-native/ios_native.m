@@ -40,15 +40,16 @@ typedef struct {
 } dsh_capability;
 
 // `calendar` is the first entry that reaches personal data, and the only one so
-// far that iOS guards with a privacy prompt. It lists no write operation on
-// purpose: the user's system grant covers writing too (§4.0), so the operation
-// list is what actually keeps a plugin calling the addon directly from changing
-// anything (§5.3).
+// far that iOS guards with a privacy prompt. Its writes are listed here like
+// anything else, which is the point: the user's system grant already covers
+// writing (§4.0), so what actually protects their calendar is not this list but
+// the confirmation each write waits for on the native side (§4.3). A plugin
+// calling the addon directly reaches exactly the same confirmation.
 static const dsh_capability CAPABILITIES[] = {
   {"device",   dsh_native_device,   {"info", NULL}, NULL},
   {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications"},
   {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL},
-  {"calendar", dsh_native_calendar, {"list", "calendars", NULL}, "calendar"},
+  {"calendar", dsh_native_calendar, {"list", "calendars", "create", "update", "delete", NULL}, "calendar"},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 

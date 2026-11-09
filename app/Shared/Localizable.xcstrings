@@ -3521,6 +3521,22 @@
         }
       }
     },
+    "修改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar"
+          }
+        }
+      }
+    },
     "修改了文件" : {
       "localizations" : {
         "en" : {
@@ -3549,6 +3565,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actualizar tarea programada"
+          }
+        }
+      }
+    },
+    "修改这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cambiar este evento?"
           }
         }
       }
@@ -5277,6 +5309,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Eliminar esta tarea?"
+          }
+        }
+      }
+    },
+    "删除这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este evento?"
           }
         }
       }

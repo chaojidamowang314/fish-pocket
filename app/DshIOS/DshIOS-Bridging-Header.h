@@ -2,3 +2,4 @@
 // Node: the addon's N-API entry is for the engine, not for the app.
 #import "DshNativeCapabilities.h"
 #import "DshNativeAudit.h"
+#import "DshNativeBridge.h"

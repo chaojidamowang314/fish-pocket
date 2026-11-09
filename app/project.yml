@@ -57,6 +57,8 @@ targets:
       - sdk: UserNotifications.framework
       - sdk: AVFoundation.framework
       - sdk: EventKit.framework
+      # 写日历走系统自带的事件编辑器（EKEventEditViewController）。
+      - sdk: EventKitUI.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm
