@@ -25,6 +25,9 @@ final class PluginMarketModel {
     private(set) var failure: String?
     private(set) var saving = false
     private(set) var sourceFailure: SourceFailure?
+    /// What is listed came from `PluginStoreCache` and the engine has not answered for it yet: its
+    /// installation states may be out of date, so nothing is installed from it.
+    private(set) var fromCache = false
     private var generation = 0
 
     private let pageSize = 50
@@ -37,15 +40,62 @@ final class PluginMarketModel {
         return URLComponents(string: url)?.host ?? url
     }
 
+    /// The sources and the first page as the last visit left them, for a model that has read nothing
+    /// yet. Only both together: sources without a list would read as an empty index.
+    func restoreCached() async {
+        guard indexes == nil, let cached = await PluginStoreCache.indexes(), !cached.isEmpty,
+              let first = cached.first?["url"].string, let listing = await PluginStoreCache.listing(first),
+              indexes == nil, result == nil else { return }
+        indexes = cached
+        result = listing
+        entries = listing["entries"].array
+        fromCache = true
+    }
+
     func loadIndexes(_ app: AppModel) async {
         indexesFailed = false
         do {
-            indexes = try await app.client.call("pluginMarket/listIndexes").array
+            let fresh = try await app.client.call("pluginMarket/listIndexes").array
+            indexes = Self.keepingTitles(fresh, from: indexes ?? [])
+            PluginStoreCache.saveIndexes(indexes ?? [])
             if let selected, !(indexes ?? []).contains(where: { $0["url"].string == selected }) { self.selected = nil }
             await reload(app)
         } catch {
             indexesFailed = indexes == nil
         }
+    }
+
+    /// `listIndexes` names only the sources this engine has read since it started; until it reads one
+    /// again, the title an earlier read gave it stands.
+    private static func keepingTitles(_ fresh: [JSON], from known: [JSON]) -> [JSON] {
+        fresh.map { index in
+            guard index["title"].isNull, let url = index["url"].string,
+                  let old = known.first(where: { $0["url"].string == url }), !old["title"].isNull else { return index }
+            var fields = index.object
+            fields["title"] = old["title"]
+            if !old["description"].isNull { fields["description"] = old["description"] }
+            return .object(fields)
+        }
+    }
+
+    /// A first page read in default order is what the store opens on next time; its header names
+    /// the source too. Only one page of it: a longer read (after an install, or 显示更多) kept whole
+    /// would shrink back to a page when the next visit reads again.
+    private func remember(_ value: JSON, url: String) {
+        var page = value.object
+        let entries = value["entries"].array
+        if entries.count > pageSize {
+            page["entries"] = .array(Array(entries.prefix(pageSize)))
+            page["nextOffset"] = .number(Double(pageSize))
+        }
+        PluginStoreCache.saveListing(url, .object(page))
+        guard let title = value["title"].nonNull, let position = indexes?.firstIndex(where: { $0["url"].string == url }),
+              indexes?[position]["title"] != title else { return }
+        var fields = indexes?[position].object ?? [:]
+        fields["title"] = title
+        fields["description"] = value["description"].nonNull
+        indexes?[position] = .object(fields)
+        PluginStoreCache.saveIndexes(indexes ?? [])
     }
 
     private func searchArgs(url: String, offset: Int, limit: Int, fetchedAt: JSON?, refresh: Bool) -> JSON {
@@ -68,10 +118,12 @@ final class PluginMarketModel {
         guard let url else {
             result = nil
             entries = []
+            fromCache = false
             return
         }
         generation += 1
         let current = generation
+        let plain = query == Query()
         loading = true
         failure = nil
         do {
@@ -79,7 +131,9 @@ final class PluginMarketModel {
             guard current == generation else { return }
             result = value
             entries = value["entries"].array
+            fromCache = false
             dropUndeclared(value["metadata"])
+            if plain { remember(value, url: url) }
         } catch is CancellationError {
         } catch {
             guard current == generation else { return }

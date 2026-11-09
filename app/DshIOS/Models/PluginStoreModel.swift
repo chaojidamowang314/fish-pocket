@@ -37,8 +37,12 @@ final class PluginStoreModel {
     }
 
     private func ready(_ app: AppModel) async {
+        await market.restoreCached()
         let manager = app.plugins
         await manager.refresh(revision: app.revision("plugin-manager/changed"))
+        // The engine is not answering yet (it starts with the app, and restarts after some plugin
+        // changes): the last visit's list stays up, and the next connection asks again.
+        if manager.status == .error, market.fromCache { return }
         guard manager.status != .unavailable, let bundle = manager.package(PluginManagerModel.marketBundle) else {
             readiness = .unavailable
             return
@@ -81,6 +85,10 @@ final class PluginStoreModel {
     func marketTurnedOff() {
         if readiness == .ready { readiness = .off }
     }
+
+    /// Something to list while the engine is checked: before `.ready`, only the last visit's list
+    /// from disk (or what a pull to refresh read over it) fills the sources.
+    var hasList: Bool { market.indexes?.isEmpty == false }
 
     /// The newest read of a listing: a page that holds one outlives what it says about installation.
     func latest(_ entry: StoreEntry) -> StoreEntry {
