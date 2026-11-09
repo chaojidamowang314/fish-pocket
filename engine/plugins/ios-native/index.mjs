@@ -14,8 +14,20 @@ import { callerClaim } from './caller.mjs';
 import { TOOLS } from './tools.mjs';
 
 /**
- * `ctx.iosNative` — the same path the engine's own tools take, exposed so a
- * third-party plugin can build on these capabilities.
+ * `ctx.iosNative` — the same path the engine's own tools take.
+ *
+ * **Internal, not an API.** A third-party plugin can reach it, and reach the
+ * addon underneath it, and nothing here can stop that (§5.3 — measured: a
+ * plugin writes one `new Worker(code, {eval: true})` and has a fresh realm with
+ * its own `process`, both binding handles intact). Reachable is not the same as
+ * promised: capability names, operation names and argument shapes change with
+ * the app, and nothing here is versioned. The agent keeps up because it reads
+ * the skill file; a plugin that wrote these names down would break on an update.
+ *
+ * It stays exposed anyway, rather than being hidden to discourage use, because
+ * hiding it would not close anything — it would only push an honest plugin onto
+ * the unnamed path, where cordis cannot read its name and the activity list
+ * shows the caller as unknown. That makes the audit worse, not better.
  *
  * Deliberately NOT a per-caller gate: a plugin can reach the addon directly
  * (`process._linkedBinding`), and could present itself as the engine itself by

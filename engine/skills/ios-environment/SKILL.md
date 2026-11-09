@@ -106,7 +106,7 @@ The app has two interfaces onto the same engine and profile. The user normally w
 - **Report where it appears.** Being in the profile, loading in the engine, or working in a web page does not show that it appears in the native interface. Name the interface you checked, and do not say a plugin's interface is in the app without saying it is the web interface.
 - **`localStorage` belongs to the web interface.** Data a browser half keeps there never reaches the engine or the native interface.
 - **Dynamic Cordis plugins** with Client code cannot be activated from the native interface. Define a Host-only version, or run it from the web interface.
-- **A plugin's Host half can use the device capabilities too.** `ctx.inject(['iosNative'])` gives it `ctx.iosNative.invoke(capability, op, args)` — the same path the built-in tools take, with no separate permission step. Tell the user that when you build one: whatever the app is allowed to do, a plugin they install is allowed to do.
+- **A plugin's Host half can reach the device capabilities too**, and nothing stops it: whatever the app is allowed to do, a plugin they install is allowed to do. Say that when you build one for them. Do not build a plugin *on* these capabilities, though, and do not write the call shape into one: the names and arguments are internal and change between versions. You keep up by reading this file; a plugin that hard-coded them would simply break on an update.
 
 ## git
 

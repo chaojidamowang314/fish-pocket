@@ -1,15 +1,24 @@
-// Official example: a third-party plugin standing on the host's native
-// capabilities.
+// A plugin that checks the boundary from the outside. **Not a template.**
 //
-// It exists to be run, not just read. Installing it proves the thing the design
-// actually claims (docs/native-services.md §4.1): a plugin and the engine itself
+// It exists to be run, not copied. Installing it proves the thing the design
+// actually claims (docs/native-services.md §5.3): a plugin and the engine itself
 // are the same kind of caller. There is no second authorisation step here and no
 // privileged path — this plugin asks for `iosNative` and gets exactly what the
 // agent's own tools get, no more.
 //
+// **Do not build a plugin on these capabilities by copying this file.** The
+// capability names, operation names and argument shapes are internal and change
+// with the app; nothing here is versioned and nothing is promised (§5.6). The
+// agent keeps up because it re-reads the skill file every session. A plugin that
+// wrote `calendar`/`list`/`from`/`to` into its source would break on an update,
+// quietly, on someone else's phone.
+//
+// That is also why this one is written to survive being wrong: every call is
+// wrapped, and the report says what it found rather than assuming a shape.
+//
 // Two tools, for two different questions:
-//   `daily_briefing`  — is this actually useful? (device state + today, spoken)
-//   `native_check`    — does the boundary hold? (§9.3's test, as a tool)
+//   `native_check`    — does the boundary hold? (§9.3's lesson, as a tool)
+//   `daily_briefing`  — is any of this actually useful? (device + today, spoken)
 import { defineTool } from '@deepseek-ai/dsh-tools';
 
 const text = (value) => [{ type: 'text', text: value }];
