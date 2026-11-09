@@ -14,6 +14,8 @@ Fish Pocket 是独立的开源社区项目，与深度求索（DeepSeek）不存
 
 会话、工作区文件、设置和模型服务商的凭证都只保存在你的设备上。删除 App 会删除这些内容。
 
+小组件要显示的会话标题、状态和当前工作区名称，由 App 写进设备上 App 与小组件共用的存储空间，同样不会离开设备。设备锁定时标题会被打码，也可以在 设置 → 小组件 里关掉标题。
+
 你授权过的本机数据（日历、提醒事项）不会被 App 另存一份，每次用到都是现读。App 只在本机留一份使用记录：哪项能力、什么操作、什么时候、调用方自报的名字，最近若干条，可以在「设置 → 本机能力 → 使用记录」里查看和清空。
 
 ### 会发送到第三方的内容
@@ -43,6 +45,8 @@ Fish Pocket is an independent open-source community project. It is not affiliate
 ### What stays on your device
 
 Sessions, workspace files, settings and model provider credentials are stored only on your device. Deleting the app deletes this data.
+
+For the widgets, the app writes session titles, their status and the current workspace name to storage on your device shared by the app and its widgets; this also never leaves the device. Titles are hidden while the device is locked, and you can turn them off in Settings → Widgets.
 
 Device data you have allowed (Calendar, Reminders) is never copied into the app's own storage; it is read fresh each time it is used. The app keeps one local record of that use — which capability, which operation, when, and the name the caller gave for itself — for the most recent entries only. You can read and clear it under Settings → Device capabilities → Activity.
 

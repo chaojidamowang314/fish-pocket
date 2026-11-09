@@ -18,11 +18,13 @@ settings:
     # One version everywhere: the app, its extension, the App Store and the `v<version>` release tag.
     # Changing it sends the TestFlight public beta back through review: a beta build bumps the build number.
     # App Store and GitHub releases do bump it, or the update check never sees them.
-    MARKETING_VERSION: "1.0.1"
+    MARKETING_VERSION: "1.1.0"
     CURRENT_PROJECT_VERSION: "12"
     # UI strings: SwiftUI literals and String(localized:) go to the String Catalog at build time.
     SWIFT_EMIT_LOC_STRINGS: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    # The container the app and the widget extension share (widget snapshot). Rename it with the bundle ID.
+    DSH_APP_GROUP: group.com.wsw.dsh-ios
 targets:
   DshIOS:
     type: application
@@ -42,10 +44,17 @@ targets:
       - path: ../native/ios-native
       # The engine's filesystem view, for the Node entry points libc cannot reach: linked binding `dsh_root`.
       - path: ../native/root/binding.c
+      # Python for the engine: embedded CPython, one subinterpreter per process: linked binding `dsh_python`.
+      - path: ../native/python
+        # CPython's framework headers include each other with quotes.
+        compilerFlags: [-Wno-quoted-include-in-framework-header]
     dependencies:
       # First: the app's own libc calls (libgit2) bind to it by link order, as Node's do by its load command.
       - target: DshRoot
       - framework: ../vendor/nodejs-mobile/rooted/NodeMobile.xcframework
+        embed: true
+      # python.org's iOS CPython, pointed at DshRoot (scripts/fetch-python.sh).
+      - framework: ../vendor/python/rooted/Python.xcframework
         embed: true
       # Static libgit2 (scripts/build-libgit2.sh); HTTPS through Security.framework.
       - framework: ../vendor/libgit2/Libgit2.xcframework
@@ -63,6 +72,18 @@ targets:
       - sdk: libiconv.tbd
       - package: SwiftTerm
       - target: DshLiveActivity
+    postBuildScripts:
+      # CPython's standard library into the bundle (python/lib), and each extension
+      # module turned into a framework under Frameworks, as App Store binaries must be:
+      # the steps CPython documents for iOS apps (Python.xcframework/build/utils.sh).
+      - name: Install Python standard library
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          source "$PROJECT_DIR/../vendor/python/rooted/Python.xcframework/build/utils.sh"
+          # Unsigned builds (CI) still need a valid identity for codesign: ad hoc.
+          export EXPANDED_CODE_SIGN_IDENTITY="${EXPANDED_CODE_SIGN_IDENTITY:--}"
+          install_python ../vendor/python/rooted/Python.xcframework
     info:
       path: DshIOS/Info.plist
       properties:
@@ -92,6 +113,7 @@ targets:
         NSCalendarsFullAccessUsageDescription: 让智能体按你的要求查看和安排日程。为回答你的问题，相关日程内容会随对话发送给你选择的模型服务商。
         # 本机能力「提醒」。同样的理由：第二句是产品选择，不是硬性要求。
         NSRemindersFullAccessUsageDescription: 让智能体按你的要求查看和创建提醒。为回答你的问题，相关提醒内容会随对话发送给你选择的模型服务商。
+        NSPhotoLibraryAddUsageDescription: 把分享海报保存到相册。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.
@@ -105,10 +127,16 @@ targets:
         BGTaskSchedulerPermittedIdentifiers: ["$(PRODUCT_BUNDLE_IDENTIFIER).task.*"]
         # Agent status on the lock screen and in the Dynamic Island (LiveActivityController).
         NSSupportsLiveActivities: true
-        # dsh://session/<id>: the Live Activity opens its session.
+        # dsh://session/<id> and dsh://new: the Live Activity and the widgets (Shared/DshLink.swift).
         CFBundleURLTypes:
           - CFBundleURLName: com.wsw.dsh-ios
             CFBundleURLSchemes: [dsh]
+        # Shared/WidgetSnapshot.swift reads the group from here.
+        DshAppGroup: $(DSH_APP_GROUP)
+    entitlements:
+      path: DshIOS/DshIOS.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(DSH_APP_GROUP)"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wsw.dsh-ios
@@ -136,7 +164,8 @@ targets:
         DEFINES_MODULE: NO
         SKIP_INSTALL: YES
         OTHER_LDFLAGS: ["$(inherited)", "-Wl,-reexport-lSystem"]
-  # The Live Activity's views; the app starts and updates it.
+  # The widget extension: the Live Activity (the app starts and updates it) and the
+  # home and lock screen widgets (they draw the snapshot the app writes).
   DshLiveActivity:
     type: app-extension
     platform: iOS
@@ -152,6 +181,11 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        DshAppGroup: $(DSH_APP_GROUP)
+    entitlements:
+      path: LiveActivity/DshLiveActivity.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(DSH_APP_GROUP)"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wsw.dsh-ios.LiveActivity

@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,43 @@ static void write_file(const char *path, const char *text) {
   FILE *file = fopen(path, "w");
   CHECK(file != NULL);
   if (file) { fputs(text, file); fclose(file); }
+}
+
+/** A thread with its own working directory, as an emulated process runs. */
+static void *child(void *unused) {
+  char out[PATH_MAX];
+  SAME(getcwd(out, sizeof out), "/home/dsh/a");
+  CHECK(chdir("..") == 0);
+  return NULL;
+}
+
+static void *process(void *unused) {
+  char out[PATH_MAX], process_cwd[PATH_MAX];
+  struct stat status;
+  CHECK(dsh_root_enter("/home/dsh/a") == 0);
+  SAME(getcwd(out, sizeof out), "/home/dsh/a");
+  CHECK(stat("f", &status) == 0 && S_ISREG(status.st_mode));
+  CHECK(fstatat(AT_FDCWD, "f", &status, 0) == 0);
+  int descriptor = openat(AT_FDCWD, "f", O_RDONLY); CHECK(descriptor >= 0);
+  if (descriptor >= 0) close(descriptor);
+  CHECK(stat("", &status) == -1 && errno == ENOENT);
+  CHECK(chdir("f") == -1 && errno == ENOTDIR);
+  CHECK(chdir("missing") == -1 && errno == ENOENT);
+  // Threads it starts share it: their chdir is the process's.
+  pthread_t thread;
+  CHECK(pthread_create(&thread, NULL, child, NULL) == 0);
+  pthread_join(thread, NULL);
+  SAME(getcwd(out, sizeof out), "/home/dsh");
+  CHECK(mkdir("made", 0755) == 0 && stat("/home/dsh/made", &status) == 0);
+  CHECK(mkdirat(AT_FDCWD, "made/deeper", 0755) == 0 && unlinkat(AT_FDCWD, "made/deeper", AT_REMOVEDIR) == 0);
+  CHECK(rmdir("made") == 0);
+  int home = open("/home/dsh/a", O_RDONLY | O_DIRECTORY); CHECK(home >= 0);
+  CHECK(fchdir(home) == 0); SAME(getcwd(out, sizeof out), "/home/dsh/a");
+  CHECK(fstatat(home, "f", &status, 0) == 0);
+  close(home);
+  dsh_root_leave();
+  CHECK(getcwd(process_cwd, sizeof process_cwd) != NULL && strcmp(process_cwd, "/home/dsh/a") != 0);
+  return NULL;
 }
 
 int main(int argc, char **argv) {
@@ -156,6 +194,14 @@ int main(int argc, char **argv) {
   CHECK(connect(client, (struct sockaddr *)&address, address.sun_len) == 0);
   CHECK(stat("/tmp/s", &status) == 0);
   close(server); close(client); unlink("/tmp/s");
+
+  // A thread's own working directory leaves the process's alone.
+  char before[PATH_MAX], after_[PATH_MAX];
+  CHECK(getcwd(before, sizeof before) != NULL);
+  pthread_t thread;
+  CHECK(pthread_create(&thread, NULL, process, NULL) == 0);
+  pthread_join(thread, NULL);
+  CHECK(getcwd(after_, sizeof after_) != NULL); SAME(after_, before);
 
   printf(failures ? "%d failed\n" : "ok\n", failures);
   return failures != 0;

@@ -2,8 +2,9 @@
 // this Node process. Shell scripts and Unix commands go through just-bash (a
 // bash interpreter written in TypeScript) over the real filesystem; commands
 // that just start a Node program (node, pnpm, npx, .bin shims — see
-// runtime/direct.mjs) run as worker threads with streamed output, so dev
-// servers and other long runners show their output while they run. The
+// runtime/direct.mjs) run as worker threads, and Python programs as embedded
+// interpreters (runtime/python), both with streamed output, so dev servers and
+// other long runners show their output while they run. The
 // service contract is the one documented in
 // @deepseek-ai/dsh-subprocess; providers own their signalling limits, and
 // ours are: terminate aborts the script, there are no process groups.
@@ -19,6 +20,7 @@ import { CONFINE } from '../sandbox-ios/index.mjs';
 import { BIN, COMMANDS, planArgv, shell, stringEnv } from '../../runtime/shell.mjs';
 import { planDirect } from '../../runtime/direct.mjs';
 import { startNodeWorker } from '../../runtime/node-worker.mjs';
+import { drained, planPython, startPython } from '../../runtime/python/index.mjs';
 
 /** Offset-addressed tail buffer with the collect-mode reader contract. */
 class Collector {
@@ -118,7 +120,10 @@ export class IosSubprocessRuntime extends SubprocessRuntime {
     const env = stringEnv({ ...scrubbedParentEnv(), ...spec.env });
     // Confinement fences the interpreter's filesystem; a Node worker runs
     // outside it either way (sandbox-ios reports enforcement as partial).
-    const direct = planDirect(spec.argv[0] === CONFINE ? spec.argv.slice(spec.argv.indexOf('--') + 1) : spec.argv, { cwd: spec.cwd, env });
+    const argv = spec.argv[0] === CONFINE ? spec.argv.slice(spec.argv.indexOf('--') + 1) : spec.argv;
+    const direct = planDirect(argv, { cwd: spec.cwd, env });
+    // Python, likewise, runs outside the interpreter's filesystem fence.
+    const python = direct ? undefined : planPython(argv, { cwd: spec.cwd, env });
     const stdin = readStdin(spec.stdio.stdin);
     const out = outputSink(spec.stdio.stdout, process.stdout);
     const err = outputSink(spec.stdio.stderr, process.stderr);
@@ -126,7 +131,8 @@ export class IosSubprocessRuntime extends SubprocessRuntime {
     const onAbort = () => abort.abort();
     spec.signal?.addEventListener('abort', onAbort, { once: true });
 
-    const done = direct ? this.runDirect(direct, spec, stdin, out, err, abort.signal).finally(() => spec.signal?.removeEventListener('abort', onAbort)) : (async () => {
+    const served = direct ? this.runDirect(direct, spec, stdin, out, err, abort.signal) : python ? this.runPython(python, spec, stdin, out, err, abort.signal) : undefined;
+    const done = served ? served.finally(() => spec.signal?.removeEventListener('abort', onAbort)) : (async () => {
       const input = await stdin.text;
       try {
         const result = await shell(plan.writable).exec(plan.scriptFromStdin ? input : plan.script, {
@@ -196,6 +202,31 @@ export class IosSubprocessRuntime extends SubprocessRuntime {
     out.end();
     err.end();
     return signal.aborted ? { exitCode: null, signal: 'SIGTERM' } : { exitCode: code, signal: null };
+  }
+
+  /** Run a planned Python process, streaming its output into the sinks. */
+  async runPython(planned, spec, stdin, out, err, signal) {
+    let child;
+    try {
+      child = startPython({ ...planned, cwd: spec.cwd });
+    } catch (error) {
+      err.write(Buffer.from(`${error?.message ?? error}\n`));
+      out.end();
+      err.end();
+      return { exitCode: 127, signal: null };
+    }
+    if (stdin.stream) stdin.stream.pipe(child.stdin);
+    else child.stdin.end(typeof spec.stdio.stdin === 'object' ? spec.stdio.stdin.data : undefined);
+    child.stdout.on('data', (chunk) => out.write(chunk));
+    child.stderr.on('data', (chunk) => err.write(chunk));
+    const stop = () => child.kill('SIGTERM');
+    signal.addEventListener('abort', stop, { once: true });
+    const { code, signal: killedWith } = await child.exited;
+    await Promise.race([drained(child), new Promise((resolve) => setTimeout(resolve, 100))]);
+    signal.removeEventListener('abort', stop);
+    out.end();
+    err.end();
+    return signal.aborted ? { exitCode: null, signal: 'SIGTERM' } : { exitCode: code, signal: killedWith };
   }
 
   /** A line-editing terminal whose lines run through just-bash, keeping cwd and exported variables between lines. */

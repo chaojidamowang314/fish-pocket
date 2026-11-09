@@ -27,7 +27,7 @@ iOS 部分的改动请至少在模拟器上跑一遍，并在 PR 里写明测过
 ## 约定
 
 - **不改引擎文件：** 执行层只通过 cordis 服务替换（`ctx.subprocess`、`ctx.sandbox`）和 Node 层模拟适配，不改 `node_modules` 里的文件。
-- **钉死依赖：** 依赖版本写死在 `engine/package.json` 和 `scripts/fetch-nodejs-mobile.sh` 里，后者带 sha256 校验。
+- **钉死依赖：** 依赖版本写死在 `engine/package.json`、`scripts/fetch-nodejs-mobile.sh` 和 `scripts/fetch-python.sh` 里，后两者带 sha256 校验。
 - **git 输出和真 git 一致：** 改 `engine/runtime/git` 时，在 `engine/test/git/*.json` 里加场景，用宿主机 git 对照。
 - **同步环境说明：** 执行层能用的命令有变化时，同步改 `engine/skills/ios-environment/SKILL.md`，Agent 靠它判断能做什么。
 - **只移植能力：** 对齐官方 Web UI 时移植的是能力，不是网页的样子，交互按 iOS 习惯设计。取舍见 `docs/webui/parity.md`。

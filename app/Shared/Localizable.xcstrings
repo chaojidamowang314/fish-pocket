@@ -535,6 +535,38 @@
         }
       }
     },
+    "%lld 个等你" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld waiting"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld esperando"
+          }
+        }
+      }
+    },
+    "%lld 个等你 · %lld 个进行中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld waiting · %lld running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld esperando · %lld en curso"
+          }
+        }
+      }
+    },
     "%lld 个路径" : {
       "localizations" : {
         "en" : {
@@ -569,6 +601,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld 个运行中的子智能体：%2$@"
+          }
+        }
+      }
+    },
+    "%lld 个进行中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld en curso"
           }
         }
       }
@@ -623,6 +671,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld con errores"
+          }
+        }
+      }
+    },
+    "%lld 待处理" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pending"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pend."
           }
         }
       }
@@ -1546,7 +1610,40 @@
     "Fish Pocket" : {
       "shouldTranslate" : false
     },
+    "Fish Pocket 分享海报，带二维码" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket share poster with QR code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster de Fish Pocket con código QR"
+          }
+        }
+      }
+    },
+    "Fish Pocket 分享海报，带链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket share poster with link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster de Fish Pocket con enlace"
+          }
+        }
+      }
+    },
     "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：%@\nGitHub：%@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1564,6 +1661,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：%1$@\nGitHub：%2$@"
+          }
+        }
+      }
+    },
+    "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，支持第三方插件市场，不连电脑，不连服务器。\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket: run DeepSeek Harness right on your iPhone and iPad, with third-party plugin markets — no computer, no server.\n%@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket: ejecuta DeepSeek Harness directamente en tu iPhone y iPad, con mercados de plugins de terceros, sin ordenador ni servidor.\n%@"
           }
         }
       }
@@ -2235,6 +2348,22 @@
         }
       }
     },
+    "上次的工作区" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last workspace"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último espacio"
+          }
+        }
+      }
+    },
     "上级" : {
       "localizations" : {
         "en" : {
@@ -2443,6 +2572,22 @@
         }
       }
     },
+    "不打开 App 也能看到会话在进行、已完成还是在等你允许，轻点回到对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See whether a session is running, done or waiting for your approval without opening the app. Tap to jump back in."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mira si una sesión está en curso, terminada o esperando tu aprobación sin abrir la app. Tócalo para volver a la conversación."
+          }
+        }
+      }
+    },
     "不是有效的正则表达式。" : {
       "localizations" : {
         "en" : {
@@ -2587,6 +2732,22 @@
         }
       }
     },
+    "主屏幕和锁屏小组件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home and Lock Screen widgets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets de inicio y bloqueo"
+          }
+        }
+      }
+    },
     "主页" : {
       "localizations" : {
         "en" : {
@@ -2631,6 +2792,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Evento"
+          }
+        }
+      }
+    },
+    "二维码海报" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QR Poster"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster con QR"
           }
         }
       }
@@ -2807,6 +2984,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar desde npm, un repositorio Git o una carpeta local"
+          }
+        }
+      }
+    },
+    "从控制中心按钮、Siri 或快捷指令直接开始新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new conversation from a Control Center button, Siri or Shortcuts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza una conversación nueva desde un botón del Centro de control, Siri o Atajos."
           }
         }
       }
@@ -3329,6 +3522,22 @@
         }
       }
     },
+    "会话状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones"
+          }
+        }
+      }
+    },
     "会话：%@" : {
       "localizations" : {
         "en" : {
@@ -3441,6 +3650,22 @@
         }
       }
     },
+    "保存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Photos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar en Fotos"
+          }
+        }
+      }
+    },
     "保存后自动生效。内容无法解析时会恢复原内容。" : {
       "localizations" : {
         "en" : {
@@ -3453,6 +3678,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los cambios surten efecto al guardar. Si el contenido no se puede analizar, se restaura el original."
+          }
+        }
+      }
+    },
+    "保存失败：%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar: %@"
           }
         }
       }
@@ -4145,6 +4386,22 @@
         }
       }
     },
+    "关掉后，主屏幕和锁屏小组件只显示数量和状态。设备锁定时，标题总会被打码。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When off, Home Screen and Lock Screen widgets show only counts and status. Titles are always hidden while the device is locked."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si lo desactivas, los widgets de la pantalla de inicio y de bloqueo solo muestran cantidades y estado. Los títulos siempre se ocultan con el dispositivo bloqueado."
+          }
+        }
+      }
+    },
     "关联会话" : {
       "localizations" : {
         "en" : {
@@ -4445,6 +4702,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integrado"
+          }
+        }
+      }
+    },
+    "内置 Python" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Built-in Python"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python integrado"
           }
         }
       }
@@ -4813,6 +5086,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compartir"
+          }
+        }
+      }
+    },
+    "分享 Fish Pocket" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Fish Pocket"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir Fish Pocket"
           }
         }
       }
@@ -6385,6 +6674,38 @@
         }
       }
     },
+    "口袋里的\nDeepSeek Harness" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pocket-sized\nDeepSeek Harness"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeepSeek Harness\nde bolsillo"
+          }
+        }
+      }
+    },
+    "另有 %lld 个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld more"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld más"
+          }
+        }
+      }
+    },
     "只保存在本机引擎里，任何读取接口都不会返回它。" : {
       "localizations" : {
         "en" : {
@@ -7153,6 +7474,22 @@
         }
       }
     },
+    "在 App 内切换语言" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change the language in the app"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia el idioma desde la app"
+          }
+        }
+      }
+    },
     "在 GitHub 点 Star" : {
       "localizations" : {
         "en" : {
@@ -7165,6 +7502,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dar una estrella en GitHub"
+          }
+        }
+      }
+    },
+    "在 iPhone 和 iPad 上本机运行\n不连电脑，不连服务器" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runs right on iPhone and iPad\nNo computer, no server"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecuta en tu iPhone y iPad\nSin ordenador ni servidor"
           }
         }
       }
@@ -7281,6 +7634,22 @@
         }
       }
     },
+    "在浏览器打开，了解和下载" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in a browser to learn more and download"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ábrelo en el navegador para saber más y descargar"
+          }
+        }
+      }
+    },
     "在第几分钟" : {
       "localizations" : {
         "en" : {
@@ -7309,6 +7678,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en el navegador del sistema"
+          }
+        }
+      }
+    },
+    "在设置里直接选择界面语言，新增西班牙语。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick the interface language right in Settings. Spanish is now available."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige el idioma de la interfaz en Ajustes. Ahora también en español."
           }
         }
       }
@@ -7661,6 +8046,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar salida"
+          }
+        }
+      }
+    },
+    "复制链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar enlace"
           }
         }
       }
@@ -8353,6 +8754,22 @@
         }
       }
     },
+    "将发送这段文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This text will be shared"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se compartirá este texto"
+          }
+        }
+      }
+    },
     "将当前会话内容导出为 ZIP" : {
       "localizations" : {
         "en" : {
@@ -8381,6 +8798,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "horas"
+          }
+        }
+      }
+    },
+    "小组件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets"
           }
         }
       }
@@ -8765,6 +9198,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardado, pero no disponible actualmente"
+          }
+        }
+      }
+    },
+    "已保存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en Fotos"
           }
         }
       }
@@ -9991,6 +10440,38 @@
         }
       }
     },
+    "开源项目\nApp Store 与 TestFlight 均可安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open source\nOn the App Store and TestFlight"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código abierto\nEn App Store y TestFlight"
+          }
+        }
+      }
+    },
+    "开源项目 · App Store 与 TestFlight 均可安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open source · On the App Store and TestFlight"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código abierto · En App Store y TestFlight"
+          }
+        }
+      }
+    },
     "异常" : {
       "localizations" : {
         "en" : {
@@ -10903,6 +11384,54 @@
         }
       }
     },
+    "打开 App 后这里会显示会话状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the app to see your sessions here"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre la app para ver aquí tus sesiones"
+          }
+        }
+      }
+    },
+    "打开 App 查看" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the app to check"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre la app para verlo"
+          }
+        }
+      }
+    },
+    "打开 Fish Pocket，开始一个新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Fish Pocket and start a new conversation."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre Fish Pocket y empieza una conversación nueva."
+          }
+        }
+      }
+    },
     "打开「发现」时，App 会访问这里列出的地址。左滑可移除。" : {
       "localizations" : {
         "en" : {
@@ -11107,6 +11636,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comandos ejecutados"
+          }
+        }
+      }
+    },
+    "扫码了解和下载" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scan to learn more and download"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea para saber más y descargar"
           }
         }
       }
@@ -11383,6 +11928,22 @@
         }
       }
     },
+    "控制中心、Siri 和快捷指令" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control Center, Siri and Shortcuts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centro de control, Siri y Atajos"
+          }
+        }
+      }
+    },
     "推理等级" : {
       "localizations" : {
         "en" : {
@@ -11572,6 +12133,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los complementos se ejecutan con tus permisos. Instala solo de fuentes en las que confíes."
+          }
+        }
+      }
+    },
+    "插件和终端都能直接运行 Python 脚本，不用另外安装。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins and the terminal can run Python scripts, with nothing extra to install."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los plugins y el terminal pueden ejecutar scripts de Python sin instalar nada más."
           }
         }
       }
@@ -12202,6 +12779,22 @@
         }
       }
     },
+    "支持第三方插件市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Third-party plugin markets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mercados de plugins de terceros"
+          }
+        }
+      }
+    },
     "收到 GitHub 事件" : {
       "localizations" : {
         "en" : {
@@ -12490,6 +13083,22 @@
         }
       }
     },
+    "放进输入框，不会自动发送。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placed in the message box, not sent."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se coloca en el cuadro de mensaje, no se envía."
+          }
+        }
+      }
+    },
     "数字" : {
       "localizations" : {
         "en" : {
@@ -12774,6 +13383,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Las sesiones nuevas pedirán menos confirmaciones y podrán modificar archivos y ejecutar comandos directamente. Úsala solo si confías en las tareas siguientes."
+          }
+        }
+      }
+    },
+    "新功能" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's New"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades"
           }
         }
       }
@@ -13688,6 +14313,22 @@
         }
       }
     },
+    "显示会话标题" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show session titles"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar títulos de sesión"
+          }
+        }
+      }
+    },
     "显示名称" : {
       "localizations" : {
         "en" : {
@@ -14228,6 +14869,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se actualizó el plan"
+          }
+        }
+      }
+    },
+    "更新于 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizado %@"
           }
         }
       }
@@ -16581,6 +17238,22 @@
         }
       }
     },
+    "正在运行和等你处理的会话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions that are running or waiting for you."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones en curso o que te esperan."
+          }
+        }
+      }
+    },
     "正在连接…" : {
       "localizations" : {
         "en" : {
@@ -17217,6 +17890,22 @@
         }
       }
     },
+    "没有相册权限，可以在系统设置里允许 Fish Pocket 添加照片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No access to Photos. Allow Fish Pocket to add photos in Settings."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Fotos. Permite que Fish Pocket añada fotos en Ajustes."
+          }
+        }
+      }
+    },
     "没有符合条件的插件" : {
       "localizations" : {
         "en" : {
@@ -17261,6 +17950,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sin documentación"
+          }
+        }
+      }
+    },
+    "没有进行中的任务" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada en curso"
           }
         }
       }
@@ -17329,6 +18034,22 @@
         }
       }
     },
+    "浏览、安装社区插件，手机上直接启用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browse and install community plugins"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instala plugins de la comunidad"
+          }
+        }
+      }
+    },
     "浏览器" : {
       "localizations" : {
         "en" : {
@@ -17341,6 +18062,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Navegador"
+          }
+        }
+      }
+    },
+    "海报、二维码或链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poster, QR code or link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster, código QR o enlace"
           }
         }
       }
@@ -17809,6 +18546,22 @@
         }
       }
     },
+    "点一下就开始新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new conversation with one tap."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza una conversación nueva con un toque."
+          }
+        }
+      }
+    },
     "照片" : {
       "localizations" : {
         "en" : {
@@ -17885,6 +18638,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado"
+          }
+        }
+      }
+    },
+    "状态未知" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status unknown"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado desconocido"
           }
         }
       }
@@ -19385,6 +20154,22 @@
         }
       }
     },
+    "给个评分" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate on the App Store"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valorar en App Store"
+          }
+        }
+      }
+    },
     "继续" : {
       "localizations" : {
         "en" : {
@@ -20005,6 +20790,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecciona al menos un modelo para guardar."
+          }
+        }
+      }
+    },
+    "草稿" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrador"
           }
         }
       }
@@ -21929,6 +22730,22 @@
         }
       }
     },
+    "还没有会话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sessions yet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay sesiones"
+          }
+        }
+      }
+    },
     "还没有可分叉的轮次" : {
       "localizations" : {
         "en" : {
@@ -23034,6 +23851,22 @@
         }
       }
     },
+    "都处理完了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All done"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo listo"
+          }
+        }
+      }
+    },
     "配置" : {
       "localizations" : {
         "en" : {
@@ -23402,6 +24235,22 @@
         }
       }
     },
+    "链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enlace"
+          }
+        }
+      }
+    },
     "链接已复制" : {
       "localizations" : {
         "en" : {
@@ -23414,6 +24263,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enlace copiado"
+          }
+        }
+      }
+    },
+    "链接海报" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link Poster"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster con enlace"
           }
         }
       }

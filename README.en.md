@@ -37,24 +37,27 @@ https://github.com/user-attachments/assets/618e690f-3873-4f08-811d-3213b3b9a056
 - **A complete agent.** Chat, tool calls, file editing, search, plan mode and approvals, matching the official Web UI's features.
 - **A terminal that works.** Built-in bash, `node`, `pnpm` and `git`, plus `rg`, `jq`, `curl`, `sed`, `awk` and other everyday commands.
 - **Built-in Git.** Statically linked libgit2, no child processes. `clone`, `commit`, `branch`, `merge`, `stash`, `pull`, `push` and the rest of everyday git work, with output that matches real git so the agent reads it as usual. Private repositories authenticate over HTTPS with a token.
-- **The DSH plugin ecosystem.** Install pure JavaScript plugins from npm and enable them on the phone.
+- **A built-in DSH plugin store.** A DSH ecosystem plugin market comes preset: browse and search on the phone, install with one tap, and the plugin is ready to use, no computer involved. Add store sources you trust under Index Sources, or install pure JavaScript plugins straight from npm.
 - **A workbench.** Terminal, file preview, built-in browser and change review in one panel.
-- **Made for iOS.** Dynamic Island and Lock Screen Live Activities, and tasks that continue in the background.
+- **Made for iOS.** Dynamic Island and Lock Screen Live Activities, Home Screen and Lock Screen widgets, a Control Center button, Siri and Shortcuts, and tasks that continue in the background.
 - **Made for iPad too.** A persistent sidebar, a side workbench, multiple windows, file drag and drop, and keyboard shortcuts.
 - **More private.** Sessions and workspaces stay on your device.
+- **Coming soon: Bot mode.** Turn the agent in your pocket into an always-on bot: hand it a task in chat, it runs the work on your phone and sends the result back.
 
 Model calls still need a network connection. Use a DeepSeek account or an API key.
 
 ## Compared with other approaches
 
+Remote clients need a computer left running. Fish Pocket does not: the engine lives on your phone, ready anytime, anywhere. Among approaches that run right on the phone, it is also the fastest today: Node, Git and Python all run as native code, with no emulator in between.
+
 |  | Fish Pocket | Remote clients | Web UI on the phone | Linux emulators on iOS (iSH, UTM SE) |
 |---|---|---|---|---|
 | Where the engine runs | Phone | Computer or server | Phone | Phone |
 | Interface | Fully native SwiftUI | Depends on the project | Official Web UI | Terminal or official Web UI |
-| Computer must stay on | No | Yes | No | No |
+| Computer must stay on | No: your phone is enough, anytime, anywhere | Yes, it has to stay on and online | No | No |
 | Dynamic Island and Lock Screen status | Yes | Depends on the project | Depends on the project | No |
 | Full Linux tools | No, only built-in commands and Node | Yes | Depends on the project | Yes |
-| Speed | Node runs natively, several times slower than a desktop | Native speed on the computer | Depends on the project | Very slow: CPU instructions are interpreted one by one |
+| Speed | Fastest of the on-phone approaches: Node, Git and Python run as native code | Depends on that computer | Depends on the project | Very slow: CPU instructions are interpreted one by one |
 
 ## Quick start
 
@@ -112,6 +115,7 @@ We took the 50 most-downloaded community DSH plugins as a sample and ran each on
 - [ ] Define plugin compatibility tiers and an adaptation guide ([#4](https://github.com/imsai-sh/fish-pocket/issues/4))
 - [x] Bundle a third-party plugin store ([#5](https://github.com/imsai-sh/fish-pocket/issues/5))
 - [ ] Move the bash interpreter off the engine thread
+- [ ] Bot mode: hand tasks to the agent in your pocket from a chat
 
 ## Contributing
 

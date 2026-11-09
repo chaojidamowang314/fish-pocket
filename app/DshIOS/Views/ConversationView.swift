@@ -190,6 +190,8 @@ struct ConversationView: View {
                     ComposerView(
                         model: model, context: context, pendingDraft: app.pendingDrafts[sessionId],
                         consumeDraft: { app.pendingDrafts[sessionId] = nil },
+                        focusOnAppear: app.pendingFocus.contains(sessionId),
+                        consumeFocus: { app.pendingFocus.remove(sessionId) },
                         openLogExport: { headerSheet = .logExport },
                         focusChanged: { composerFocused = $0 },
                         sheetUp: $inputSheetUp

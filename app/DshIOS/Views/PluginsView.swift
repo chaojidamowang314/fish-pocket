@@ -40,12 +40,14 @@ struct PluginIcon: View {
 
     var body: some View {
         Group {
-            if let source, source.hasPrefix("data:image/svg") || source.lowercased().hasSuffix(".svg") {
+            if let source, source.hasPrefix("data:image/svg") {
                 SVGIconView(source: source)
             } else if let source, let image = Self.decode(source) {
                 Image(uiImage: image).resizable().scaledToFit()
             } else if let source, source.hasPrefix("http"), let url = URL(string: source) {
-                AsyncImage(url: url) { image in image.resizable().scaledToFit() } placeholder: { fallback }
+                RemoteIcon(url: url) { fallback }
+            } else if let source, source.lowercased().hasSuffix(".svg") {
+                SVGIconView(source: source)
             } else {
                 fallback
             }
@@ -64,6 +66,31 @@ struct PluginIcon: View {
         guard source.hasPrefix("data:image/"), let comma = source.firstIndex(of: ","), source[..<comma].hasSuffix(";base64"),
               let data = Data(base64Encoded: String(source[source.index(after: comma)...])) else { return nil }
         return UIImage(data: data)
+    }
+}
+
+/// An icon at an http(s) address, through the store's disk cache: drawn from memory or disk when it
+/// is there, so rows do not blink back to the glyph, and fetched once otherwise.
+private struct RemoteIcon<Fallback: View>: View {
+    let url: URL
+    let fallback: () -> Fallback
+    @State private var art: PluginIconMemory.Art?
+
+    init(url: URL, @ViewBuilder fallback: @escaping () -> Fallback) {
+        self.url = url
+        self.fallback = fallback
+        _art = State(initialValue: PluginIconMemory.cached(url))
+    }
+
+    var body: some View {
+        Group {
+            switch art {
+            case .image(let image): Image(uiImage: image).resizable().scaledToFit()
+            case .svg(let source): SVGIconView(source: source)
+            case nil: fallback()
+            }
+        }
+        .task(id: url) { art = await PluginIconMemory.load(url) }
     }
 }
 

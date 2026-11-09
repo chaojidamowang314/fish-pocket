@@ -13,6 +13,7 @@ xcrun devicectl device info details --device "$device" --json-output "$info" >/d
 udid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["result"]["hardwareProperties"]["udid"])' "$info")"
 rm -f "$info"
 [ -d "$root/vendor/nodejs-mobile/rooted" ] || "$root/scripts/fetch-nodejs-mobile.sh"
+[ -d "$root/vendor/python/rooted" ] || "$root/scripts/fetch-python.sh"
 [ -d "$root/vendor/libgit2/Libgit2.xcframework" ] || "$root/scripts/build-libgit2.sh"
 "$root/scripts/build-engine.sh"
 cd "$root/app"

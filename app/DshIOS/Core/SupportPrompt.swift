@@ -1,14 +1,20 @@
-import UIKit
+import Foundation
 
-/// When to ask for a Star or a share, after Orca's star nag: only right after a turn went
-/// well, a few turns in, and rarely. An ignored ask waits three days and twice the turns; the
-/// third is the last. GitHub can't say from here who has starred, so the first tap settles it.
+/// When to ask for a rating, a Star or a share, after Orca's star nag: only right after a turn
+/// went well, a few turns in, and rarely; each ask starts the same wait, three days and the
+/// turns again. An App Store install is asked for a rating alone, once a version (Apple decides
+/// whether the sheet shows, and says nothing either way); the Star / share card is left to
+/// 设置 there. Other installs get the card instead: an ignored one waits twice the turns, the
+/// third is the last, and the first tap settles it, as GitHub can't say from here who has starred.
 @MainActor
 enum SupportPrompt {
+    enum Ask { case review, support }
+
     private static let turnsKey = "dsh.support.turns"
     private static let asksKey = "dsh.support.asks"
     private static let notBeforeKey = "dsh.support.notBefore"
     private static let settledKey = "dsh.support.settled"
+    private static let reviewedKey = "dsh.support.reviewedVersion"
 
     private static let firstAsk = 5
     private static let lastAsk = 3
@@ -16,56 +22,63 @@ enum SupportPrompt {
 
     /// Counts a turn that finished well; true when an ask is due.
     static func noteCompletedTurn() -> Bool {
+        guard reviewOpen || supportOpen else { return false }
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: settledKey) else { return false }
-        let turns = defaults.integer(forKey: turnsKey) + 1
-        defaults.set(turns, forKey: turnsKey)
-        return isDue
+        defaults.set(defaults.integer(forKey: turnsKey) + 1, forKey: turnsKey)
+        return due != nil
     }
 
     /// The ask to make now: each is spent here, whatever becomes of it.
-    static func take() -> Bool {
-        guard isDue else { return false }
+    static func take() -> Ask? {
+        guard let ask = due else { return nil }
         let defaults = UserDefaults.standard
-        defaults.set(defaults.integer(forKey: asksKey) + 1, forKey: asksKey)
+        switch ask {
+        case .review: defaults.set(version, forKey: reviewedKey)
+        case .support: defaults.set(defaults.integer(forKey: asksKey) + 1, forKey: asksKey)
+        }
         defaults.set(0, forKey: turnsKey)
         defaults.set(Date.now.addingTimeInterval(cooldown).timeIntervalSince1970, forKey: notBeforeKey)
-        return true
+        return ask
     }
 
-    /// They went to the repository or the share sheet: never ask again.
+    /// They went to the repository or the share page: never show the card again.
     static func settle() { UserDefaults.standard.set(true, forKey: settledKey) }
 
-    private static var isDue: Bool {
+    private static var version: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+    }
+
+    private static var reviewOpen: Bool {
+        AppDistribution.channel == .appStore && UserDefaults.standard.string(forKey: reviewedKey) != version
+    }
+
+    private static var supportOpen: Bool {
         let defaults = UserDefaults.standard
-        let asks = defaults.integer(forKey: asksKey)
-        return !defaults.bool(forKey: settledKey) && asks < lastAsk
-            && defaults.integer(forKey: turnsKey) >= firstAsk << asks
-            && Date.now.timeIntervalSince1970 >= defaults.double(forKey: notBeforeKey)
+        return AppDistribution.channel != .appStore
+            && !defaults.bool(forKey: settledKey) && defaults.integer(forKey: asksKey) < lastAsk
+    }
+
+    private static var due: Ask? {
+        let defaults = UserDefaults.standard
+        guard Date.now.timeIntervalSince1970 >= defaults.double(forKey: notBeforeKey) else { return nil }
+        let turns = defaults.integer(forKey: turnsKey)
+        if reviewOpen && turns >= firstAsk { return .review }
+        if supportOpen && turns >= firstAsk << defaults.integer(forKey: asksKey) { return .support }
+        return nil
     }
 }
 
 /// The app's links, and the message that passes them on.
-@MainActor
 enum AppLinks {
     static let repository = URL(string: "https://github.com/\(UpdateChecker.repository)")!
-    private static let testFlight = URL(string: "https://testflight.apple.com/join/2SCftb2M")!
+    /// The website, which sends each reader on to the App Store or the public beta. The share
+    /// poster's QR code is a picture of this link: scripts/make-share-qr.swift redraws it.
+    static let site = URL(string: "https://fish.imsai.cc")!
+    /// The App Store's 「撰写评论」 page for the app.
+    static let writeReview = URL(string: "https://apps.apple.com/app/id6830703602?action=write-review")!
 
-    /// The App Store once it answers for the app, the public beta until then.
+    /// What 「链接」 on the share page sends.
     static var shareText: String {
-        let download = UpdateChecker.shared.storePage ?? testFlight
-        return String(localized: "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：\(download.absoluteString)\nGitHub：\(repository.absoluteString)")
-    }
-
-    /// The share sheet, from where SwiftUI can't start one (`ShareLink` needs its own tap).
-    static func share() {
-        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first { $0.activationState == .foregroundActive }
-        guard let window = scene?.keyWindow, var top = window.rootViewController else { return }
-        while let presented = top.presentedViewController, !presented.isBeingDismissed { top = presented }
-        let controller = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
-        // iPad shows it as a popover, which needs an anchor: the toast's place, at the bottom.
-        controller.popoverPresentationController?.sourceView = window
-        controller.popoverPresentationController?.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.maxY - 80, width: 0, height: 0)
-        top.present(controller, animated: true)
+        String(localized: "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，支持第三方插件市场，不连电脑，不连服务器。\n\(site.absoluteString)")
     }
 }

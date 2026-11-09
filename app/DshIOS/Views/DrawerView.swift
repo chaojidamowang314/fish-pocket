@@ -89,6 +89,7 @@ struct DrawerView: View {
         .task(id: search) { await searchRemote() }
         .onChange(of: searchRequest) { searchFocused = true }
         .onChange(of: groupBy) { Haptics.select() }
+        .onChange(of: selection) { revealSelection() }
         .confirmationDialog("删除「\(removingWorkspace?.displayTitle ?? "")」？", isPresented: Binding(get: { removingWorkspace != nil }, set: { if !$0 { removingWorkspace = nil } }), titleVisibility: .visible) {
             Button("删除工作区", role: .destructive) {
                 if let workspace = removingWorkspace {
@@ -387,10 +388,17 @@ struct DrawerView: View {
 
     /// Groups start open (the web opens only the current one; on a phone every
     /// workspace should be a glance away, and each shows five rows); a group the
-    /// user closed stays closed unless it holds the current session.
+    /// user closed stays closed, the current session's included, until they open it
+    /// or switch to a session inside it (`revealSelection`).
     private func isExpanded(_ group: SessionGroup) -> Bool {
-        if let selection, group.rows.contains(where: { $0.id == selection }) { return true }
-        return expansion[group.id] ?? true
+        expansion[group.id] ?? true
+    }
+
+    /// Opens the group of a session just switched to, so it shows where it lives.
+    private func revealSelection() {
+        guard let selection, let group = groups.first(where: { $0.rows.contains { $0.id == selection } }),
+              !isExpanded(group) else { return }
+        setExpanded(group, true)
     }
 
     private func setExpanded(_ group: SessionGroup, _ open: Bool) {

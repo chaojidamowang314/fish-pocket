@@ -7,6 +7,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 device="${SIM_DEVICE:-iPhone 17 Pro}"
 xcrun simctl boot "$device" 2>/dev/null || true
 [ -d "$root/vendor/nodejs-mobile/rooted" ] || "$root/scripts/fetch-nodejs-mobile.sh"
+[ -d "$root/vendor/python/rooted" ] || "$root/scripts/fetch-python.sh"
 [ -d "$root/vendor/libgit2/Libgit2.xcframework" ] || "$root/scripts/build-libgit2.sh"
 "$root/scripts/build-engine.sh"
 cd "$root/app"

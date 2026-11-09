@@ -21,6 +21,8 @@ Anything not listed here should be assumed missing.
 - **Development:** `git node pnpm pnpx`
 - **Shell:** `bash sh env printenv which type command date sleep timeout time xargs yes true false expr whoami hostname pwd history alias unalias clear help`
 
+Python and pip also exist: see the Python section below.
+
 ## Missing, and what to do instead
 
 | Missing | Use instead |
@@ -28,7 +30,7 @@ Anything not listed here should be assumed missing.
 | `npm`, `npx`, `yarn`, `corepack` | `pnpm`, `pnpx` |
 | `bun`, `deno` | `node` |
 | `tsc`, `tsx` | `node file.ts` runs TypeScript directly. For a real compile, `pnpm add -D typescript@5` and run `node_modules/.bin/tsc`. TypeScript 7 is native and does not run |
-| `python`, `python3`, `pip`, `ruby`, `perl`, `php`, `lua` | Write the script in Node |
+| `ruby`, `perl`, `php`, `lua` | Write the script in Node or Python |
 | `gcc`, `clang`, `make`, `cmake`, `cargo`, `go`, `java`, `swift` | Nothing compiles here. Say so, and leave the build to another machine |
 | `zip`, `unzip`, `7z`, `xz`, `bzip2` | `tar` and `gzip`, or an npm package such as `fflate` |
 | `wget` | `curl` |
@@ -44,14 +46,15 @@ Anything not listed here should be assumed missing.
 
 Pipes, redirects, `&&`, `||`, variables, arrays, functions, loops, here-documents, `$(...)`, subshells and `[[ ]]` work. Plain bash scripts run. The differences that matter:
 
-- **No live output.** A command's output appears only when it finishes. A single `node` or `pnpm run` command is the exception and streams.
+- **No live output.** A command's output appears only when it finishes. A single `node`, `pnpm run` or `python3` command is the exception and streams.
 - **Nothing is interactive.** There is no TTY. Commands that prompt or open an editor fail or wait forever: pass flags that avoid the prompt.
 - **`trap` does nothing.** It is accepted, but no signal arrives and `EXIT` traps do not run. Do not rely on them for cleanup.
 - **Heavy shell work blocks the app.** The interpreter shares a thread with the agent. Long `while` loops or a big `sort` or `rg` freeze everything until they finish. Do heavy work in a Node script: it runs on its own thread.
 - **`&` does not detach.** The shell returns only after background jobs finish, so `server & curl localhost` still waits for `server`, and nothing survives the command. `wait` works.
-- **Run scripts with their interpreter.** `./tool.js` works only as a whole command on its own: in `./tool.js && next`, or in a pipe, the shell tries to parse it as bash and fails. Write `node tool.js`. Scripts in other languages do not run.
+- **Run scripts with their interpreter.** `./tool.js` works only as a whole command on its own: in `./tool.js && next`, or in a pipe, the shell tries to parse it as bash and fails. Write `node tool.js`. The same goes for `./tool.py`: write `python3 tool.py`. Scripts in other languages do not run.
 - **`xargs` is limited.** `xargs -n 1 cmd` works (with the space); `-n1` and `-I{}` do not. Use a `for` loop when you need placeholders.
-- **Reduced file metadata.** `ls -l` may show placeholder owners and dates, and `/dev/urandom` and `/etc` do not exist. Use `node:crypto` for random bytes.
+- **Reduced file metadata.** `ls -l` may show placeholder owners and dates.
+- **`/dev` is only `/dev/null` in the shell.** `> /dev/null` works, but `/dev/urandom` and other devices do not exist there. Use `node:crypto` for random bytes.
 
 ## Files
 
@@ -69,6 +72,17 @@ Node 24 runs in jitless mode: pure JavaScript is several times slower than on a 
 - `http.createServer` works, and dev servers listen on `127.0.0.1`.
 - WebAssembly works but runs interpreted, so wasm tools are slow.
 - A plain `node` script can use the filesystem, network, `node:sqlite` and worker threads, and `node file.ts` runs TypeScript.
+
+## Python
+
+Python 3.15 is built into the app: `python`, `python3`, `python3.15`, `pip`, `pip3` and `pip3.15` work, and so do `#!/usr/bin/env python3` scripts run as a whole command. Pure Python runs close to desktop speed. The standard library is complete apart from GUI modules: `sqlite3`, `ssl`, `threading`, `asyncio` and `venv` all work.
+
+- `pip install` works for pure-Python packages. Outside a venv they go to `~/.local`. The first `pip` sets pip itself up, which takes a few seconds.
+- `python3 -m venv .venv` works, and so does `source .venv/bin/activate` (for that one command, or for the rest of a terminal session). Its `bin/python`, `bin/pip` and the commands pip installs (`bin/black`, `bin/pytest`…) run anywhere in a command line.
+- **Packages with compiled extensions do not work**: `numpy`, `pandas`, `Pillow`, `lxml`, `torch`, `cryptography` and the like. pip fails to build them, or they fail to import. Say so instead of retrying, and look for a pure-Python alternative.
+- **`subprocess` runs only Python.** From Python, `subprocess.run([sys.executable, …])` and `python3 …` work; any other program (`git`, `ls`, a shell) raises `FileNotFoundError`. So does `multiprocessing`. Use Python's own modules (`shutil`, `pathlib`, `glob`) instead of shelling out.
+- **No interactive Python.** `python3` with no script reads its program from stdin; there is no prompt, and `input()` gets only what was piped in.
+- `uv`, `poetry` and `conda` are native programs and do not exist: use `pip` and `venv`.
 
 ## Packages
 
@@ -98,7 +112,7 @@ The app has two interfaces onto the same engine and profile. The user normally w
 
 `git` is built in, on libgit2. Its output matches real git, so read it as usual.
 
-**Works:** `init clone fetch pull push status add rm mv commit log show diff rev-list shortlog diff-tree branch checkout switch restore reset merge tag stash clean apply remote ls-remote worktree config rev-parse ls-files ls-tree cat-file write-tree check-ignore hash-object merge-base show-ref symbolic-ref check-ref-format`
+**Works:** `init clone fetch pull push status add rm mv commit log show diff rev-list shortlog diff-tree branch checkout switch restore reset merge tag stash clean apply remote ls-remote worktree config rev-parse ls-files ls-tree cat-file write-tree check-ignore hash-object merge-base show-ref symbolic-ref check-ref-format whatchanged`
 
 **Not available:**
 
@@ -110,7 +124,7 @@ The app has two interfaces onto the same engine and profile. The user normally w
 | `revert` | Undo the change in the files and commit |
 | `blame` | `git log -p -- <file>` |
 | `git grep` | `rg` |
-| `bisect`, `submodule`, `am`, `format-patch`, `reflog`, `describe` | Not available |
+| `bisect`, `submodule`, `am`, `format-patch`, `reflog`, `describe`, `notes`, `sparse-checkout`, `filter-branch`, `lfs` | Not available |
 
 **Rules:**
 

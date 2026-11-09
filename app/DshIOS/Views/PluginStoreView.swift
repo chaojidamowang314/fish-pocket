@@ -132,6 +132,8 @@ private struct StoreDiscoverPage: View {
     var body: some View {
         Group {
             switch model.readiness {
+            case .checking where model.hasList:
+                ready
             case .checking, .preparing:
                 ProgressView("正在准备插件市场")
                     .font(.footnote)
@@ -515,6 +517,8 @@ private struct StoreRow: View {
                         .hitTarget()
                 }
                 .buttonStyle(.plain)
+                .disabled(model.market.fromCache)
+                .opacity(model.market.fromCache ? 0.4 : 1)
                 .accessibilityLabel("安装 \(entry.displayName)")
             }
         }

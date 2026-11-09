@@ -91,6 +91,8 @@ struct StoreEntryDetail: View {
         } else if entry.installable, let version = entry.version {
             Button("安装 \(entry.versionNumber)") { install(MarketChoice(entry: entry.json, version: version)) }
                 .buttonStyle(.capsule(height: 48))
+                .disabled(model.market.fromCache)
+                .opacity(model.market.fromCache ? 0.4 : 1)
         }
     }
 
@@ -257,9 +259,12 @@ private struct StoreReadmePage: View {
         .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// The copy on disk shows at once; the engine's answer replaces it, and a failed read keeps it.
     private func load() async {
         failed = false
         let language = AppLanguage.isChinese ? "zh" : "en"
+        let key = [url, entry.name, entry.versionNumber, language]
+        if markdown == nil, !missing, let cached = await PluginStoreCache.readme(key) { show(cached) }
         do {
             let detail = try await app.client.call("pluginMarket/readEntryDetail", [
                 "url": .string(url),
@@ -267,14 +272,21 @@ private struct StoreReadmePage: View {
                 "version": .string(entry.versionNumber),
                 "language": .string(language),
             ])
-            if detail["status"].string == "found", let text = detail["markdown"].string {
-                markdown = Self.withoutHTML(text)
-            } else {
-                missing = true
-            }
+            show(detail)
+            PluginStoreCache.saveReadme(key, ["status": detail["status"], "markdown": detail["markdown"]])
         } catch is CancellationError {
         } catch {
-            failed = true
+            failed = markdown == nil && !missing
+        }
+    }
+
+    private func show(_ detail: JSON) {
+        if detail["status"].string == "found", let text = detail["markdown"].string {
+            markdown = Self.withoutHTML(text)
+            missing = false
+        } else {
+            markdown = nil
+            missing = true
         }
     }
 }
