@@ -21,6 +21,8 @@ Anything not listed here should be assumed missing.
 - **Development:** `git node pnpm pnpx`
 - **Shell:** `bash sh env printenv which type command date sleep timeout time xargs yes true false expr whoami hostname pwd history alias unalias clear help`
 
+Python and pip also exist: see the Python section below.
+
 ## Missing, and what to do instead
 
 | Missing | Use instead |
@@ -51,7 +53,8 @@ Pipes, redirects, `&&`, `||`, variables, arrays, functions, loops, here-document
 - **`&` does not detach.** The shell returns only after background jobs finish, so `server & curl localhost` still waits for `server`, and nothing survives the command. `wait` works.
 - **Run scripts with their interpreter.** `./tool.js` works only as a whole command on its own: in `./tool.js && next`, or in a pipe, the shell tries to parse it as bash and fails. Write `node tool.js`. The same goes for `./tool.py`: write `python3 tool.py`. Scripts in other languages do not run.
 - **`xargs` is limited.** `xargs -n 1 cmd` works (with the space); `-n1` and `-I{}` do not. Use a `for` loop when you need placeholders.
-- **Reduced file metadata.** `ls -l` may show placeholder owners and dates, and `/dev/urandom` and `/etc` do not exist. Use `node:crypto` for random bytes.
+- **Reduced file metadata.** `ls -l` may show placeholder owners and dates.
+- **`/dev` is only `/dev/null` in the shell.** `> /dev/null` works, but `/dev/urandom` and other devices do not exist there. Use `node:crypto` for random bytes.
 
 ## Files
 
@@ -72,7 +75,7 @@ Node 24 runs in jitless mode: pure JavaScript is several times slower than on a 
 
 ## Python
 
-Python 3.15 is built into the app: `python`, `python3`, `python3.15`, `pip` and `pip3` work, and so do `#!/usr/bin/env python3` scripts run as a whole command. Pure Python runs close to desktop speed. The standard library is complete apart from GUI modules: `sqlite3`, `ssl`, `threading`, `asyncio` and `venv` all work.
+Python 3.15 is built into the app: `python`, `python3`, `python3.15`, `pip`, `pip3` and `pip3.15` work, and so do `#!/usr/bin/env python3` scripts run as a whole command. Pure Python runs close to desktop speed. The standard library is complete apart from GUI modules: `sqlite3`, `ssl`, `threading`, `asyncio` and `venv` all work.
 
 - `pip install` works for pure-Python packages. Outside a venv they go to `~/.local`. The first `pip` sets pip itself up, which takes a few seconds.
 - `python3 -m venv .venv` works, and so does `source .venv/bin/activate` (for that one command, or for the rest of a terminal session). Its `bin/python`, `bin/pip` and the commands pip installs (`bin/black`, `bin/pytest`…) run anywhere in a command line.
@@ -108,7 +111,7 @@ The app has two interfaces onto the same engine and profile. The user normally w
 
 `git` is built in, on libgit2. Its output matches real git, so read it as usual.
 
-**Works:** `init clone fetch pull push status add rm mv commit log show diff rev-list shortlog diff-tree branch checkout switch restore reset merge tag stash clean apply remote ls-remote worktree config rev-parse ls-files ls-tree cat-file write-tree check-ignore hash-object merge-base show-ref symbolic-ref check-ref-format`
+**Works:** `init clone fetch pull push status add rm mv commit log show diff rev-list shortlog diff-tree branch checkout switch restore reset merge tag stash clean apply remote ls-remote worktree config rev-parse ls-files ls-tree cat-file write-tree check-ignore hash-object merge-base show-ref symbolic-ref check-ref-format whatchanged`
 
 **Not available:**
 
@@ -120,7 +123,7 @@ The app has two interfaces onto the same engine and profile. The user normally w
 | `revert` | Undo the change in the files and commit |
 | `blame` | `git log -p -- <file>` |
 | `git grep` | `rg` |
-| `bisect`, `submodule`, `am`, `format-patch`, `reflog`, `describe` | Not available |
+| `bisect`, `submodule`, `am`, `format-patch`, `reflog`, `describe`, `notes`, `sparse-checkout`, `filter-branch`, `lfs` | Not available |
 
 **Rules:**
 

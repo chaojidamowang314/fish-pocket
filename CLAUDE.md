@@ -35,3 +35,20 @@
 
 - 已经发出去的条目，不要改它的 `version` 或 `build`，否则看过的人可能会再弹一次，或者有人会漏看。
 - 本地自测用 Debug 版的启动参数：`-dshVersion 1.1.0 -dshBuild 20` 让 App 当成这个版本和 build 运行；`-dshOpen whatsnew` 直接打开弹窗。这些参数只在 Debug 版里生效。
+
+## 内置 skill：iOS 环境说明
+
+`engine/skills/ios-environment/SKILL.md` 随 App 打包，App 里的 Agent 靠它判断这台「iOS 沙盒」里能做什么、不能做什么。它写错了，Agent 就会去试不存在的命令，或者放弃本来能做的事。
+
+**只要改动影响 Agent 在 App 里的执行环境，就在同一个提交里更新这份 skill。** 包括但不限于：
+
+- Shell 命令增减或行为变化：升级 `just-bash`，改 `engine/runtime/shell.mjs`（自定义命令、`/dev`、挂载）。
+- git：`engine/runtime/git` 里增减子命令或改了限制（同时对齐 `MISSING` 里的替代建议）。
+- Python：`engine/runtime/python`、`scripts/fetch-python.sh`（版本、pip/venv、subprocess 的能力）。
+- Node 和包管理：`scripts/fetch-nodejs-mobile.sh` 的 Node 版本、pnpm 版本、`engine/runtime/node-worker.mjs`、`engine/shims`（比如 `sharp` 替身支持的方法）。
+- 文件系统布局：`native/root`、`app/DshIOS/EnginePaths.swift`、`engine/main.mjs` 里的 `HOME`、`TMPDIR`、工作区位置。
+- 插件在原生界面和网页版里的可见范围，以及设置里相关入口的名字。
+
+改完跑 `cd engine && node --test test/ios-environment.test.mjs`：它检查 frontmatter、description 不超过 500 字，以及「Commands that exist」里列的每个命令都真实存在。在没有 git 原生插件的机器上（比如 Linux），`git` 会被报成不存在，这一项可以忽略；macOS 上先跑 `scripts/build-git-addon.sh`。
+
+写法上保持现在的风格：英文、短句、先说能不能用再说替代办法；「Commands that exist」之外的命令都会被当成不存在，所以新增命令一定要列进去。
