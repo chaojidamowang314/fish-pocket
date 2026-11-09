@@ -141,16 +141,18 @@ const DEFAULT_RANGE_DAYS = 7;
  * parsed as UTC by the language, which would shift the whole day for anyone east
  * or west of Greenwich and quietly return the wrong events.
  *
- * Exported so that behaviour can be pinned by a test; nothing else uses it.
+ * Exported so that behaviour can be pinned by a test. Shared by `calendar` and
+ * `health`, which is why the message names no tool: a health range failing with
+ * "calendar: ..." sends the reader looking in the wrong place.
  */
 export function toEpochSeconds(value, fallback) {
   if (value === undefined || value === null || value === '') return fallback;
-  if (typeof value !== 'string') throw new Error(`calendar: '${value}' is not a date`);
+  if (typeof value !== 'string') throw new Error(`'${value}' is not a date`);
   const bare = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   const date = bare
     ? new Date(Number(bare[1]), Number(bare[2]) - 1, Number(bare[3]))
     : new Date(value);
-  if (Number.isNaN(date.getTime())) throw new Error(`calendar: could not read the date '${value}'`);
+  if (Number.isNaN(date.getTime())) throw new Error(`could not read the date '${value}'`);
   return Math.floor(date.getTime() / 1000);
 }
 
@@ -699,6 +701,426 @@ const location = defineTool({
   },
 });
 
+const transcribe = defineTool({
+  name: 'transcribe_audio',
+  description:
+    'Read what is said in an audio file already on this device: a voice memo, a recorded meeting, '
+    + 'an audio attachment. Runs on the phone by default, so the recording is not uploaded and it '
+    + 'costs no tokens — prefer it over attaching the audio itself.\n'
+    + 'It reads a FILE. It does not listen to the microphone and cannot record: there is no live '
+    + 'dictation here, so do not offer it.\n'
+    + '`text` is Apple\'s own best reading of the audio and the other readings come back in '
+    + '`alternatives` — when the transcript has a word that makes no sense in context, look there '
+    + 'before guessing.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['file', 'languages'],
+      description: 'transcribe one audio file, or list the languages this device can recognise',
+      required: true,
+    },
+    path: { type: 'string', description: 'file: path to the audio file' },
+    language: {
+      type: 'string',
+      description: 'file: BCP-47 code to recognise, e.g. zh-CN or en-US; defaults to the language the phone is set to',
+    },
+    onDevice: {
+      type: 'boolean',
+      description:
+        'file: keep recognition on the phone. Defaults to true. Passing false sends the recording to '
+        + 'Apple\'s servers, so ask the user first and tell them afterwards that it was uploaded.',
+    },
+    punctuation: { type: 'boolean', description: 'file: let Apple punctuate the transcript; defaults to true' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'languages') {
+        const fallback = value.default
+          ? `\ndefault: ${value.default}${value.defaultSupportsOnDevice ? '' : ' (server-only on this device)'}`
+          : '\nno recogniser for the language this phone is set to';
+        return text(`${value.total} languages: ${value.languages.join(', ')}${fallback}`);
+      }
+      if (!value.text) return text('Nothing was said in that recording, or none of it could be made out.');
+      const others = value.alternativeCount > 1
+        ? `\n… Apple's best of ${value.alternativeCount} readings; the others are in "alternatives"`
+        : '';
+      // Said every time it happens, because the user cannot see that their
+      // recording left the phone and would have no other way to learn it.
+      const uploaded = value.onDevice
+        ? ''
+        : '\n… this was transcribed by Apple\'s servers, so the recording left the phone — tell the user';
+      const cut = value.segmentsTruncated
+        ? `\n… the transcript is complete; only the timed word list was cut to ${value.segments.length} of ${value.segmentTotal}`
+        : '';
+      return text(value.text + others + uploaded + cut);
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'languages') return invoke('transcribe', 'languages', {});
+    if (args.path === undefined) throw new Error('transcribe_audio: `file` needs `path`');
+    return invoke('transcribe', 'file', {
+      path: args.path,
+      ...(args.language === undefined ? {} : { language: args.language }),
+      ...(args.onDevice === undefined ? {} : { onDevice: args.onDevice }),
+      ...(args.punctuation === undefined ? {} : { punctuation: args.punctuation }),
+    });
+  },
+});
+
+const HEALTH_DEFAULT_DAYS = 7;
+
+/** `YYYY-MM-DD HH:MM`, from stamps the addon already wrote in device-local time. */
+const stampOf = (iso) => `${dayOf(iso)} ${timeOf(iso)}`;
+
+/** Enough digits to read, not enough to look like precision nobody measured. */
+function healthNumber(value) {
+  if (typeof value !== 'number') return '—';
+  if (Number.isInteger(value)) return String(value);
+  return Math.abs(value) >= 10 ? value.toFixed(0) : value.toFixed(2);
+}
+
+const health = defineTool({
+  name: 'health',
+  description:
+    'Apple Health on this device, READ ONLY: steps, distance, stairs, energy, exercise and stand '
+    + 'minutes, heart rate and HRV, breathing, blood oxygen, blood pressure, weight and body '
+    + 'measurements, sleep, mindfulness, water and food energy. Call `types` first for what can be '
+    + 'read and in which unit. Nothing here writes to Health, and there is no operation that can.\n'
+    + 'Prefer `aggregate` for anything about activity. A day of step data is hundreds of fragments, '
+    + 'so "how far did I walk last week" cannot be answered from raw samples — and raw samples from '
+    + 'an iPhone and a Watch overlap, so adding them up double counts. `aggregate` is HealthKit\'s '
+    + 'own statistics, which do not.\n'
+    + 'iOS never says whether a read was allowed — Apple withholds that on purpose, so that being '
+    + 'refused is not itself a disclosure. An empty answer means EITHER the user did not allow that '
+    + 'type OR there is genuinely nothing recorded, and nothing can tell the two apart. Say it could '
+    + 'be either; never report "you have no data" and never report "access is off".',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['types', 'read', 'aggregate'],
+      description: 'list the readable types, read raw samples, or total/average them per interval',
+      required: true,
+    },
+    type: { type: 'string', description: 'read/aggregate: the type, as `types` returned its id (e.g. stepCount)' },
+    from: {
+      type: 'string',
+      description: `read/aggregate: start of the range, YYYY-MM-DD or a full ISO timestamp; defaults to ${HEALTH_DEFAULT_DAYS} days before 'to'`,
+    },
+    to: { type: 'string', description: "read/aggregate: end of the range; defaults to now" },
+    limit: { type: 'number', description: 'read: how many samples, newest first; defaults to 100, capped at 500' },
+    interval: {
+      type: 'string',
+      enum: ['hour', 'day', 'week', 'month'],
+      description: 'aggregate: one bucket per hour, day, week or month; defaults to day',
+    },
+    unit: {
+      type: 'string',
+      description: "the unit to read values in, HealthKit's own spelling (count, kg, km, kcal, count/min, %, degC); defaults to the one `types` names",
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'types') {
+        return text((value.types ?? []).map((row) => {
+          const bits = [row.kind];
+          if (row.unit) bits.push(row.unit);
+          if (row.aggregatesAs) bits.push(`aggregate → ${row.aggregatesAs}`);
+          return `${row.id}  (${bits.join(', ')})\n    ${row.about}`;
+        }).join('\n'));
+      }
+      if (args.action === 'read') {
+        const samples = value.samples ?? [];
+        if (samples.length === 0) {
+          return text(`No ${value.type} samples between ${dayOf(value.from)} and ${dayOf(value.to)}.\n${value.emptyMeans ?? ''}`.trim());
+        }
+        const lines = samples.map((sample) => {
+          const when = sample.start === sample.end
+            ? stampOf(sample.start)
+            : `${stampOf(sample.start)} – ${dayOf(sample.end) === dayOf(sample.start) ? timeOf(sample.end) : stampOf(sample.end)}`;
+          // A category sample's name is the value; a quantity's is a number and a unit.
+          const what = sample.valueName ?? `${healthNumber(sample.value)}${value.unit ? ` ${value.unit}` : ''}`;
+          return `${when}  ${what}${sample.source ? `  [${sample.source}]` : ''}`;
+        });
+        if (value.truncated) {
+          lines.push(`… the newest ${samples.length}; there are more. Narrow the range, raise \`limit\` (max 500), or use \`aggregate\`.`);
+        }
+        return text(lines.join('\n'));
+      }
+      const buckets = value.buckets ?? [];
+      const lines = [`${value.type} · ${value.stat} per ${value.interval} · ${value.unit}`];
+      for (const bucket of buckets) {
+        const when = value.interval === 'hour' ? stampOf(bucket.start) : dayOf(bucket.start);
+        // Null is "HealthKit had no samples here", which is not the same as zero —
+        // a watch left on the table and a day spent sitting still look different.
+        if (bucket.value === null) { lines.push(`${when}  —`); continue; }
+        const span = bucket.min === undefined ? '' : `  (${healthNumber(bucket.min)}–${healthNumber(bucket.max)})`;
+        lines.push(`${when}  ${healthNumber(bucket.value)}${span}`);
+      }
+      if (value.truncated) lines.push(`… ${buckets.length} of ${value.total} buckets.`);
+      if (value.emptyMeans) lines.push(value.emptyMeans);
+      return text(lines.join('\n'));
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'types') return invoke('health', 'types');
+    if (!args.type) {
+      throw new Error(`health: ${args.action} needs \`type\`; call \`types\` for the ones this app can read`);
+    }
+    const to = toEpochSeconds(args.to, Math.floor(Date.now() / 1000));
+    const from = toEpochSeconds(args.from, to - HEALTH_DEFAULT_DAYS * 86400);
+    if (to <= from) throw new Error("health: 'to' must be after 'from'");
+    const window = { type: args.type, from, to, ...(args.unit === undefined ? {} : { unit: args.unit }) };
+    if (args.action === 'read') {
+      return invoke('health', 'read', { ...window, ...(args.limit === undefined ? {} : { limit: args.limit }) });
+    }
+    return invoke('health', 'aggregate', {
+      ...window, ...(args.interval === undefined ? {} : { interval: args.interval }),
+    });
+  },
+});
+
+const photos = defineTool({
+  name: 'photos',
+  description:
+    'Read the metadata of the photos and videos on this device, list its albums, or export one '
+    + 'photo to a file. Nothing here returns image data: use `list` or `albums` to find the picture '
+    + 'you mean, then `export` to get a file path and read it with read_image — all on the phone, so '
+    + 'a receipt or a screenshot never has to be uploaded.\n'
+    + 'Photos come back in the library\'s own order, which is OLDEST FIRST, so ask for a stretch of '
+    + 'time with from/to or pass newestFirst when the question is about recent pictures.\n'
+    + 'If the reply says access is "limited", the user shared a few photos rather than their '
+    + 'library: relay that instead of telling them how many photos they have.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['list', 'albums', 'export'],
+      description: 'list photo metadata, list the albums, or export one photo to a file',
+      required: true,
+    },
+    from: { type: 'number', description: 'list: earliest creation time, seconds since 1970' },
+    to: { type: 'number', description: 'list: latest creation time, seconds since 1970' },
+    album: { type: 'string', description: 'list: restrict to one album, by the id `albums` returned' },
+    newestFirst: { type: 'boolean', description: 'list: newest first instead of the library order; defaults to false' },
+    limit: { type: 'number', description: 'list: how many to return, at most 200' },
+    id: { type: 'string', description: 'export: which photo, by the id `list` returned' },
+    maxPixels: { type: 'number', description: 'export: cap the longest edge in pixels; omit for full resolution' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      // The limited-access note goes first, every time: a count taken from a
+      // handful of shared photos reads exactly like a count of their library.
+      const note = value.access === 'limited' ? `${value.note}\n\n` : '';
+      if (args.action === 'albums') {
+        const list = value.albums ?? [];
+        if (list.length === 0) return text(`${note}No albums on this device.`);
+        return text(note + list.map((a) => `${a.count}\t${a.title || '(untitled)'}\t${a.kind}\t${a.id}`).join('\n')
+          + (value.truncated ? `\n… ${value.total} albums in all.` : ''));
+      }
+      if (args.action === 'export') {
+        return text(`${note}Exported to ${value.path} — ${value.width}x${value.height} jpeg, `
+          + `${Math.round(value.bytes / 1024)} KB. Read it with read_image.`);
+      }
+      const list = value.photos ?? [];
+      if (list.length === 0) return text(`${note}No photos match that.`);
+      return text(note + list.map((p) => `${p.created}\t${p.width}x${p.height}`
+        + `${p.isVideo ? `\tvideo ${Math.round(p.duration)}s` : ''}${p.favorite ? '\t★' : ''}\t${p.id}`).join('\n')
+        + (value.truncated ? `\n… ${value.total} in all; narrow it with from/to.` : ''));
+    },
+  },
+  execute: (args) => invoke('photos', args.action, {
+    ...(args.from === undefined ? {} : { from: args.from }),
+    ...(args.to === undefined ? {} : { to: args.to }),
+    ...(args.album === undefined ? {} : { album: args.album }),
+    ...(args.newestFirst === undefined ? {} : { newestFirst: args.newestFirst }),
+    ...(args.limit === undefined ? {} : { limit: args.limit }),
+    ...(args.id === undefined ? {} : { id: args.id }),
+    ...(args.maxPixels === undefined ? {} : { maxPixels: args.maxPixels }),
+  }),
+});
+
+const homekit = defineTool({
+  name: 'homekit',
+  description:
+    'Read and control the user\'s HomeKit home: list homes, rooms and accessories, read one '
+    + 'accessory in full with its characteristics and current values, write one characteristic, '
+    + 'list scenes, and run one.\n'
+    + 'Values come straight from HomeKit and are NOT translated for you — read a characteristic\'s '
+    + '`type` to know which one it is, and its `metadata` (format, minimumValue, maximumValue, '
+    + 'units) to work out what a number means. Categories are HomeKit\'s own constants.\n'
+    + 'When a name matches more than one accessory or scene, `get` returns every match while `set` '
+    + 'and `trigger` refuse and list them: pick one and pass its uniqueIdentifier. Writing may stop '
+    + 'for the user to confirm, depending on their setting.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['list', 'get', 'set', 'scenes', 'trigger'],
+      description: 'list the home, read one accessory, set one characteristic, list scenes, or run a scene',
+      required: true,
+    },
+    name: { type: 'string', description: "get: the accessory's name; trigger: the scene's name" },
+    uniqueIdentifier: { type: 'string', description: 'get: the accessory to read, when a name matched several' },
+    accessory: { type: 'string', description: 'set: the accessory to change, by name or uniqueIdentifier' },
+    characteristic: {
+      type: 'string',
+      description: 'set: which characteristic to write, by `type` or `uniqueIdentifier` from `get`. '
+        + 'Use the uniqueIdentifier when one accessory has the same characteristic twice, like a two-gang switch',
+    },
+    value: { type: 'number', description: 'set: the new value; a bool characteristic takes 0 or 1' },
+    valueText: { type: 'string', description: 'set: the new value when the characteristic is a string' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'list') {
+        const homes = value.homes ?? [];
+        if (homes.length === 0) return text('No homes are set up on this device.');
+        const lines = [];
+        for (const home of homes) {
+          lines.push(`${home.name}${home.primary ? ' (primary)' : ''}  hub state ${home.homeHubState}`);
+          for (const item of home.accessories ?? []) {
+            lines.push(`  ${item.name}  ${item.room ?? '-'}  ${item.categoryLocalizedDescription}`
+              + `${item.reachable ? '' : '  UNREACHABLE'}  ${item.uniqueIdentifier}`);
+          }
+        }
+        if (value.truncated) lines.push(`… ${value.total} accessories in all`);
+        return text(lines.join('\n'));
+      }
+      if (args.action === 'get') {
+        const lines = [];
+        for (const item of value.accessories ?? []) {
+          lines.push(`${item.name}  ${item.room ?? '-'}  ${item.categoryLocalizedDescription}`
+            + `${item.reachable ? '' : '  UNREACHABLE'}  ${item.uniqueIdentifier}`);
+          for (const service of item.services ?? []) {
+            lines.push(`  service ${service.name} (${service.localizedDescription})`);
+            for (const c of service.characteristics ?? []) {
+              const meta = c.metadata ?? {};
+              const range = meta.minimumValue === undefined
+                ? '' : ` [${meta.minimumValue}..${meta.maximumValue}${meta.units ? ` ${meta.units}` : ''}]`;
+              lines.push(`    ${c.localizedDescription} = `
+                + `${c.readError ? `(${c.readError})` : JSON.stringify(c.value)}`
+                + `${range}  ${(c.properties ?? []).join(',')}  ${c.uniqueIdentifier}`);
+            }
+          }
+        }
+        if (value.total > (value.accessories ?? []).length) {
+          lines.push(`… ${value.total} accessories match that name; pass a uniqueIdentifier to pick one`);
+        }
+        if (value.characteristicsTruncated) lines.push('… some characteristics were left out');
+        if (value.valuesTimedOut) lines.push('some values did not come back in time and may be stale');
+        return text(lines.join('\n'));
+      }
+      if (args.action === 'scenes') {
+        const scenes = value.scenes ?? [];
+        if (scenes.length === 0) return text('No scenes are set up.');
+        const lines = scenes.map((s) =>
+          `${s.name}  ${s.home}  ${s.actionSetType}  ${s.actionCount} actions  ${s.uniqueIdentifier}`);
+        if (value.truncated) lines.push(`… ${value.total} scenes in all`);
+        return text(lines.join('\n'));
+      }
+      if (args.action === 'trigger') {
+        return text(value.executed ? 'Scene run.' : 'They declined; the scene did not run.');
+      }
+      return text(value.written ? 'Written.' : 'They declined; nothing was changed.');
+    },
+  },
+  execute: (args) => {
+    if (args.action === 'list') return invoke('homekit', 'list');
+    if (args.action === 'scenes') return invoke('homekit', 'scenes');
+    if (args.action === 'get') {
+      if (!args.name && !args.uniqueIdentifier) throw new Error('homekit: `get` needs `name` or `uniqueIdentifier`');
+      return invoke('homekit', 'get', {
+        ...(args.uniqueIdentifier === undefined ? {} : { uniqueIdentifier: args.uniqueIdentifier }),
+        ...(args.name === undefined ? {} : { name: args.name }),
+      });
+    }
+    if (args.action === 'trigger') {
+      if (!args.name) throw new Error('homekit: `trigger` needs the scene `name`');
+      return invoke('homekit', 'trigger', { name: args.name });
+    }
+    if (!args.accessory) throw new Error('homekit: `set` needs `accessory`');
+    if (!args.characteristic) throw new Error('homekit: `set` needs `characteristic`');
+    // Two parameters because the schema has no union type and a characteristic
+    // may be a number, a bool (0/1) or a string. Nothing here maps "on" to 1 —
+    // inventing that mapping is exactly the kind of rule §4.5 refuses.
+    const written = args.valueText === undefined ? args.value : args.valueText;
+    if (written === undefined) {
+      throw new Error('homekit: `set` needs `value`, or `valueText` for a string characteristic');
+    }
+    return invoke('homekit', 'set', {
+      accessory: args.accessory, characteristic: args.characteristic, value: written,
+    });
+  },
+});
+
+const alarm = defineTool({
+  name: 'alarm',
+  description:
+    'Set a real alarm clock on the user\'s device, or list and cancel ones you set. Unlike '
+    + '`notify`, an alarm breaks through silent mode and Focus and keeps ringing until they stop '
+    + 'it — so use it only for things they must not sleep through or miss, and use `notify` for '
+    + 'ordinary reminders. Needs iOS 26 or later, and they must switch alarms on under Device '
+    + 'capabilities first.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['list', 'create', 'cancel'],
+      description: 'list the alarms you set, create one, or cancel one by id',
+      required: true,
+    },
+    title: { type: 'string', description: 'what the alarm is for; required to create' },
+    hour: { type: 'number', description: 'hour of day, 0-23; required to create' },
+    minute: { type: 'number', description: 'minute of the hour, 0-59; required to create' },
+    repeatWeekdays: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'optional; lowercase English weekday names to repeat on, e.g. ["monday","friday"]. '
+        + 'Omit for a one-off alarm at the next occurrence of that time.',
+    },
+    id: { type: 'string', description: 'the alarm to cancel, as create or list returned it' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'list') {
+        const list = value.alarms ?? [];
+        if (list.length === 0) return text('No alarms set.');
+        return text(list.map((item) => {
+          const at = typeof item.hour === 'number'
+            ? `${String(item.hour).padStart(2, '0')}:${String(item.minute ?? 0).padStart(2, '0')}`
+            : '';
+          const days = (item.repeatWeekdays ?? []).join(' ');
+          return [at, days, item.state, item.title ?? '', item.id].filter(Boolean).join('  ');
+        }).join('\n'));
+      }
+      if (args.action === 'cancel') {
+        return text(value.cancelled ? 'Alarm turned off.' : 'They declined; the alarm is still set.');
+      }
+      return text(value.saved ? `Alarm set (id ${value.id}).` : 'They declined; no alarm was set.');
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'create') {
+      if (!args.title) throw new Error('alarm: creating needs `title`');
+      if (typeof args.hour !== 'number') throw new Error('alarm: creating needs `hour`');
+      if (typeof args.minute !== 'number') throw new Error('alarm: creating needs `minute`');
+      return invoke('alarm', 'create', {
+        title: args.title,
+        hour: args.hour,
+        minute: args.minute,
+        ...(args.repeatWeekdays === undefined ? {} : { repeatWeekdays: args.repeatWeekdays }),
+      });
+    }
+    if (args.action === 'cancel') {
+      if (!args.id) throw new Error('alarm: cancelling needs `id`');
+      return invoke('alarm', 'cancel', { id: args.id });
+    }
+    return invoke('alarm', 'list');
+  },
+});
+
 /** Tool definitions by the capability each one needs. */
 export const TOOLS = {
   device: device,
@@ -712,4 +1134,9 @@ export const TOOLS = {
   vision: vision,
   clipboard: clipboard,
   location: location,
+  transcribe: transcribe,
+  health: health,
+  photos: photos,
+  homekit: homekit,
+  alarm: alarm,
 };

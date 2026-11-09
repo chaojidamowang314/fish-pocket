@@ -36,7 +36,16 @@ static dispatch_queue_t vision_queue(void) {
 }
 
 /// Load the image an engine path names, or nil with a reason the agent can read.
-static CGImageRef copy_image(NSString *path, NSString **error) CF_RETURNS_RETAINED {
+///
+/// `orientation` comes back alongside it, and it is not optional detail: a
+/// CGImage carries pixels and nothing else, so a photo shot sideways and stored
+/// with an EXIF rotation loads as a sideways image. Handing that to Vision makes
+/// the text in it unreadable — which is exactly the common case here, a receipt
+/// photographed in portrait. Vision takes the orientation as an argument rather
+/// than wanting the pixels rotated, so this is a value to carry, not a transform
+/// to apply.
+static CGImageRef copy_image(NSString *path, CGImagePropertyOrientation *orientation,
+                             NSString **error) CF_RETURNS_RETAINED {
   if (![path isKindOfClass:NSString.class] || path.length == 0) {
     *error = @"this operation needs a 'path' to an image file";
     return NULL;
@@ -53,6 +62,15 @@ static CGImageRef copy_image(NSString *path, NSString **error) CF_RETURNS_RETAIN
     return NULL;
   }
   CGImageRef image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+  // Absent for a screenshot or a file that was never rotated; 1 ("up") is the
+  // right answer then, and also the right answer for a value we cannot read.
+  *orientation = kCGImagePropertyOrientationUp;
+  NSDictionary *properties =
+    (__bridge_transfer NSDictionary *)CGImageSourceCopyPropertiesAtIndex(source, 0, NULL);
+  NSNumber *stored = properties[(__bridge NSString *)kCGImagePropertyOrientation];
+  if ([stored isKindOfClass:NSNumber.class] && stored.unsignedIntValue >= 1 && stored.unsignedIntValue <= 8) {
+    *orientation = (CGImagePropertyOrientation)stored.unsignedIntValue;
+  }
   CFRelease(source);
   if (image == NULL) {
     *error = [NSString stringWithFormat:@"'%@' is not an image this device can read", path];
@@ -65,12 +83,13 @@ static CGImageRef copy_image(NSString *path, NSString **error) CF_RETURNS_RETAIN
 static void with_vision(NSString *path, DshNativeReply reply,
                         NSArray<VNRequest *> *requests, void (^next)(void)) {
   NSString *error = nil;
-  CGImageRef image = copy_image(path, &error);
+  CGImagePropertyOrientation orientation = kCGImagePropertyOrientationUp;
+  CGImageRef image = copy_image(path, &orientation, &error);
   if (image == NULL) { reply(nil, error); return; }
 
   dispatch_async(vision_queue(), ^{
     VNImageRequestHandler *handler =
-      [[VNImageRequestHandler alloc] initWithCGImage:image options:@{}];
+      [[VNImageRequestHandler alloc] initWithCGImage:image orientation:orientation options:@{}];
     NSError *runError = nil;
     BOOL ok = [handler performRequests:requests error:&runError];
     CGImageRelease(image);

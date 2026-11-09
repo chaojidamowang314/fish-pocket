@@ -88,17 +88,31 @@ private extension NativeBridge {
         case ("reminders", "create"): return String(localized: "新建这个提醒？")
         case ("reminders", "complete"): return String(localized: "把这个提醒标记为完成？")
         case ("reminders", "delete"): return String(localized: "删除这个提醒？")
+        case ("alarm", "create"): return String(localized: "设这个闹钟？")
+        case ("alarm", "cancel"): return String(localized: "取消这个闹钟？")
+        case ("clipboard", "set"): return String(localized: "替换剪贴板的内容？")
+        case ("clipboard", "clear"): return String(localized: "清空剪贴板？")
+        case ("homekit", "set"): return String(localized: "改这个配件的状态？")
+        case ("homekit", "trigger"): return String(localized: "执行这个场景？")
         // 新能力忘了加文案时，问句仍然成立，只是不够具体——总好过问错对象。
         default: return destructive ? String(localized: "删除这一条？") : String(localized: "确认这个改动？")
         }
     }
 
+    /// 按操作选词，destructive 只做兜底——它决定的是按钮的样式（红色），不是
+    /// 按钮上的字。先按 destructive 返回「删除」的话，关掉一个闹钟和清空剪贴板
+    /// 都会写成「删除」，而那两件事都不是删除。
     static func confirmButton(op: String, destructive: Bool) -> String {
-        if destructive { return String(localized: "删除") }
         switch op {
         case "create": return String(localized: "新建")
         case "complete": return String(localized: "标记完成")
-        default: return String(localized: "修改")
+        // 不能只说「取消」——那是框上另一个按钮的字，两个按钮都写「取消」时
+        // 用户分不清哪个是「别动我的闹钟」。
+        case "cancel": return String(localized: "关掉闹钟")
+        case "trigger": return String(localized: "执行")
+        case "clear": return String(localized: "清空")
+        case "delete": return String(localized: "删除")
+        default: return destructive ? String(localized: "删除") : String(localized: "修改")
         }
     }
 }

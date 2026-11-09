@@ -1,6 +1,9 @@
 import SwiftUI
 import CoreLocation
 import EventKit
+import HealthKit
+import Speech
+import Photos
 import UserNotifications
 
 /// 「本机能力」：智能体能用到手机的哪些东西，各自要不要系统授权——以及由你在这里
@@ -155,6 +158,30 @@ struct NativeCapabilitiesView: View {
             // raises nothing. Only `requestWhenInUseAuthorization` shows a dialog.
             permissions[NativeCapability.locationPermission] = .ofLocation(CLLocationManager().authorizationStatus)
         }
+        if needed.contains(NativeCapability.speechPermission) {
+            permissions[NativeCapability.speechPermission] = .ofSpeech(SFSpeechRecognizer.authorizationStatus())
+        }
+        if needed.contains(NativeCapability.photosPermission) {
+            permissions[NativeCapability.photosPermission] =
+                .ofPhotos(PHPhotoLibrary.authorizationStatus(for: .readWrite))
+        }
+        if needed.contains(NativeCapability.homeKitPermission) {
+            // HomeKit has no free status query — creating the manager IS the
+            // prompt — so this asks what the app has already seen iOS answer.
+            permissions[NativeCapability.homeKitPermission] = DshHomeKitAccessGranted()
+                ? .allowed
+                : (DshHomeKitAccessRefused() ? .denied : .notDetermined)
+        }
+        if needed.contains(NativeCapability.healthPermission) {
+            // The only capability that cannot report whether it was allowed.
+            DshHealthRequestStatus { status in
+                Task { @MainActor in
+                    // 1 is "would still ask"; 2 is "has been asked", which is NOT
+                    // "was allowed" and must never be shown as 已开启.
+                    permissions[NativeCapability.healthPermission] = status == 2 ? .asked : .notDetermined
+                }
+            }
+        }
         if needed.contains(NativeCapability.notificationPermission) {
             UNUserNotificationCenter.current().getNotificationSettings { settings in
                 Task { @MainActor in
@@ -173,11 +200,39 @@ enum CapabilityPermission {
     case denied
     /// 给了，但不够用。日历的「仅添加」就是这一档：写得进去，读不出来。
     case insufficient(LocalizedStringResource)
+    /// 问过了，但**系统不肯说用户答了什么**。健康数据是这一档，而且只有这一档：
+    /// Apple 故意不让 App 查询读权限的状态，因为「能不能读到某一项」本身就会
+    /// 泄露用户有没有这项数据。所以这里既不能写「已开启」也不能写「已关闭」——
+    /// 两种都是我们不知道的事，写哪个都是在骗人。
+    case asked
+    /// 这台机器的系统版本不支持这项能力。闹钟要 iOS 26，而部署目标是 17。
+    /// 这一档既不是「没开」也不是「关了」——用户做什么都没用，所以不能给他
+    /// 一个点了毫无反应的「开启」按钮。
+    case unsupported(LocalizedStringResource)
 
     static func ofNotifications(_ status: UNAuthorizationStatus) -> CapabilityPermission {
         switch status {
         case .authorized, .provisional, .ephemeral: return .allowed
         case .denied: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofSpeech(_ status: SFSpeechRecognizerAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .authorized: return .allowed
+        case .denied, .restricted: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofPhotos(_ status: PHAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .authorized: return .allowed
+        // 「仅选择照片…」确实是授权了，但说「已开启」会让用户以为智能体看得到
+        // 整个相册。它看得到的只有用户挑的那几张，这一行得说实话。
+        case .limited: return .insufficient("仅限你分享的那几张")
+        case .denied, .restricted: return .denied
         default: return .notDetermined
         }
     }
@@ -209,6 +264,8 @@ enum CapabilityPermission {
         case .allowed: return "已开启"
         case .denied: return "已关闭"
         case .insufficient(let detail): return detail
+        case .asked: return "已询问"
+        case .unsupported(let why): return why
         }
     }
 
@@ -218,10 +275,18 @@ enum CapabilityPermission {
         case .notNeeded, .allowed: return .none
         case .notDetermined: return .enable
         case .denied, .insufficient: return .settings
+        // 再点一次「开启」不会再弹框（iOS 一生只问一次），但去系统设置能逐项
+        // 查看和改——那里是唯一能看到真实状态的地方。
+        case .asked: return .settings
+        // 系统设置里也没有这一项可开，给「去设置」同样是空指望。
+        case .unsupported: return .none
         }
     }
 
     var isAllowed: Bool { if case .allowed = self { return true } else { return false } }
+
+    /// 写入开关只在确定开着的时候才有意义。`.asked` 不算——我们并不知道它开着。
+    var showsWriteSetting: Bool { isAllowed }
 }
 
 enum CapabilityAction { case none, enable, settings }
@@ -230,6 +295,10 @@ enum CapabilityAction { case none, enable, settings }
 struct NativeCapability: Identifiable {
     static let notificationPermission = "notifications"
     static let locationPermission = "location"
+    static let speechPermission = "speech"
+    static let healthPermission = "health"
+    static let homeKitPermission = "homekit"
+    static let photosPermission = "photos"
     static let calendarPermission = "calendar"
     static let remindersPermission = "reminders"
 
@@ -276,6 +345,11 @@ struct NativeCapability: Identifiable {
         case "vision": return String(localized: "图像识别")
         case "clipboard": return String(localized: "剪贴板")
         case "location": return String(localized: "位置")
+        case "transcribe": return String(localized: "语音转写")
+        case "health": return String(localized: "健康")
+        case "homekit": return String(localized: "智能家居")
+        case "photos": return String(localized: "照片")
+        case "alarm": return String(localized: "闹钟")
         case "calendar": return String(localized: "日历")
         case "reminders": return String(localized: "提醒事项")
         default: return id
@@ -293,6 +367,11 @@ struct NativeCapability: Identifiable {
         case "vision": return String(localized: "认出图里的文字、二维码和内容。全在本机算，图片不上传")
         case "clipboard": return String(localized: "读你复制的内容。每次读取 iOS 都会提示你")
         case "location": return String(localized: "问到的时候读一次当前位置。不持续记录，也没有轨迹")
+        case "transcribe": return String(localized: "把录音文件里说的话转成文字。默认只在本机识别，录音不上传")
+        case "health": return String(localized: "读「健康」里的步数、睡眠、心率等。只读，绝不写入")
+        case "homekit": return String(localized: "查看家里有哪些配件和它们的状态，并按你设的写入方式改状态、跑场景")
+        case "photos": return String(localized: "查看相册里有哪些照片，并把你指定的一张导出给本机识别。不增不改不删")
+        case "alarm": return String(localized: "让智能体设真正的闹钟。和通知不同，闹钟会穿透静音和专注模式，响到你关掉为止")
         case "calendar": return String(localized: "查看你的日程，并按你设的写入方式增删改")
         case "reminders": return String(localized: "查看「提醒事项」里的待办，并按你设的写入方式增删改")
         default: return ops.joined(separator: " · ")
@@ -311,6 +390,11 @@ struct NativeCapability: Identifiable {
         case "vision": return "eye"
         case "clipboard": return "doc.on.clipboard"
         case "location": return "location"
+        case "transcribe": return "waveform"
+        case "health": return "heart"
+        case "homekit": return "house"
+        case "photos": return "photo"
+        case "alarm": return "alarm.waves.left.and.right"
         case "calendar": return "calendar"
         case "reminders": return "checklist"
         default: return "square.grid.2x2"
@@ -366,9 +450,16 @@ private struct CapabilityRow: View {
                         .font(.footnote)
                         .foregroundStyle(Palette.ink)
                 }
+                // 「已询问」三个字单独摆着没人看得懂，必须跟一句为什么只能这么说。
+                if case .asked = permission {
+                    Text("iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。去「健康」App 的「共享」里可以逐项查看和更改。")
+                        .font(.footnote)
+                        .foregroundStyle(Palette.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 // 只在这项真的能改用户数据、而且已经开着的时候才出现：没开的
                 // 能力给个写入开关，是在问一个还不成立的问题。
-                if capability.canWrite, permission.isAllowed {
+                if capability.canWrite, permission.showsWriteSetting {
                     Menu {
                         Picker("写入", selection: Binding(get: { policy }, set: setPolicy)) {
                             Text(DshWritePolicy.direct.label).tag(DshWritePolicy.direct)

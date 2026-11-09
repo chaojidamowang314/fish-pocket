@@ -50,8 +50,9 @@ test('tool names are unique and stable', () => {
   // Pinned because they reach the model's prompt and a rename is a breaking
   // change for any skill or plugin that mentions them.
   assert.deepEqual(names.sort(),
-    ['calendar', 'clipboard', 'device_info', 'location', 'maps', 'notify', 'open_url', 'read_image',
-     'reminders', 'speak', 'text_analysis']);
+    ['alarm', 'calendar', 'clipboard', 'device_info', 'health', 'homekit', 'location', 'maps',
+     'notify', 'open_url', 'photos', 'read_image', 'reminders', 'speak', 'text_analysis',
+     'transcribe_audio']);
 });
 
 test('a reminders write is refused before the addon when it has nothing to act on', async () => {
@@ -280,6 +281,63 @@ test('maps names the coordinates it was given rather than "Unknown Location"', (
   assert.match(rendered, /1 h 55 min, 137\.1 km/);
 });
 
+test('the capabilities added last refuse before the addon when an argument is missing', async () => {
+  await assert.rejects(TOOLS.health.execute({ action: 'read' }, {}), /needs `type`/);
+  await assert.rejects(
+    TOOLS.health.execute({ action: 'read', type: 'stepCount', from: '2026-11-10', to: '2026-11-09' }, {}),
+    /'to' must be after 'from'/,
+  );
+  await assert.rejects(TOOLS.transcribe.execute({ action: 'file' }, {}), /`file` needs `path`/);
+  await assert.rejects(TOOLS.homekit.execute({ action: 'get' }, {}), /needs `name` or `uniqueIdentifier`/);
+  await assert.rejects(TOOLS.homekit.execute({ action: 'set', accessory: 'a' }, {}), /needs `characteristic`/);
+  // 0 is a real characteristic value — "off" on a bool. A truthiness check here
+  // would refuse exactly the request to turn something off.
+  await assert.rejects(
+    TOOLS.homekit.execute({ action: 'set', accessory: 'a', characteristic: 'b', value: 0 }, {}),
+    /only available in the iOS app/,
+  );
+  await assert.rejects(TOOLS.alarm.execute({ action: 'create', title: 'x' }, {}), /needs `hour`/);
+  // Midnight is 0:00, and both halves of it are falsy.
+  await assert.rejects(
+    TOOLS.alarm.execute({ action: 'create', title: 'x', hour: 0, minute: 0 }, {}),
+    /only available in the iOS app/,
+  );
+  await assert.rejects(TOOLS.alarm.execute({ action: 'cancel' }, {}), /cancelling needs `id`/);
+});
+
+test('an empty health answer never reads as "you have no data"', () => {
+  const render = (action, value) => TOOLS.health.output.render({ action }, value)[0].text;
+  // iOS will not say whether a read was allowed, so the renderer must carry the
+  // addon's "could be either" line rather than stating one of the two.
+  const empty = render('read', {
+    type: 'stepCount', from: '2026-11-03T00:00:00+08:00', to: '2026-11-10T00:00:00+08:00',
+    samples: [], emptyMeans: 'This is either not allowed or not recorded; iOS does not say which.',
+  });
+  assert.match(empty, /either not allowed or not recorded/);
+
+  // A bucket with no samples is not a zero: a watch left on the table and a day
+  // spent sitting still are different answers.
+  const gaps = render('aggregate', {
+    type: 'stepCount', stat: 'sum', interval: 'day', unit: 'count',
+    buckets: [{ start: '2026-11-09T00:00:00+08:00', value: null },
+              { start: '2026-11-10T00:00:00+08:00', value: 8421 }],
+  });
+  assert.match(gaps, /2026-11-09 {2}—/);
+  assert.match(gaps, /2026-11-10 {2}8421/);
+});
+
+test('a limited photo library is never reported as the whole library', () => {
+  const rendered = TOOLS.photos.output.render({ action: 'list' }, {
+    access: 'limited',
+    note: 'These are the photos the user shared with this app, not their library.',
+    photos: [{ created: '2026-11-09', width: 4032, height: 3024, id: 'A' }],
+    total: 1,
+  })[0].text;
+  // The note comes first, because a count taken from a handful of shared photos
+  // reads exactly like a count of everything they have.
+  assert.match(rendered.split('\n')[0], /shared with this app/);
+});
+
 test('a bare date means local midnight, not UTC midnight', () => {
   // The whole point of the conversion. `new Date('2026-11-09')` is UTC midnight,
   // which lands on 8 November for anyone west of Greenwich and skips the first
@@ -303,6 +361,9 @@ test('a missing range falls back rather than failing', () => {
 test('an unreadable date is refused with the value in the message', () => {
   assert.throws(() => toEpochSeconds('next tuesday'), /could not read the date 'next tuesday'/);
   assert.throws(() => toEpochSeconds(20261109), /is not a date/);
+  // The message names no tool on purpose: `calendar` and `health` share this
+  // helper, and "calendar: ..." on a health range sends the reader to the wrong file.
+  assert.throws(() => toEpochSeconds('nope'), (error) => !/^calendar:/.test(error.message));
 });
 
 test('a calendar write is refused before the addon when it cannot say what to write', async () => {

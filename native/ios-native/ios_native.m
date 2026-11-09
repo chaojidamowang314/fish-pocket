@@ -17,6 +17,10 @@
 #import "DshNativeCapabilities.h"
 #import "DshNativeAudit.h"
 #import "eventkit_shared.h"
+// alarm is the one capability ObjC cannot implement (AlarmKit has no ObjC
+// surface at all), so its declarations live with its bridge, not in the shared
+// header the other capabilities use.
+#import "DshAlarmBridge.h"
 #import <node_api.h>
 
 /// A capability may put a one-line account of what it did under this key. The
@@ -85,6 +89,28 @@ static const dsh_capability CAPABILITIES[] = {
   // Apple's servers and cost the user nothing, but they live here because that
   // is where a caller looks for them.
   {"location", dsh_native_location,  {"current", "geocode", "reverse", NULL}, "location", {NULL}, false},
+  // Transcribes a file that already exists. No microphone and no recording, so
+  // the only permission is speech recognition itself — which is why the
+  // permission here is named for the permission, not for the capability.
+  {"transcribe", dsh_native_transcribe, {"file", "languages", NULL}, "speech", {NULL}, false},
+  // Read only, and there is no operation here that could write: the entitlement
+  // asks for read alone (§3). iOS never reports whether a read was allowed, so
+  // an empty answer means "not allowed OR nothing recorded" and the capability
+  // says so rather than guessing which.
+  {"health",   dsh_native_health,   {"types", "read", "aggregate", NULL}, "health", {NULL}, false},
+  // `set` and `trigger` change the user's own home, so they obey the write
+  // policy. Reads do not: seeing that a light is on is not changing it.
+  {"homekit",  dsh_native_homekit,  {"list", "get", "set", "scenes", "trigger", NULL}, "homekit",
+   {"set", "trigger", NULL}, false},
+  // Metadata and an export to a file the engine can see, so a receipt can go to
+  // `vision` without leaving the phone. Nothing here adds, changes or deletes.
+  {"photos",   dsh_native_photos,   {"list", "albums", "export", NULL}, "photos", {NULL}, false},
+  // iOS 26+ only, and implemented in Swift behind DshAlarmBridge.h: AlarmKit's
+  // whole surface is Swift generics and async sequences. An alarm rings through
+  // silent mode, which is why it is a separate capability from `notify` rather
+  // than an option on it.
+  {"alarm",    dsh_native_alarm,    {"list", "create", "cancel", NULL}, "alarm",
+   {"create", "cancel", NULL}, false},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -203,6 +229,16 @@ void DshNativeRequestPermission(NSString *permission, void (^done)(BOOL granted,
     DshNotifyGrantAccess(reply);
   } else if ([permission isEqualToString:@"location"]) {
     DshLocationGrantAccess(reply);
+  } else if ([permission isEqualToString:@"speech"]) {
+    DshTranscribeGrantAccess(reply);
+  } else if ([permission isEqualToString:@"health"]) {
+    DshHealthGrantAccess(reply);
+  } else if ([permission isEqualToString:@"homekit"]) {
+    DshHomeKitGrantAccess(reply);
+  } else if ([permission isEqualToString:@"photos"]) {
+    DshPhotosGrantAccess(reply);
+  } else if ([permission isEqualToString:@"alarm"]) {
+    DshAlarmGrantAccess(reply);
   } else {
     // In the table, but nothing here knows how to ask for it: a capability was
     // added with a new `systemPermission` and this function was not extended.
