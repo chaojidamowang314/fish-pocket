@@ -18,4 +18,14 @@ int dsh_root_real(const char *path, char *out, size_t size);
 /** The engine path for a real path, in `out`. Returns 0, or -1 with errno. */
 int dsh_root_virtual(const char *path, char *out, size_t size);
 
+/**
+ * Give the calling thread a working directory of its own, `path` (an engine
+ * path), as an emulated process has: relative paths, chdir() and getcwd() on
+ * this thread and the threads it starts use it. Returns 0, or -1 with errno.
+ */
+int dsh_root_enter(const char *path);
+
+/** Return the calling thread to the process's working directory. */
+void dsh_root_leave(void);
+
 #endif

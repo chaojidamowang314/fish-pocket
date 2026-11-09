@@ -1,6 +1,6 @@
 # Compile the app for the iOS simulator on every PR into main, without signing or running it.
-# The same steps as scripts/run-sim.sh up to `xcodebuild build`: fetch nodejs-mobile,
-# build libgit2, assemble the engine tree, generate the project, compile.
+# The same steps as scripts/run-sim.sh up to `xcodebuild build`: fetch nodejs-mobile
+# and Python, build libgit2, assemble the engine tree, generate the project, compile.
 # macOS minutes are dear on a private repo: the downloaded / built vendor/ is
 # cached by the hash of the script that makes it, and docs-only changes skip.
 name: iOS build
@@ -50,6 +50,19 @@ jobs:
       - name: Fetch nodejs-mobile
         if: steps.nodejs-mobile.outputs.cache-hit != 'true'
         run: scripts/fetch-nodejs-mobile.sh
+
+      - name: Cache Python
+        id: python
+        uses: actions/cache@v5
+        with:
+          path: |
+            vendor/python/ios
+            vendor/python/rooted
+          key: python-${{ hashFiles('scripts/fetch-python.sh') }}
+
+      - name: Fetch Python
+        if: steps.python.outputs.cache-hit != 'true'
+        run: scripts/fetch-python.sh
 
       # A path function new to Node would slip past native/root: stop here instead.
       - name: Check NodeMobile imports

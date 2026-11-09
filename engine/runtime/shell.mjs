@@ -1,10 +1,12 @@
 // The in-process "execution world" on iOS: just-bash (a bash interpreter in
 // TypeScript) over the real filesystem, plus the JavaScript CLIs — node, pnpm —
-// run as worker threads. Used by ctx.subprocess and by the child_process shim.
+// run as worker threads, and Python (python/index.mjs) when the app has it.
+// Used by ctx.subprocess and by the child_process shim.
 import path from 'node:path';
 import { Bash, InMemoryFs, MountableFs, OverlayFs, ReadWriteFs, decodeBytesToUtf8, defineCommand, getCommandNames, getNetworkCommandNames } from 'just-bash';
 import { NODE_CLIS, parseNodeArgv, startNodeWorker } from './node-worker.mjs';
 import { gitAvailable, gitCommand } from './git/index.mjs';
+import { PYTHON_COMMANDS, pythonAvailable, pythonCommands } from './python/index.mjs';
 
 export const SHELLS = new Set(['bash', 'sh', 'dash', 'zsh']);
 export const BIN = '/bin';
@@ -98,8 +100,11 @@ const custom = [
   ...Object.entries(NODE_CLIS).map(([name, script]) => nodeLikeCommand(name, script)),
 ];
 
-/** Every command name this world can run (git when the libgit2 addon is present). */
-export const COMMANDS = new Set([...getCommandNames(), ...getNetworkCommandNames(), ...custom.map((c) => c.name), ...(gitAvailable() ? ['git'] : [])]);
+/** Every command name this world can run (git and python when the app links them). */
+export const COMMANDS = new Set([
+  ...getCommandNames(), ...getNetworkCommandNames(), ...custom.map((c) => c.name),
+  ...(gitAvailable() ? ['git'] : []), ...(pythonAvailable() ? PYTHON_COMMANDS : []),
+]);
 
 // just-bash's real-directory filesystems rooted at "/" return realpath()
 // without the leading slash ("Users/x"), which then leaks into $PWD and pwd.
@@ -145,7 +150,12 @@ export function shell(writable) {
       ],
     }),
     // git writes through libgit2, not this filesystem, so it gets the confinement itself.
-    customCommands: gitAvailable() ? [...custom, gitCommand(defineCommand, decodeBytesToUtf8, writable)] : custom,
+    customCommands: [
+      ...custom,
+      ...(gitAvailable() ? [gitCommand(defineCommand, decodeBytesToUtf8, writable)] : []),
+      // Python, like node, runs outside the interpreter's filesystem fence.
+      ...(pythonAvailable() ? pythonCommands(defineCommand, decodeBytesToUtf8) : []),
+    ],
     network: { dangerouslyAllowFullInternetAccess: true },
     executionLimitProfile: 'normal',
     // While a script runs this replaces global eval with a proxy, so any direct
@@ -155,6 +165,14 @@ export function shell(writable) {
     // guards nothing here: the fence is the filesystem, node runs outside it.
     defenseInDepth: false,
   });
+  // just-bash remembers where it found each command (bash's `hash`) across
+  // runs of this shared interpreter, but every run brings its own PATH: one
+  // that activated a venv would send later runs' `python` to that venv.
+  const exec = bash.exec.bind(bash);
+  bash.exec = (script, options) => {
+    bash.state?.hashTable?.clear();
+    return exec(script, options);
+  };
   shells.set(key, bash);
   return bash;
 }
