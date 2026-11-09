@@ -518,6 +518,35 @@ NSRemindersFullAccessUsageDescription
 
 ---
 
+### 7.2 一到三期验证情况（2026-11-09，iPhone 14 Pro Max / iOS 26.6.2）
+
+探针直连 addon（`process._linkedBinding`，`callerClaim` 报成 `probe`）——走的就是插件能走的那条路，不是引擎的特权通道。
+
+**已验证（不需要人配合的部分）：**
+
+| 项 | 结果 |
+|---|---|
+| 能力表 | 五项齐全，操作列表与 `CAPABILITIES` 一致：`device[info]`、`notify[schedule,cancel,pending]`、`speak[say,stop]`、`calendar[list,calendars,create,update,delete]`、`reminders[list,create,complete,delete]` |
+| `device.info` | **第一次调用就拿到电量 70%**，零期修的那个「第一次总是 unknown」没有回潮 |
+| 操作白名单 | `calendar.wipe` → `has no operation 'wipe'`；`reminders.nuke` → 同样被拒 |
+| 未知能力 | `healthkit.read` → `unknown capability 'healthkit'` |
+| 引擎测试 | 125 项，0 失败 |
+| 三语 | 1476/1476（含 `InfoPlist.xcstrings` 3/3） |
+
+**没验证，而且必须人在手机前面才能验：**
+
+- 日历和提醒的**系统授权弹窗**，以及授权后的读取。
+- **写**的三条路：`create` 弹系统事件编辑器、`update` / `delete` 弹原生确认框、提醒的三个写操作。
+- **使用记录页**的实际显示（调用方、摘要、清空）。
+- **示例插件**装上之后，使用记录里调用方显示成插件名。
+- 日历「仅添加」那一档的提示（`simctl privacy` 和真机都不好构造这个状态）。
+
+**为什么不顺手把授权弹窗也跑了：** §7.1 记过一条——授权弹窗没人应答时若 App 被重启，后续请求会直接拿到「已拒绝」，而 iOS 一个 App 一生只弹一次。在没人看着的情况下触发它，有把权限永久弄成拒绝的风险，只能回系统设置救。所以这一段留给人跑。
+
+**一个没验证到、但值得先记下的风险：** `create` 走 `EKEventEditViewController` 时**不要求任何权限**（§4.2），所以代码里没调 `with_full_access`。但未授权状态下 `store.defaultCalendarForNewEvents` 会是 nil，`event.calendar` 就留空，指望编辑器自己挑默认日历。这条路没在真机上跑过——如果编辑器在未授权时表现异常，第一个发现的人请在这里补一笔。
+
+---
+
 ## 8. 还需要定的事
 
 1. **要不要先做零期**：§3.1 那批零权限能力（通知 / 闹钟 / 天气 / 朗读）先上，用最低风险把通道跑通。倾向：要。

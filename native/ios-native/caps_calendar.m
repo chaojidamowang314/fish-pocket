@@ -260,7 +260,6 @@ static void update_event(NSDictionary *args, DshNativeReply reply) {
 
     if (!event.hasChanges) {
       // Nothing to ask about. Asking anyway trains the user to tap through.
-      [store refreshSourcesIfNecessary];
       reply(@{@"action": DshNativeActionCancelled, @"saved": @NO, @"unchanged": @YES}, nil);
       return;
     }

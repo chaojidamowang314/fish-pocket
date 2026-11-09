@@ -7,8 +7,20 @@
 // in native/ios-native/ios_native.m and cannot be reached from here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { binding, capabilities, invoke } from '../plugins/ios-native/binding.mjs';
 import { TOOLS, toEpochSeconds } from '../plugins/ios-native/tools.mjs';
+
+test('the example plugin at least parses', () => {
+  // It cannot be imported here: it resolves `@deepseek-ai/dsh-tools` from the
+  // engine's node_modules, which only exists once it is installed on a device.
+  // A syntax check still catches the failure mode that would otherwise surface
+  // as a plugin that silently refuses to load on someone's phone.
+  const example = fileURLToPath(new URL('../../examples/dsh-plugin-native-demo/index.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, ['--check', example], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+});
 
 test('without the addon the binding reports absent rather than throwing', () => {
   assert.equal(binding(), null);
