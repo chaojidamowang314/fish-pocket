@@ -36,9 +36,13 @@ struct MainView: View {
     /// The ask for a Star or a share.
     @State private var supportDialog = false
 
+    /// A `dsh://` link this window received (`RootView`), until it is followed.
+    @Binding private var link: LinkRequest?
+
     /// `session`: the one this window opened on, when it opened on one.
-    init(session: String? = nil) {
+    init(session: String? = nil, link: Binding<LinkRequest?> = .constant(nil)) {
         _selection = State(initialValue: session)
+        _link = link
     }
 
     /// The credential sheets (`settings.onboarding`'s steps). Unlike the web they never open by
@@ -89,6 +93,13 @@ struct MainView: View {
             webOpen = true
         }
         .fullScreenCover(isPresented: $webOpen) { WebFallbackView() }
+        // The Live Activity and the widgets; a cold launch keeps the link until this view is up.
+        .onChange(of: link?.token, initial: true) {
+            guard let request = link else { return }
+            link = nil
+            Task { await follow(request.link) }
+        }
+        .onChange(of: workspaceId) { WidgetSnapshotWriter.shared.refresh() }
         // A window narrowed past the sidebar has no place beside it for the store.
         .onChange(of: sizeClass) { _, size in
             if size != .regular, storeOpen {
@@ -103,9 +114,6 @@ struct MainView: View {
         .tint(Palette.ink)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { windowWidth = $0 }
         .focusedSceneValue(\.windowCommands, windowCommands)
-        // A `dsh://` link goes to a window that is already open. Only that: `openWindow` asks
-        // through the same door, and a wider match would swallow every new window.
-        .handlesExternalEvents(preferring: ["dsh://"], allowing: ["dsh://"])
         .task(id: app.workspaces.map(\.id)) { if selection == nil { newConversation(in: workspace) } }
         .task(id: canAnnounce) {
             guard canAnnounce else { return }
@@ -155,12 +163,6 @@ struct MainView: View {
             guard token != nil, scenePhase != .background, let step = app.credentialRequest?.step else { return }
             app.credentialRequest = nil
             Task { await openCredentials(step) }
-        }
-        // dsh://session/<id>, from the Live Activity.
-        .onOpenURL { url in
-            guard url.scheme == "dsh", url.host() == "session", let id = url.pathComponents.dropFirst().first else { return }
-            selection = id
-            setDrawer(false)
         }
         #if DEBUG
         // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support`.
@@ -427,8 +429,28 @@ struct MainView: View {
         }
     }
 
+    /// `dsh://session/<id>` opens the session; `dsh://new` a new conversation with the keyboard up,
+    /// once the workspaces are known and the launch's own blank conversation is in place.
+    private func follow(_ link: DshLink) async {
+        sheet = nil
+        storeOpen = false
+        setDrawer(false)
+        switch link {
+        case .session(let id):
+            selection = id
+        case .new(let workspaceId, let preset, let draft):
+            let deadline = ContinuousClock.now + .seconds(10)
+            while app.workspaces.isEmpty || creating, ContinuousClock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            let target = workspaceId.flatMap { id in app.workspaces.first { $0.id == id } } ?? workspace
+            if let target { self.workspaceId = target.id }
+            newConversation(in: target, agentPreset: preset, draft: draft, focus: true)
+        }
+    }
+
     /// Open a blank conversation in `workspace` (the engine reuses a blank one there).
-    private func newConversation(in workspace: Workspace?, agentPreset: String? = nil, draft: String? = nil) {
+    private func newConversation(in workspace: Workspace?, agentPreset: String? = nil, draft: String? = nil, focus: Bool = false) {
         guard let workspace, !creating else { return }
         creating = true
         Task {
@@ -436,6 +458,7 @@ struct MainView: View {
             do {
                 let id = try await app.createSession(in: workspace, agentPreset: agentPreset)
                 if let draft { app.pendingDrafts[id] = draft }
+                if focus { app.pendingFocus.insert(id) }
                 selection = id
             }
             catch { app.showToast(String(localized: "新建会话失败：\(error.localizedDescription)"), tone: .warning, duration: 6) }

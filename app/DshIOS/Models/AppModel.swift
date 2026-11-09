@@ -130,6 +130,8 @@ final class AppModel {
     var composerHeight: CGFloat = 0
     /// Composer text waiting for a session to show it (appended to any draft there).
     var pendingDrafts: [String: String] = [:]
+    /// Sessions whose composer takes the keyboard when it appears (`dsh://new`).
+    var pendingFocus: Set<String> = []
     /// A session to open in the main view (set through `open(session:)`; the root view consumes it).
     var openRequest: (id: String, token: UUID)?
     /// Open the plugin store (the root view consumes it).
@@ -189,6 +191,7 @@ final class AppModel {
             account.follow()
             BackgroundKeeper.shared.attach { [weak self] in await self?.refreshSessions() }
             LiveActivityController.shared.attach(self)
+            WidgetSnapshotWriter.shared.attach(self)
         } catch {
             lastError = error.localizedDescription
         }

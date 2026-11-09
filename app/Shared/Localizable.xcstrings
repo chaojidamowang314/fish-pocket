@@ -535,6 +535,38 @@
         }
       }
     },
+    "%lld 个等你" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld waiting"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld esperando"
+          }
+        }
+      }
+    },
+    "%lld 个等你 · %lld 个进行中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld waiting · %lld running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld esperando · %lld en curso"
+          }
+        }
+      }
+    },
     "%lld 个路径" : {
       "localizations" : {
         "en" : {
@@ -569,6 +601,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld 个运行中的子智能体：%2$@"
+          }
+        }
+      }
+    },
+    "%lld 个进行中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld en curso"
           }
         }
       }
@@ -623,6 +671,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld con errores"
+          }
+        }
+      }
+    },
+    "%lld 待处理" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pending"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pend."
           }
         }
       }
@@ -2235,6 +2299,22 @@
         }
       }
     },
+    "上次的工作区" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last workspace"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último espacio"
+          }
+        }
+      }
+    },
     "上级" : {
       "localizations" : {
         "en" : {
@@ -3313,6 +3393,22 @@
         }
       }
     },
+    "会话状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones"
+          }
+        }
+      }
+    },
     "会话：%@" : {
       "localizations" : {
         "en" : {
@@ -4061,6 +4157,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acerca de"
+          }
+        }
+      }
+    },
+    "关掉后，主屏幕和锁屏小组件只显示数量和状态。设备锁定时，标题总会被打码。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When off, Home Screen and Lock Screen widgets show only counts and status. Titles are always hidden while the device is locked."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si lo desactivas, los widgets de la pantalla de inicio y de bloqueo solo muestran cantidades y estado. Los títulos siempre se ocultan con el dispositivo bloqueado."
           }
         }
       }
@@ -6241,6 +6353,22 @@
         }
       }
     },
+    "另有 %lld 个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld more"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld más"
+          }
+        }
+      }
+    },
     "只保存在本机引擎里，任何读取接口都不会返回它。" : {
       "localizations" : {
         "en" : {
@@ -8221,6 +8349,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "horas"
+          }
+        }
+      }
+    },
+    "小组件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets"
           }
         }
       }
@@ -10723,6 +10867,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir"
+          }
+        }
+      }
+    },
+    "打开 App 后这里会显示会话状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the app to see your sessions here"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre la app para ver aquí tus sesiones"
+          }
+        }
+      }
+    },
+    "打开 App 查看" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the app to check"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre la app para verlo"
           }
         }
       }
@@ -13333,6 +13509,22 @@
         }
       }
     },
+    "显示会话标题" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show session titles"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar títulos de sesión"
+          }
+        }
+      }
+    },
     "显示名称" : {
       "localizations" : {
         "en" : {
@@ -13841,6 +14033,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se actualizó el plan"
+          }
+        }
+      }
+    },
+    "更新于 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizado %@"
           }
         }
       }
@@ -16049,6 +16257,22 @@
         }
       }
     },
+    "正在运行和等你处理的会话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessions that are running or waiting for you."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones en curso o que te esperan."
+          }
+        }
+      }
+    },
     "正在连接…" : {
       "localizations" : {
         "en" : {
@@ -16733,6 +16957,22 @@
         }
       }
     },
+    "没有进行中的任务" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing running"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada en curso"
+          }
+        }
+      }
+    },
     "波浪号" : {
       "localizations" : {
         "en" : {
@@ -17229,6 +17469,22 @@
         }
       }
     },
+    "点一下就开始新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new conversation with one tap."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza una conversación nueva con un toque."
+          }
+        }
+      }
+    },
     "照片" : {
       "localizations" : {
         "en" : {
@@ -17305,6 +17561,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado"
+          }
+        }
+      }
+    },
+    "状态未知" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status unknown"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado desconocido"
           }
         }
       }
@@ -21253,6 +21525,22 @@
         }
       }
     },
+    "还没有会话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sessions yet"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay sesiones"
+          }
+        }
+      }
+    },
     "还没有可分叉的轮次" : {
       "localizations" : {
         "en" : {
@@ -22321,6 +22609,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Algunos proveedores de modelos no se pudieron cargar por ahora; las selecciones guardadas aún se pueden eliminar."
+          }
+        }
+      }
+    },
+    "都处理完了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All done"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo listo"
           }
         }
       }

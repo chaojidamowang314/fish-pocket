@@ -213,6 +213,9 @@ struct ComposerView: View {
     /// Text the shell put here (创建你的插件…): added to the draft, not sent.
     var pendingDraft: String?
     var consumeDraft: () -> Void = {}
+    /// Take the keyboard once shown (`dsh://new` from a widget).
+    var focusOnAppear = false
+    var consumeFocus: () -> Void = {}
     /// `/export`: the web downloads the ZIP itself, so this opens the log sheet instead of executing.
     var openLogExport: () -> Void = {}
     /// The input took or lost focus (the new-conversation page makes room around it).
@@ -257,6 +260,14 @@ struct ComposerView: View {
             guard let pendingDraft else { return }
             composer.text = composer.text.isEmpty ? pendingDraft : composer.text + "\n" + pendingDraft
             consumeDraft()
+        }
+        .task(id: focusOnAppear) {
+            guard focusOnAppear else { return }
+            // After the push and the launch: a field taking focus mid-transition loses it again.
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            focused = true
+            consumeFocus()
         }
         .photosPicker(isPresented: $showPhotos, selection: $photos, maxSelectionCount: max(1, composer.remainingImageSlots), matching: .images)
         .onChange(of: photos) { _, items in
