@@ -16,6 +16,12 @@
             "state" : "translated",
             "value" : "拍照后作为附件发给智能体。"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las fotos que tomes se envían al agente como archivos adjuntos."
+          }
         }
       }
     }

@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var confirmingFullAccess = false
     @AppStorage(BackgroundKeeper.enabledKey) private var keepAlive = true
     @State private var confirmingKeepAliveOff = false
+    @State private var languageChoice = AppLanguage.chosen ?? "system"
+    @State private var languageChanged = false
     @AppStorage(BackgroundKeeper.continuedKey) private var continuedProcessing = false
 
     private var mirror: SettingsMirror { app.settings }
@@ -59,8 +61,16 @@ struct SettingsView: View {
                             Text("深色").tag("dark")
                         }
                     }
-                    // iOS sets an app's language in its own Settings page; an app cannot switch it while running.
-                    linkRow("语言", AppLanguage.name, URL(string: UIApplication.openSettingsURLString)!)
+                    // iOS shows the per-app language in its Settings only to readers with several system
+                    // languages; this picker writes the same preference, applied at the next launch.
+                    Picker("语言", selection: $languageChoice) {
+                        Text("跟随系统").tag("system")
+                        ForEach(AppLanguage.choices, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
+                    }
+                    .onChange(of: languageChoice) { _, value in
+                        AppLanguage.chosen = value == "system" ? nil : value
+                        languageChanged = true
+                    }
                 }
                 .groupedRow()
 
@@ -128,6 +138,11 @@ struct SettingsView: View {
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.large)
             .closeButton(dismiss)
+            .alert("重启 App 后生效", isPresented: $languageChanged) {
+                Button("好", role: .cancel) {}
+            } message: {
+                Text("退出 Fish Pocket 再重新打开，界面就会换成新的语言。")
+            }
             .alert("启用完全权限？", isPresented: $confirmingFullAccess) {
                 Button("取消", role: .cancel) {}
                 Button("启用", role: .destructive) { Task { await write("permission", ["defaultPreset"], "danger-full-access") } }

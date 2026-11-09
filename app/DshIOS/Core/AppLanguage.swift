@@ -10,11 +10,27 @@ enum AppLanguage {
 
     static var isChinese: Bool { code.lowercased().hasPrefix("zh") }
 
+    static var isSpanish: Bool { code.lowercased().hasPrefix("es") }
+
     static var locale: Locale { Locale(identifier: code) }
 
-    /// The language's name in itself (`简体中文`, `English`), for the settings row that leads to it.
-    static var name: String {
-        locale.localizedString(forIdentifier: code).map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? code
+    /// The languages the settings picker offers: the bundle's localizations, each named in itself.
+    static let choices: [(code: String, name: String)] = [("zh-Hans", "简体中文"), ("en", "English"), ("es", "Español")]
+
+    /// The language chosen for this app, `nil` when it follows the system. It is the same
+    /// `AppleLanguages` entry that Settings → Fish Pocket → Language writes, read from the app's own
+    /// domain so the system's list does not count; it takes effect the next time the app starts.
+    static var chosen: String? {
+        get {
+            guard let id = Bundle.main.bundleIdentifier,
+                  let first = (UserDefaults.standard.persistentDomain(forName: id)?["AppleLanguages"] as? [String])?.first
+            else { return nil }
+            return choices.first { first.lowercased().hasPrefix(String($0.code.lowercased().prefix(2))) }?.code
+        }
+        set {
+            if let newValue { UserDefaults.standard.set([newValue], forKey: "AppleLanguages") }
+            else { UserDefaults.standard.removeObject(forKey: "AppleLanguages") }
+        }
     }
 
     /// `zh-hans` → `zh`: the key the engine's `{en, zh, …}` texts use.
