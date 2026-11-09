@@ -39,7 +39,7 @@ https://github.com/user-attachments/assets/d149b48d-ef15-4ba7-9fc3-2c627ea66ec0
 - **内置 Git：** 基于静态链接的 libgit2，不靠子进程。`clone`、`commit`、`branch`、`merge`、`stash`、`pull`、`push` 等日常操作都能用，输出和真 git 一致，Agent 照常读懂。私有仓库用 HTTPS 加 Token 认证。
 - **DSH 插件生态：** 从 npm 安装纯 JavaScript 插件，手机上直接启用。
 - **工作台：** 终端、文件预览、内置浏览器和改动查看都放在一个面板里。
-- **iOS 专属体验：** 灵动岛和锁屏 Live Activity，主屏幕和锁屏小组件，切到后台任务也能继续。
+- **iOS 专属体验：** 灵动岛和锁屏 Live Activity，主屏幕和锁屏小组件，控制中心按钮，Siri 和快捷指令，切到后台任务也能继续。
 - **iPad 适配：** 常驻侧栏、右侧工作台、多窗口、拖放文件，外接键盘支持常用快捷键。
 - **更私密：** 会话和工作区留在设备上。
 

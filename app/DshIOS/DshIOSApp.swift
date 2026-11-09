@@ -8,6 +8,11 @@ struct DshIOSApp: App {
     @StateObject private var engine = NodeEngine.shared
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        // Siri, Shortcuts and the Control Center button: the window in front follows the link.
+        DshIntentBridge.open = { LinkInbox.shared.request = LinkRequest(link: $0) }
+    }
+
     var body: some Scene {
         WindowGroup(id: Self.window, for: SessionWindow.self) { $window in
             RootView(session: window?.session)
@@ -26,6 +31,14 @@ struct DshIOSApp: App {
 struct LinkRequest: Equatable {
     let link: DshLink
     let token = UUID()
+}
+
+/// A link from an App Intent, which has no window of its own: the first window to see it takes it.
+@MainActor
+@Observable
+final class LinkInbox {
+    static let shared = LinkInbox()
+    var request: LinkRequest?
 }
 
 /// A window opened on a session. It moves on to other sessions from there, so the token keeps
@@ -66,12 +79,18 @@ struct RootView: View {
     /// is not up until the engine is, and follows it then.
     @State private var link: LinkRequest?
     private let connection = EngineConnection.shared
+    private let inbox = LinkInbox.shared
 
     var body: some View {
         content
             .background(WindowAppearance(style: ThemePreference.style(themePreference)))
             .onOpenURL { url in
                 if let parsed = DshLink(url: url) { link = LinkRequest(link: parsed) }
+            }
+            .onChange(of: inbox.request?.token, initial: true) {
+                guard let request = inbox.request else { return }
+                inbox.request = nil
+                link = request
             }
             // A `dsh://` link goes to a window that is already open. Only that: `openWindow` asks
             // through the same door, and a wider match would swallow every new window.

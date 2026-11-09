@@ -1,0 +1,54 @@
+{
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "${applicationName} 新对话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} new conversation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva conversación en ${applicationName}"
+          }
+        }
+      }
+    },
+    "在 ${applicationName} 里开始新对话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new conversation in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza una conversación nueva en ${applicationName}"
+          }
+        }
+      }
+    },
+    "用 ${applicationName} 新建对话" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New conversation with ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva conversación con ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

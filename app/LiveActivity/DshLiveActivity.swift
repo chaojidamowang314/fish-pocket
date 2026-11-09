@@ -9,6 +9,9 @@ struct DshWidgets: WidgetBundle {
         DshLiveActivity()
         SessionsWidget()
         NewConversationWidget()
+        if #available(iOS 18.0, *) {
+            NewConversationControl()
+        }
     }
 }
 
