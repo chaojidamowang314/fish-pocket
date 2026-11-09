@@ -79,9 +79,16 @@ final class PluginMarketModel {
     }
 
     /// A first page read in default order is what the store opens on next time; its header names
-    /// the source too.
+    /// the source too. Only one page of it: a longer read (after an install, or 显示更多) kept whole
+    /// would shrink back to a page when the next visit reads again.
     private func remember(_ value: JSON, url: String) {
-        PluginStoreCache.saveListing(url, value)
+        var page = value.object
+        let entries = value["entries"].array
+        if entries.count > pageSize {
+            page["entries"] = .array(Array(entries.prefix(pageSize)))
+            page["nextOffset"] = .number(Double(pageSize))
+        }
+        PluginStoreCache.saveListing(url, .object(page))
         guard let title = value["title"].nonNull, let position = indexes?.firstIndex(where: { $0["url"].string == url }),
               indexes?[position]["title"] != title else { return }
         var fields = indexes?[position].object ?? [:]
