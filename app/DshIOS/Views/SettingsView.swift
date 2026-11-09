@@ -2,10 +2,10 @@ import SafariServices
 import SwiftUI
 
 /// Settings: only what people come here for (账号, 模型, 访问模式, 外观, 插件, 自动化,
-/// 后台运行: 静音音频, 任务续跑). Developer pages sit behind 高级, versions and engine status behind 关于,
-/// and the star, source, feedback and author links close the list; the engine card shows here only while
-/// the engine is not running. Every page reads the shared settings mirror, so a write
-/// anywhere shows everywhere.
+/// 后台运行: 静音音频, 任务续跑). Developer pages sit behind 高级, versions and engine status behind 关于.
+/// 分享 Fish Pocket opens the list; the star, rating, source, feedback and author links close it.
+/// The engine card shows here only while the engine is not running. Every page reads the shared
+/// settings mirror, so a write anywhere shows everywhere.
 struct SettingsView: View {
     @Environment(AppModel.self) private var app
     @EnvironmentObject private var engine: NodeEngine
@@ -40,6 +40,11 @@ struct SettingsView: View {
                         .listRowBackground(Palette.grouped)
                         .listRowInsets(EdgeInsets(top: 18, leading: 18, bottom: 18, trailing: 18))
                 }
+
+                Section {
+                    NavigationLink { ShareAppPage() } label: { ShareAppRow() }
+                }
+                .groupedRow()
 
                 Section {
                     NavigationLink { AccountPage() } label: {
@@ -121,12 +126,9 @@ struct SettingsView: View {
                 Section {
                     linkRow("给个 Star", "GitHub", Self.repositoryURL)
                         .environment(\.openURL, OpenURLAction { _ in SupportPrompt.settle(); return .systemAction })
-                    ShareLink(item: AppLinks.shareText) {
-                        HStack {
-                            Text("分享给朋友").foregroundStyle(Palette.ink)
-                            Spacer()
-                            Image(systemName: "square.and.arrow.up").font(.caption).foregroundStyle(Palette.faint)
-                        }
+                    // Only an App Store install can be reviewed there.
+                    if AppDistribution.channel == .appStore {
+                        linkRow("给个评分", "App Store", AppLinks.writeReview)
                     }
                     linkRow("开源仓库", UpdateChecker.repository, Self.repositoryURL)
                     linkRow("问题反馈", "GitHub Issues", Self.issuesURL)
@@ -591,5 +593,29 @@ private struct EngineLogView: View {
         let size = (try? handle.seekToEnd()) ?? 0
         try? handle.seek(toOffset: size > 96_000 ? size - 96_000 : 0)
         text = String(decoding: handle.readDataToEndOfFile(), as: UTF8.self)
+    }
+}
+
+/// The way into 「分享 Fish Pocket」 at the top of 设置: the app's icon, so it reads as the app itself.
+private struct ShareAppRow: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            Group {
+                if let image = UIImage(named: "AppIcon") {
+                    Image(uiImage: image).resizable()
+                } else {
+                    Image("LaunchMark").resizable().scaledToFit()
+                }
+            }
+            .frame(width: 40, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("分享 Fish Pocket").foregroundStyle(Palette.ink)
+                Text("海报、二维码或链接").font(.footnote).foregroundStyle(Palette.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
     }
 }

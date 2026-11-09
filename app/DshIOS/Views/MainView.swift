@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// The root: a conversation, always. On iPhone the session list is a drawer
@@ -5,12 +6,13 @@ import SwiftUI
 /// regular width it is the split view's sidebar. With nothing selected — at
 /// launch, after archiving — a blank session in the current workspace opens.
 struct MainView: View {
-    enum Sheet: String, Identifiable { case settings, plugins, store, schedules, signIn, cordis; var id: String { rawValue } }
+    enum Sheet: String, Identifiable { case settings, plugins, store, schedules, signIn, cordis, share; var id: String { rawValue } }
 
     @Environment(AppModel.self) private var app
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
+    @Environment(\.requestReview) private var requestReview
     @Environment(\.openWindow) private var openWindow
     @Environment(\.supportsMultipleWindows) private var supportsMultipleWindows
     @AppStorage("dsh.currentWorkspace") private var workspaceId = ""
@@ -33,7 +35,7 @@ struct MainView: View {
     @State private var onboarding: Onboarding?
     /// 「添加 API Key」 was chosen in the sign-in sheet: its key editor follows once that sheet is gone.
     @State private var keyEditorRef: String?
-    /// The ask for a Star or a share.
+    /// The ask for a Star or a share (`SupportPrompt`'s `.support`).
     @State private var supportDialog = false
 
     /// A `dsh://` link this window received (`RootView`), until it is followed.
@@ -115,6 +117,8 @@ struct MainView: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { windowWidth = $0 }
         .focusedSceneValue(\.windowCommands, windowCommands)
         .task(id: app.workspaces.map(\.id)) { if selection == nil { newConversation(in: workspace) } }
+        // Which store this copy came from: only an App Store install is asked for a rating.
+        .task { await AppDistribution.refresh() }
         .task(id: canAnnounce) {
             guard canAnnounce else { return }
             await UpdateChecker.shared.checkIfDue()
@@ -126,8 +130,12 @@ struct MainView: View {
             guard app.supportMoment > 0 else { return }
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled, canAnnounce, app.toast == nil, app.currentSession == selection,
-                  !app.sessions.values.contains(where: \.running), SupportPrompt.take() else { return }
-            supportDialog = true
+                  !app.sessions.values.contains(where: \.running), let ask = SupportPrompt.take() else { return }
+            switch ask {
+            // The system decides whether its sheet shows, and never says.
+            case .review: requestReview()
+            case .support: supportDialog = true
+            }
         }
         // Windows take turns: what is read is the one in front.
         .onChange(of: scenePhase) { _, phase in if phase == .active { app.currentSession = selection } }
@@ -165,7 +173,7 @@ struct MainView: View {
             Task { await openCredentials(step) }
         }
         #if DEBUG
-        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support`.
+        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support|share`.
         .task {
             switch UserDefaults.standard.string(forKey: "dshOpen") {
             case "drawer": drawerOpen = true
@@ -175,6 +183,7 @@ struct MainView: View {
             case "schedules": sheet = .schedules
             case "signin": sheet = .signIn
             case "support": supportDialog = true
+            case "share": sheet = .share
             default: break
             }
         }
@@ -188,6 +197,7 @@ struct MainView: View {
                 case .schedules: SheetStack { SchedulesView(openSession: open(session:)) }
                 case .signIn: SignInSheet()
                 case .cordis: CordisPanelView(currentSession: selection)
+                case .share: SheetStack { ShareAppPage() }
                 }
             }
             .sheetNotices()
@@ -206,7 +216,7 @@ struct MainView: View {
             if supportDialog {
                 SupportDialog(
                     star: { settleSupport { openURL(AppLinks.repository) } },
-                    share: { settleSupport { AppLinks.share() } },
+                    share: { settleSupport { sheet = .share } },
                     later: { supportDialog = false }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.94)))

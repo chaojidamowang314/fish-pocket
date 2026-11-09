@@ -46,8 +46,6 @@ final class UpdateChecker {
     private static let announcedKey = "dsh.update.announced"
 
     private(set) var status = Status.idle
-    /// The app's App Store page, once a lookup has found one.
-    private(set) var storePage: URL?
     private var lastChecked: Date?
 
     private enum Latest {
@@ -92,20 +90,10 @@ final class UpdateChecker {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
     }
 
-    /// App Store and TestFlight installs carry no provisioning profile; anything
-    /// signed by hand does. Simulator builds have none either, and are not Apple's.
-    private static var deliveredByApple: Bool {
-        #if targetEnvironment(simulator)
-        false
-        #else
-        Bundle.main.path(forResource: "embedded", ofType: "mobileprovision") == nil
-        #endif
-    }
-
     private func latest() async -> Latest {
         let store = await appStoreLatest()
         if case .release = store { return store }
-        return Self.deliveredByApple ? store : await gitHubLatest()
+        return AppDistribution.deliveredByApple ? store : await gitHubLatest()
     }
 
     /// The App Store answers per region and without one means the US, where the app
@@ -120,7 +108,6 @@ final class UpdateChecker {
             guard let url = components?.url, let (data, code) = await Self.get(url), code == 200,
                   let lookup = try? JSONDecoder().decode(StoreLookup.self, from: data) else { continue }
             if let listing = lookup.results.first, let page = URL(string: "https://apps.apple.com/app/id\(listing.trackId)") {
-                storePage = page
                 return .release(version: listing.version, url: page)
             }
             result = .none
