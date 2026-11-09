@@ -1,12 +1,11 @@
 import Foundation
 
 /// When to ask for a rating, a Star or a share, after Orca's star nag: only right after a turn
-/// went well, a few turns in, and rarely. One ask at a time, and every ask starts the same wait:
-/// three days and the turns again, so the system's rating sheet and our own card never follow
-/// each other. An App Store install is asked for a rating first, once a version (Apple decides
-/// whether the sheet shows, and says nothing either way). Then the Star / share card: an ignored
-/// one waits twice the turns, the third is the last, and the first tap settles it, as GitHub
-/// can't say from here who has starred.
+/// went well, a few turns in, and rarely; each ask starts the same wait, three days and the
+/// turns again. An App Store install is asked for a rating alone, once a version (Apple decides
+/// whether the sheet shows, and says nothing either way); the Star / share card is left to
+/// 设置 there. Other installs get the card instead: an ignored one waits twice the turns, the
+/// third is the last, and the first tap settles it, as GitHub can't say from here who has starred.
 @MainActor
 enum SupportPrompt {
     enum Ask { case review, support }
@@ -55,7 +54,8 @@ enum SupportPrompt {
 
     private static var supportOpen: Bool {
         let defaults = UserDefaults.standard
-        return !defaults.bool(forKey: settledKey) && defaults.integer(forKey: asksKey) < lastAsk
+        return AppDistribution.channel != .appStore
+            && !defaults.bool(forKey: settledKey) && defaults.integer(forKey: asksKey) < lastAsk
     }
 
     private static var due: Ask? {
