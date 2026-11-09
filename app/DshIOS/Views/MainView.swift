@@ -37,6 +37,10 @@ struct MainView: View {
     @State private var keyEditorRef: String?
     /// The ask for a Star or a share (`SupportPrompt`'s `.support`).
     @State private var supportDialog = false
+    /// 「新功能」 after an update (`WhatsNew`).
+    @State private var whatsNew: WhatsNew.Release?
+    /// It was shown: no update toast on top of it this time.
+    @State private var newsShown = false
 
     /// A `dsh://` link this window received (`RootView`), until it is followed.
     @Binding private var link: LinkRequest?
@@ -75,7 +79,7 @@ struct MainView: View {
 
     /// Announcements are made once, so never under a sheet.
     private var canAnnounce: Bool {
-        scenePhase == .active && onboarding == nil && sheet == nil
+        scenePhase == .active && onboarding == nil && sheet == nil && whatsNew == nil
     }
 
     /// The width's own layout, with the way into the plugin store.
@@ -121,8 +125,13 @@ struct MainView: View {
         .task { await AppDistribution.refresh() }
         .task(id: canAnnounce) {
             guard canAnnounce else { return }
+            if let release = WhatsNew.take() {
+                newsShown = true
+                whatsNew = release
+                return
+            }
             await UpdateChecker.shared.checkIfDue()
-            guard let update = UpdateChecker.shared.takeAnnouncement() else { return }
+            guard !newsShown, let update = UpdateChecker.shared.takeAnnouncement() else { return }
             app.showToast(String(localized: "发现新版本 \(update.version)"), action: String(localized: "更新")) { openURL(update.url) }
         }
         // After a pause, and only into a quiet app: otherwise the next finished turn asks instead.
@@ -173,7 +182,7 @@ struct MainView: View {
             Task { await openCredentials(step) }
         }
         #if DEBUG
-        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support|share`.
+        // Screenshots and UI checks: `simctl launch … -dshOpen drawer|workbench|approval|timeline|settings|plugins|store|schedules|signin|support|share|whatsnew`.
         .task {
             switch UserDefaults.standard.string(forKey: "dshOpen") {
             case "drawer": drawerOpen = true
@@ -184,6 +193,7 @@ struct MainView: View {
             case "signin": sheet = .signIn
             case "support": supportDialog = true
             case "share": sheet = .share
+            case "whatsnew": whatsNew = WhatsNew.current
             default: break
             }
         }
@@ -210,6 +220,7 @@ struct MainView: View {
                 OnboardingKeySheet(ref: ref) { onboarding = nil }
             }
         }
+        .sheet(item: $whatsNew) { WhatsNewSheet(release: $0) }
         .modifier(ShellDialogs())
         .overlay { ShellNotices() }
         .overlay {

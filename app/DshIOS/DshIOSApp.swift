@@ -9,6 +9,7 @@ struct DshIOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        WhatsNew.noteLaunch()
         // Siri, Shortcuts and the Control Center button: the window in front follows the link.
         DshIntentBridge.open = { LinkInbox.shared.request = LinkRequest(link: $0) }
     }

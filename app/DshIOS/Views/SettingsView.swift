@@ -352,6 +352,9 @@ private struct AboutPage: View {
                 LabeledContent("引擎", value: "DeepSeek Harness")
                 if let engineVersion { LabeledContent("引擎版本", value: engineVersion) }
                 LabeledContent("App 版本", value: Self.appVersion)
+                if let release = WhatsNew.current {
+                    NavigationLink("新功能") { WhatsNewPage(release: release) }
+                }
                 UpdateRow()
                 LabeledContent("系统", value: ProcessInfo.processInfo.operatingSystemVersionString)
             }

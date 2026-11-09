@@ -2572,6 +2572,22 @@
         }
       }
     },
+    "不打开 App 也能看到会话在进行、已完成还是在等你允许，轻点回到对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See whether a session is running, done or waiting for your approval without opening the app. Tap to jump back in."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mira si una sesión está en curso, terminada o esperando tu aprobación sin abrir la app. Tócalo para volver a la conversación."
+          }
+        }
+      }
+    },
     "不是有效的正则表达式。" : {
       "localizations" : {
         "en" : {
@@ -2712,6 +2728,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relés, servicios autoalojados y otras interfaces compatibles con los protocolos de OpenAI o Anthropic."
+          }
+        }
+      }
+    },
+    "主屏幕和锁屏小组件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home and Lock Screen widgets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widgets de inicio y bloqueo"
           }
         }
       }
@@ -2936,6 +2968,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar desde npm, un repositorio Git o una carpeta local"
+          }
+        }
+      }
+    },
+    "从控制中心按钮、Siri 或快捷指令直接开始新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new conversation from a Control Center button, Siri or Shortcuts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza una conversación nueva desde un botón del Centro de control, Siri o Atajos."
           }
         }
       }
@@ -4574,6 +4622,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integrado"
+          }
+        }
+      }
+    },
+    "内置 Python" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Built-in Python"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python integrado"
           }
         }
       }
@@ -7250,6 +7314,22 @@
         }
       }
     },
+    "在 App 内切换语言" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change the language in the app"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia el idioma desde la app"
+          }
+        }
+      }
+    },
     "在 GitHub 点 Star" : {
       "localizations" : {
         "en" : {
@@ -7438,6 +7518,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en el navegador del sistema"
+          }
+        }
+      }
+    },
+    "在设置里直接选择界面语言，新增西班牙语。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick the interface language right in Settings. Spanish is now available."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige el idioma de la interfaz en Ajustes. Ahora también en español."
           }
         }
       }
@@ -11608,6 +11704,22 @@
         }
       }
     },
+    "控制中心、Siri 和快捷指令" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control Center, Siri and Shortcuts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centro de control, Siri y Atajos"
+          }
+        }
+      }
+    },
     "推理等级" : {
       "localizations" : {
         "en" : {
@@ -11764,6 +11876,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los complementos se ejecutan con tus permisos. Instala solo de fuentes en las que confíes."
+          }
+        }
+      }
+    },
+    "插件和终端都能直接运行 Python 脚本，不用另外安装。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins and the terminal can run Python scripts, with nothing extra to install."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los plugins y el terminal pueden ejecutar scripts de Python sin instalar nada más."
           }
         }
       }
@@ -12964,6 +13092,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Las sesiones nuevas pedirán menos confirmaciones y podrán modificar archivos y ejecutar comandos directamente. Úsala solo si confías en las tareas siguientes."
+          }
+        }
+      }
+    },
+    "新功能" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's New"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades"
           }
         }
       }
