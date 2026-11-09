@@ -90,6 +90,8 @@ targets:
         # 所以第二句写明数据会随对话发出去（docs/native-services.md §6.2.1）。
         # iOS 17 起读日历必须要 full access，没有只读档。
         NSCalendarsFullAccessUsageDescription: 让智能体按你的要求查看和安排日程。为回答你的问题，相关日程内容会随对话发送给你选择的模型服务商。
+        # 本机能力「提醒」。同样的理由：第二句是产品选择，不是硬性要求。
+        NSRemindersFullAccessUsageDescription: 让智能体按你的要求查看和创建提醒。为回答你的问题，相关提醒内容会随对话发送给你选择的模型服务商。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.

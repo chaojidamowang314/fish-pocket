@@ -69,11 +69,12 @@ struct NativeCapabilitiesView: View {
     /// 只问清单里真的出现过的那些授权，别为一个这个构建没有的能力去碰框架。
     private func refreshPermissions() {
         let needed = Set(capabilities.compactMap(\.systemPermission))
-        if needed.contains(NativeCapability.calendarPermission) {
-            // EventKit 是同步查询，不用回调。
-            permissions[NativeCapability.calendarPermission] = .ofCalendar(
-                EKEventStore.authorizationStatus(for: .event)
-            )
+        // EventKit 是同步查询，不用回调。日历和提醒的档位含义一样，所以共用一个映射。
+        for (permission, entity) in [
+            (NativeCapability.calendarPermission, EKEntityType.event),
+            (NativeCapability.remindersPermission, EKEntityType.reminder),
+        ] where needed.contains(permission) {
+            permissions[permission] = .ofEventKit(EKEventStore.authorizationStatus(for: entity))
         }
         if needed.contains(NativeCapability.notificationPermission) {
             UNUserNotificationCenter.current().getNotificationSettings { settings in
@@ -102,7 +103,7 @@ enum CapabilityPermission {
         }
     }
 
-    static func ofCalendar(_ status: EKAuthorizationStatus) -> CapabilityPermission {
+    static func ofEventKit(_ status: EKAuthorizationStatus) -> CapabilityPermission {
         switch status {
         case .fullAccess: return .allowed
         case .denied, .restricted: return .denied
@@ -136,6 +137,7 @@ enum CapabilityPermission {
 struct NativeCapability: Identifiable {
     static let notificationPermission = "notifications"
     static let calendarPermission = "calendar"
+    static let remindersPermission = "reminders"
 
     let id: String
     let ops: [String]
@@ -167,6 +169,7 @@ struct NativeCapability: Identifiable {
         case "notify": return String(localized: "通知提醒")
         case "speak": return String(localized: "朗读")
         case "calendar": return String(localized: "日历")
+        case "reminders": return String(localized: "提醒事项")
         default: return id
         }
     }
@@ -176,7 +179,8 @@ struct NativeCapability: Identifiable {
         case "device": return String(localized: "机型、系统版本、电量、存储空间")
         case "notify": return String(localized: "按你的要求定时提醒你，App 关着也会响")
         case "speak": return String(localized: "把文字念出来")
-        case "calendar": return String(localized: "查看你的日程，回答和安排有关的问题。只读，改不了也删不掉")
+        case "calendar": return String(localized: "查看你的日程。新建、修改和删除都要你当场确认")
+        case "reminders": return String(localized: "查看「提醒事项」里的待办。新建、完成和删除都要你当场确认")
         default: return ops.joined(separator: " · ")
         }
     }

@@ -4,14 +4,17 @@
 // Reading needs FULL access, not a read-only tier — iOS 17 offers write-only or
 // full, and write-only cannot read back even the events it created
 // (docs/native-services.md §4.0). So a user who allows reading has also allowed
-// writing at the system level; keeping writes behind a confirmation is our job,
-// not the system's, and phase 1 simply registers no write operation at all.
+// writing at the system level, and "the agent can see my schedule but will not
+// quietly change it" is ours to guarantee rather than the system's.
 //
-// Everything here is behind the same capability table as every other capability,
-// which means a plugin reaching the addon directly gets exactly this and nothing
-// more: `list` and `calendars`. There is no unchecked variant.
+// The guarantee is not the operation list — writes are listed here like anything
+// else. It is that every one of them stops in front of the user before it
+// happens: `create` opens Apple's own event editor, `update` and `delete` wait
+// on a native confirmation. A plugin reaching the addon directly meets exactly
+// the same stop. There is no unchecked variant.
 #import "dsh_ios_native.h"
 #import "DshNativeBridge.h"
+#import "eventkit_shared.h"
 #import <EventKit/EventKit.h>
 
 /// A single query can span years; a model does not need ten thousand events and
@@ -21,90 +24,15 @@ static const NSUInteger kMaxEvents = 200;
 /// not to flood the conversation.
 static const NSUInteger kMaxNotesLength = 500;
 
-/// One store for the process. EventKit hands back objects that belong to their
-/// store, and `reset` (needed after a grant arrives) only helps if everyone is
-/// looking at the same one.
-static EKEventStore *event_store(void) {
-  static EKEventStore *shared;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{ shared = [EKEventStore new]; });
-  return shared;
-}
-
-/// EKEventStore is not thread-safe, and `eventsMatchingPredicate:` is a
-/// synchronous query that can take a noticeable moment on a busy calendar. Both
-/// reasons point the same way: one serial queue that is neither Node's thread
-/// nor the main one.
-static dispatch_queue_t calendar_queue(void) {
-  static dispatch_queue_t queue;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    queue = dispatch_queue_create("com.wsw.dsh-ios.calendar", DISPATCH_QUEUE_SERIAL);
-  });
-  return queue;
-}
-
-// The agent reads these out to the user, so they say what happened and what the
+// The agent reads this out to the user, so it says what happened and what the
 // user can do about it. iOS prompts once per app for the lifetime of the install:
 // after a refusal there is no second prompt, only Settings.
 static NSString *const kDeniedMessage =
   @"calendar access is off for this app. The user can turn it on in "
   @"Settings > Privacy & Security > Calendars. iOS only asks once, so it cannot be requested again from here";
-static NSString *const kWriteOnlyMessage =
-  @"this app has add-only calendar access, which cannot read events. Reading needs Full Access, "
-  @"which the user can switch on in Settings > Privacy & Security > Calendars";
 
-/// Resolve full calendar access, prompting if iOS has not asked yet, then run
-/// `next`. `next` may run on any thread.
 static void with_full_access(void (^next)(BOOL granted, NSString *error)) {
-  switch ([EKEventStore authorizationStatusForEntityType:EKEntityTypeEvent]) {
-    case EKAuthorizationStatusFullAccess:
-      next(YES, nil);
-      return;
-    case EKAuthorizationStatusDenied:
-    case EKAuthorizationStatusRestricted:
-      next(NO, kDeniedMessage);
-      return;
-    case EKAuthorizationStatusWriteOnly:
-      next(NO, kWriteOnlyMessage);
-      return;
-    case EKAuthorizationStatusNotDetermined:
-    default:
-      break;
-  }
-
-  // The prompt is UI. It is also the only place the user is ever told what this
-  // app does with their calendar, which is why the Info.plist wording matters
-  // as much as the code (§6.2.1).
-  dsh_native_on_main(^{
-    [event_store() requestFullAccessToEventsWithCompletion:^(BOOL granted, NSError *error) {
-      if (error != nil) {
-        next(NO, error.localizedDescription);
-      } else if (!granted) {
-        next(NO, kDeniedMessage);
-      } else {
-        // A store that was queried before the grant keeps answering from the old,
-        // empty view until it is reset. Without this the first call after the
-        // user taps Allow returns nothing, which reads exactly like an empty
-        // calendar.
-        [event_store() reset];
-        next(YES, nil);
-      }
-    }];
-  });
-}
-
-/// ISO 8601 with the device's own offset, so neither the model nor the user has
-/// to guess which timezone a time is in.
-static NSString *iso8601(NSDate *date) {
-  static NSISO8601DateFormatter *formatter;
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    formatter = [NSISO8601DateFormatter new];
-    formatter.formatOptions = NSISO8601DateFormatWithInternetDateTime;
-    formatter.timeZone = NSTimeZone.localTimeZone;
-  });
-  return date == nil ? @"" : [formatter stringFromDate:date];
+  DshEventKitRequestAccess(EKEntityTypeEvent, kDeniedMessage, next);
 }
 
 static NSString *truncated(NSString *text, NSUInteger limit) {
@@ -118,8 +46,8 @@ static NSDictionary *event_json(EKEvent *event) {
     // talk about "that one" across turns.
     @"id": event.eventIdentifier ?: @"",
     @"title": event.title ?: @"",
-    @"start": iso8601(event.startDate),
-    @"end": iso8601(event.endDate),
+    @"start": DshISO8601(event.startDate),
+    @"end": DshISO8601(event.endDate),
     @"allDay": @(event.allDay),
     @"calendar": event.calendar.title ?: @"",
   } mutableCopy];
@@ -144,8 +72,8 @@ static void list_events(NSDictionary *args, DshNativeReply reply) {
       reply(nil, error);
       return;
     }
-    dispatch_async(calendar_queue(), ^{
-      EKEventStore *store = event_store();
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
       NSPredicate *predicate =
         [store predicateForEventsWithStartDate:[NSDate dateWithTimeIntervalSince1970:from.doubleValue]
                                        endDate:[NSDate dateWithTimeIntervalSince1970:to.doubleValue]
@@ -167,8 +95,8 @@ static void list_events(NSDictionary *args, DshNativeReply reply) {
               @"total": @(found.count),
               @"truncated": @(found.count > events.count),
               @"auditSummary": [NSString stringWithFormat:@"%@ → %@ · %lu",
-                                [iso8601([NSDate dateWithTimeIntervalSince1970:from.doubleValue]) substringToIndex:10],
-                                [iso8601([NSDate dateWithTimeIntervalSince1970:to.doubleValue]) substringToIndex:10],
+                                [DshISO8601([NSDate dateWithTimeIntervalSince1970:from.doubleValue]) substringToIndex:10],
+                                [DshISO8601([NSDate dateWithTimeIntervalSince1970:to.doubleValue]) substringToIndex:10],
                                 (unsigned long)found.count]}, nil);
     });
   });
@@ -180,8 +108,8 @@ static void list_calendars(DshNativeReply reply) {
       reply(nil, error);
       return;
     }
-    dispatch_async(calendar_queue(), ^{
-      EKEventStore *store = event_store();
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
       NSString *defaultId = store.defaultCalendarForNewEvents.calendarIdentifier;
       NSMutableArray *calendars = [NSMutableArray array];
       for (EKCalendar *calendar in [store calendarsForEntityType:EKEntityTypeEvent]) {
@@ -210,9 +138,9 @@ static void list_calendars(DshNativeReply reply) {
 static NSString *event_summary(EKEvent *event) {
   NSString *title = event.title.length > 0 ? event.title : @"(untitled)";
   if (event.allDay) {
-    return [NSString stringWithFormat:@"%@\n%@", title, [iso8601(event.startDate) substringToIndex:10]];
+    return [NSString stringWithFormat:@"%@\n%@", title, [DshISO8601(event.startDate) substringToIndex:10]];
   }
-  NSString *start = iso8601(event.startDate), *end = iso8601(event.endDate);
+  NSString *start = DshISO8601(event.startDate), *end = DshISO8601(event.endDate);
   return [NSString stringWithFormat:@"%@\n%@ %@ – %@ %@", title,
           [start substringToIndex:10], [start substringWithRange:NSMakeRange(11, 5)],
           [end substringToIndex:10], [end substringWithRange:NSMakeRange(11, 5)]];
@@ -257,8 +185,8 @@ static void create_event(NSDictionary *args, DshNativeReply reply) {
   id<DshNativeBridging> bridge = require_bridge(reply);
   if (bridge == nil) return;
 
-  dispatch_async(calendar_queue(), ^{
-    EKEventStore *store = event_store();
+  dispatch_async(DshEventKitQueue(), ^{
+    EKEventStore *store = DshEventStore();
     EKEvent *event = [EKEvent eventWithEventStore:store];
     event.title = title;
     event.startDate = start;
@@ -297,8 +225,8 @@ static void with_event(NSString *identifier, DshNativeReply reply, void (^next)(
   }
   with_full_access(^(BOOL granted, NSString *error) {
     if (!granted) { reply(nil, error); return; }
-    dispatch_async(calendar_queue(), ^{
-      EKEventStore *store = event_store();
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
       EKEvent *event = [store eventWithIdentifier:identifier];
       if (event == nil) {
         reply(nil, @"no event with that id; it may have been deleted or the id may be stale");
@@ -339,7 +267,7 @@ static void update_event(NSDictionary *args, DshNativeReply reply) {
 
     NSString *summary = [NSString stringWithFormat:@"%@\n→\n%@", before, event_summary(event)];
     [bridge confirmChange:summary destructive:NO completion:^(BOOL confirmed) {
-      dispatch_async(calendar_queue(), ^{
+      dispatch_async(DshEventKitQueue(), ^{
         if (!confirmed) {
           // Put the store's copy back the way it was; these edits were never saved.
           [event reset];
@@ -367,7 +295,7 @@ static void delete_event(NSDictionary *args, DshNativeReply reply) {
   with_event(args[@"id"], reply, ^(EKEventStore *store, EKEvent *event) {
     NSString *summary = event_summary(event);
     [bridge confirmChange:summary destructive:YES completion:^(BOOL confirmed) {
-      dispatch_async(calendar_queue(), ^{
+      dispatch_async(DshEventKitQueue(), ^{
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"deleted": @NO}, nil);
           return;

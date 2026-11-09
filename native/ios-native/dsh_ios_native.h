@@ -22,6 +22,7 @@ void dsh_native_device(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_notify(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_speak(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_calendar(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_reminders(NSString *op, NSDictionary *args, DshNativeReply reply);
 
 /// Run `block` on the main thread and return without waiting. UIKit, AVFoundation
 /// and the permission prompts all want the main thread; the engine calls us from

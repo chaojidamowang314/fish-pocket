@@ -3569,6 +3569,22 @@
         }
       }
     },
+    "修改日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar evento"
+          }
+        }
+      }
+    },
     "修改这个日程？" : {
       "localizations" : {
         "en" : {
@@ -5261,6 +5277,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eliminar espacio de trabajo"
+          }
+        }
+      }
+    },
+    "删除待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar recordatorio"
+          }
+        }
+      }
+    },
+    "删除日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar evento"
           }
         }
       }
@@ -11447,6 +11495,22 @@
         }
       }
     },
+    "提醒事项" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorios"
+          }
+        }
+      }
+    },
     "提问" : {
       "localizations" : {
         "en" : {
@@ -12816,6 +12880,22 @@
         }
       }
     },
+    "新建待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir recordatorio"
+          }
+        }
+      }
+    },
     "新建文件夹" : {
       "localizations" : {
         "en" : {
@@ -12828,6 +12908,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva carpeta"
+          }
+        }
+      }
+    },
+    "新建日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir evento"
           }
         }
       }
@@ -15112,6 +15208,22 @@
         }
       }
     },
+    "查看「提醒事项」里的待办。新建、完成和删除都要你当场确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what is on your Reminders. Adding, completing and deleting each ask you first"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tus Recordatorios. Añadir, completar y eliminar te preguntan antes"
+          }
+        }
+      }
+    },
     "查看任务、目标和排队" : {
       "localizations" : {
         "en" : {
@@ -15128,7 +15240,24 @@
         }
       }
     },
+    "查看你的日程。新建、修改和删除都要你当场确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule. Adding, changing and deleting each ask you first"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda. Añadir, cambiar y eliminar te preguntan antes"
+          }
+        }
+      }
+    },
     "查看你的日程，回答和安排有关的问题。只读，改不了也删不掉" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -15460,6 +15589,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etiquetas · %lld"
+          }
+        }
+      }
+    },
+    "标记完成" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark done"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como hecho"
           }
         }
       }
@@ -21108,6 +21253,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lee la subsesión para determinar si se puede continuar."
+          }
+        }
+      }
+    },
+    "读取待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer recordatorios"
           }
         }
       }

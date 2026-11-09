@@ -291,10 +291,87 @@ const calendar = defineTool({
   },
 });
 
+const reminders = defineTool({
+  name: 'reminders',
+  description:
+    'The user\'s Reminders app on this device: list what they have to do, and — only with their '
+    + 'confirmation — add one, mark one done, or delete one.\n'
+    + 'This is not the same as `notify`. `notify` is this app\'s own alert and leaves nothing '
+    + 'behind, so it is the right answer to "remind me in twenty minutes". A reminder here is a row '
+    + 'in their Reminders app that syncs to their other devices and may sit in a list they share, '
+    + 'so every write asks them first and they may say no — check `saved`/`deleted` in the result '
+    + 'before telling them it is done.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['list', 'create', 'complete', 'delete'],
+      description: 'list the reminders, add one, mark one done, or delete one',
+      required: true,
+    },
+    includeCompleted: {
+      type: 'boolean',
+      description: 'list: include the ones already done; by default only the unfinished ones',
+    },
+    title: { type: 'string', description: 'create: what the reminder says; required' },
+    due: {
+      type: 'string',
+      description: 'create: when it is due, YYYY-MM-DD or a full ISO timestamp. Without one it never alerts',
+    },
+    notes: { type: 'string', description: 'create: free-text notes on the reminder' },
+    id: { type: 'string', description: 'complete/delete: the reminder, as `list` returned its id' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'create') {
+        return text(value.saved ? 'They confirmed; the reminder is in their list.' : 'They declined. Nothing was added.');
+      }
+      if (args.action === 'complete') {
+        if (value.unchanged) return text('That one is already done.');
+        return text(value.saved ? 'They confirmed; it is marked done.' : 'They declined. It is still open.');
+      }
+      if (args.action === 'delete') {
+        return text(value.deleted ? 'They confirmed; the reminder is deleted.' : 'They declined. It is still there.');
+      }
+      const list = value.reminders ?? [];
+      if (list.length === 0) return text('Nothing on their reminders.');
+      const lines = list.map((item) => {
+        const when = item.due ? `${dayOf(item.due)} ${timeOf(item.due)}` : 'no due date';
+        const parts = [`${item.completed ? '[done] ' : ''}${when}`, item.title || '(no title)'];
+        if (item.list) parts.push(`[${item.list}]`);
+        const line = parts.join('  ');
+        return item.notes ? `${line}\n    ${item.notes.replace(/\n+/g, ' ')}` : line;
+      });
+      if (value.truncated) {
+        lines.push(`… showing the first ${list.length} of ${value.total}.`);
+      }
+      return text(lines.join('\n'));
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'list') {
+      return invoke('reminders', 'list', {
+        ...(args.includeCompleted === undefined ? {} : { includeCompleted: args.includeCompleted }),
+      });
+    }
+    if (args.action === 'create') {
+      if (!args.title) throw new Error('reminders: creating needs `title`');
+      return invoke('reminders', 'create', {
+        title: args.title,
+        ...(args.due === undefined ? {} : { due: toEpochSeconds(args.due) }),
+        ...(args.notes === undefined ? {} : { notes: args.notes }),
+      });
+    }
+    if (!args.id) throw new Error(`reminders: ${args.action} needs the reminder's \`id\``);
+    return invoke('reminders', args.action, { id: args.id });
+  },
+});
+
 /** Tool definitions by the capability each one needs. */
 export const TOOLS = {
   device: device,
   notify: notify,
   speak: speak,
   calendar: calendar,
+  reminders: reminders,
 };

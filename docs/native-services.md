@@ -198,6 +198,21 @@ contacts.read
 | **② `EKEventEditViewController`** | **最强，且免费**。弹系统原生的事件编辑器、预填内容，用户点"添加"才落库。插件无法替用户点，不可伪造 | 只适合**新建**。改和删现有事件不适用（而且要先读到它）。批量会弹很多次 |
 | **③ 原生一次性 grant** | 强。Swift 侧弹自己的确认框 → 签发一次性、绑定这次操作摘要、短时效的 grant，密钥只在原生侧 | 要自己做确认 UI；批量需要合成一次确认 |
 
+**二期实现时，③ 里的"签发 grant"这一步被证明是多余的，去掉了。**
+
+grant（一次性令牌、绑操作摘要、短时效）解决的是**决策和执行被分开**时的问题：
+决策结果要穿过一段不可信的地带再回来执行，所以需要一张不可伪造、不可重放、
+会过期的票。但实际实现里这两件事根本没分开——addon 调桥、**同步等用户答复**、
+拿到答复就地执行，中间没有任何东西经过 JS。没有地带要穿，就没有票要签。
+
+所以最终形态是：`DshNativeBridging` 协议 + `bridge.m` 一个槽位 + Swift 侧的
+`NativeBridge`。强度和带 grant 的版本完全一样（决策始终没离开原生侧），但少了
+密钥管理、时效判断和重放检查三块代码。
+
+新建事件仍然优先走 ②（`EKEventEditViewController`），因为它比我们自己弹的框更强：
+那是 Apple 的界面和 Apple 的按钮。提醒事项没有对应的系统编辑器（EventKit 的编辑器
+只管事件），所以它的三个写操作都走 ③。
+
 ②是这次查文档时的意外收获：`EKEventEditViewController` **完全不需要日历权限**就能让用户创建事件。对"帮我把周三下午两点的产品评审加上"这种最常见的助理场景，它同时解决了确认和权限两件事，而且用户看到的是系统界面，可信度最高。
 
 倾向：**新建走②，改/删走③，一期只做读所以都不急**。确认框的信息层次见下。
@@ -280,15 +295,22 @@ native/ios-native/
   caps_device.m             # ✅ UIDevice：型号、系统版本、电量、低电量、热状态、存储
   caps_notify.m             # ✅ UNUserNotificationCenter：本地通知
   caps_speak.m              # ✅ AVSpeechSynthesizer：朗读
-  caps_calendar.m           # ✅ EventKit 读：list / calendars
+  eventkit_shared.h/.m      # ✅ 日历和提醒共用的 store、串行队列、ISO8601、授权请求
+  caps_calendar.m           # ✅ EventKit 事件：list / calendars / create / update / delete
+  caps_reminders.m          # ✅ EventKit 提醒：list / create / complete / delete
   DshNativeAudit.h          # ✅ 审计的只读视图，给 Swift 用（同样不含 node_api.h）
   audit.m                   # ✅ 环形缓冲，存 UserDefaults
-  NativeBridge.swift        # ⬜ @objc 单例：需要 UI 的操作在主线程做（写确认）
+  DshNativeBridge.h         # ✅ 写确认的协议，ObjC 侧自己定义（不用 Swift 生成头）
+  bridge.m                  # ✅ 那个协议的槽位，App 启动时填
 
 app/DshIOS/
-  DshIOS-Bridging-Header.h            # ✅ 让 SwiftUI 读得到上面那两张表
+  DshIOS-Bridging-Header.h            # ✅ 让 SwiftUI 读得到上面那三张头
+  Native/NativeBridge.swift           # ✅ 写确认的实现：系统事件编辑器 + 确认框
   Views/NativeCapabilitiesView.swift  # ✅ 设置 →「本机能力」：清单 + 系统授权状态
   Views/NativeAuditView.swift         # ✅ 每次调用记一条，用户可查
+
+examples/
+  dsh-plugin-native-demo/   # ✅ 官方示例：第三方插件怎么用这些能力，含绕过自检
 ```
 
 **能力清单只有一张表。** 设置页列的、N-API 分发用的、判定一次调用合不合法的，都是 `ios_native.m` 里那个 `CAPABILITIES` 数组：`DshNativeCapabilityList()` 是它的只读视图，经 bridging header 给 Swift。界面不许自己维护一份拷贝——两份清单迟早对不上，而对不上的那条缝就是绕过（§9.3）。页面的中文名和说明按能力 id 查，**查不到就显示 id**，所以原生加了能力而忘了加文案，页面会少个名字，但不会漏掉这项能力。
@@ -326,8 +348,8 @@ app/DshIOS/
 | 给了权限后，插件读日历 | **不拦**，这就是本方案的明确语义：权限给的是这个 App，含它装的任何插件。事前靠安装页警告（§4.1.1），事后靠审计（§5.4） |
 | 插件冒充本体 | **不适用**。没有"本体专属"的权限可冒充，§2.2 那个攻击失去了目标 |
 | 插件绕过 JS 网关 | **绕得过，但无所谓**。`_linkedBinding('dsh_ios_native')` 对任何 JS 可见，插件可以直连 addon——拿到的权限和老实调用完全一样（§4.1 的模型不按调用方分）。前提是 addon 里没有免确认的写后门 |
-| 插件写/删日历（一期） | 引擎侧不注册写工具，但插件能直连 addon。**所以 addon 的能力白名单一期就要有**——不是授权门，是"没实现的操作一律不执行" |
-| 插件写/删日历（二期起） | **挡住**。新建走 `EKEventEditViewController`（用户在系统界面上点"添加"才落库，插件替不了他点）；改删走一次性 grant（§4.3） |
+| 表里没有的操作 | **挡住**。能力白名单——不是授权门，是"没实现的操作一律不执行" |
+| 插件写/删日历或提醒 | **挡住**。新建事件走 `EKEventEditViewController`（用户在系统界面上点"添加"才落库，插件替不了他点）；改、删和提醒的写都要用户在原生确认框上点一次，决策不经过 JS（§4.3） |
 
 一句话：**读的门就是 iOS 那一道，写的门在原生侧每次确认**。读侧不再假装有应用层粒度，省下的复杂度换成了"把唯一那次系统弹窗和唯一那个事前决策点做好"。
 
@@ -393,11 +415,25 @@ Apple 对 HealthKit 数据有硬条款：不得用于广告或基于使用的数
 | 文件 | 改什么 |
 |---|---|
 | `app/project.yml` | 每个能力的 `NS*UsageDescription`；HealthKit 还要 capability / entitlement 和 `HealthKit.framework` |
-| `app/DshIOS/PrivacyInfo.xcprivacy` | 现在 `NSPrivacyCollectedDataTypes` 是空的。日历/健康/位置/通讯录都属于要申报的类型（即使不离开设备，"发给模型服务商"也算 third-party 流向，要按实际情况申报） |
-| `PRIVACY.md` | 新增一节：本机数据怎么被读、流向哪里、怎么撤销 |
-| `engine/skills/ios-environment/SKILL.md` | 智能体靠它判断自己能做什么。新增能力必须同步，否则模型不知道有这些工具（`CONTRIBUTING.md` 已有此约定） |
-| `docs/webui/parity.md` | 这是官方 Web 没有的能力，属于本项目自有扩展，在"有意与官方不同"里记一条 |
-| `docs/webui/settings-plugins.md` | `installTrust` 文案按 §4.1.1 改 |
+| `app/DshIOS/PrivacyInfo.xcprivacy` | **待定，没动，见下。** |
+| `PRIVACY.md` | ✅ 已改：本机数据不另存、每次现读；使用记录留在本机可查可清；日历和提醒会随对话发给模型服务商（中英两版都改了） |
+| `engine/skills/ios-environment/SKILL.md` | ✅ 已改：日历和提醒两行、写操作要确认、`notify` 和 `reminders` 怎么选、被拒和「仅添加」怎么说 |
+| `docs/webui/parity.md` | ✅ 已改：新增 §3.3「本项目自有扩展」 |
+| `docs/webui/settings-plugins.md` | ✅ 已改：`installTrust` 文案按 §4.1.1 加了本机能力那半句 |
+| `app/project.yml` + `InfoPlist.xcstrings` | ✅ 已改：日历和提醒两条用途描述，中英西三语 |
+
+**`PrivacyInfo.xcprivacy` 为什么没动——这是个口径问题，不是代码问题。**
+
+现在的清单里 `NSPrivacyCollectedDataTypes` 是**空的**。但这个 App 早就在把对话内容、文件内容、命令输出和相机照片发给用户选定的模型服务商了。也就是说，项目现有的口径是：**用户自己发起、发给用户自己选的服务商，不算开发者"收集"。**
+
+日历和提醒是完全一样的形状——用户授权、用户提问时才读、直接发给用户选的服务商、不经过我们、我们不另存。按现有口径，它们同样不需要申报。
+
+所以这里**不是"漏了日历"，而是整条口径要不要改**：
+
+- 维持现状：一致，且有现成先例（照片走的就是这条）。
+- 改成申报：那就不只是加日历，对话内容和照片也得一起申报，是整份清单重写。
+
+这件事牵扯的是产品/法务判断，不是实现细节，所以留给人定。本次改动没有碰这个文件。
 
 ### 6.2.1 用途描述是唯一的告知渠道，所以文案是正事
 
@@ -430,20 +466,19 @@ NSRemindersFullAccessUsageDescription
 | 期 | 内容 | 产出 |
 |---|---|---|
 | **零期** ✅ | 通道 + 不要权限的那批 | addon 骨架（N-API 入口、能力表、policy 判断点、ThreadSafeFunction 回复）、引擎插件与 `binding.mjs`、`device_info` / `notify` / `speak` 三个工具、设置 →「本机能力」页、`project.yml` 接入、SKILL.md 同步。**不碰任何授权机制**，用最低风险把整条链跑通 |
-| **一期** | 日历读 | `caps_calendar.m`（读）、系统权限请求与被拒引导、Info.plist 文案、`calendar` 工具、绕过测试（§9.3）、四份文档同步 |
-| **二期** | 写 + 审计 | 新建走 `EKEventEditViewController`、改删走一次性 grant、审计记录与查看页 |
-| **三期** | 提醒 | `reminders.*`，与 todo / schedule 的职责划分写进 SKILL.md |
-| **四期** | 插件可用 | 导出 `ctx.iosNative`、`caller.mjs` 归因打标签、安装页警告按 §4.1.1 改 |
+| **一期** ✅ | 日历读 | `caps_calendar.m`（读）、系统权限请求与被拒引导、Info.plist 文案、`calendar` 工具、绕过测试（§9.3 → 示例插件的 `native_check`）、文档同步 |
+| **二期** ✅ | 写 + 审计 | 新建走 `EKEventEditViewController`、改删走原生确认（grant 简化掉了，见 §4.3）、审计记录与查看页 |
+| **三期** ✅ | 提醒 | `reminders.*`，与 `notify` 的职责划分写进 SKILL.md |
+| **四期** ✅ | 插件可用 | 导出 `ctx.iosNative`、`caller.mjs` 归因打标签、安装页警告按 §4.1.1 改、官方示例插件 |
 | **五期**（待定） | 健康 / 运动 / 位置 | 先过 §6.1 的决定 |
 
-**零期实际越界做掉了后面两期的一部分**，这里据实记一笔，免得照表排期的人重复劳动：
+分期在执行中有三处偏离，都是有意的，记在这里免得后面的人按原表推断：
 
-- 三期原本写的是「提醒 + 本地通知」，其中**本地通知（`notify`）零期就做了**，三期只剩 `reminders.*`，上表已改。
-- 四期三件事里，**导出 `ctx.iosNative` 和改安装页警告零期都做了**（警告文案 4 处，能力名取自同一张能力表，所以日历一加进来它自己就变）。四期只剩 `caller.mjs` 归因。
+1. **本地通知（`notify`）零期就做了**，所以三期只剩 `reminders.*`，上表已改。
+2. **审计从二期挪到了一期。** §5.4 说审计是"用户唯一能看到这个 App 碰了我哪些数据的地方"，而一期上线日历读之后插件就能直连 addon 读日历（§5.3 的明确语义）。排在二期意味着中间有一段用户完全查不到的窗口。审计本身很轻（一个环形缓冲 + 一个列表页），没有理由让那个窗口存在。
+3. **二期的"一次性 grant"被简化掉了**，因为决策和执行根本没有分开——详见 §4.3 表格下面那段。
 
-去掉应用层授权后，一、四期都明显变轻：一期不用做 `CapabilityStore` 和授权 sheet；四期不再是"搭一套插件授权体系"，只是**把服务导出 + 改一句安装页文案**——插件和本体走的本来就是同一条路。
-
-**审计的位置要往前挪。** §5.4 说审计是"用户唯一能看到这个 App 碰了我哪些数据的地方"，而一期上线日历读之后，插件就能直连 addon 读日历（§5.3 的明确语义）。审计排在二期意味着中间这段时间用户没有任何事后可查的地方。审计本身很轻（一个环形缓冲 + 一个列表页），**和一期一起做**。
+去掉应用层授权后，一、四期都明显变轻：一期不用做 `CapabilityStore` 和授权 sheet；四期不再是"搭一套插件授权体系"，只是**把服务导出 + 改一句安装页文案**——插件和本体走的本来就是同一条路。四期的归因（`caller.mjs`）跟着审计一起做了，官方示例插件（`examples/dsh-plugin-native-demo/`）把这条路真的跑了一遍。
 
 一期做完就能验证最关键的假设：**Node 线程发起 → Swift 执行 → 系统弹窗 → 结果回到智能体**这条链在真机上通不通。模拟器能过不代表真机能过（`CONTRIBUTING.md` 的既有教训）。
 

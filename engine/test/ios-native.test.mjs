@@ -36,7 +36,34 @@ test('tool names are unique and stable', () => {
   assert.deepEqual(names, [...new Set(names)]);
   // Pinned because they reach the model's prompt and a rename is a breaking
   // change for any skill or plugin that mentions them.
-  assert.deepEqual(names.sort(), ['calendar', 'device_info', 'notify', 'speak']);
+  assert.deepEqual(names.sort(), ['calendar', 'device_info', 'notify', 'reminders', 'speak']);
+});
+
+test('a reminders write is refused before the addon when it has nothing to act on', async () => {
+  await assert.rejects(TOOLS.reminders.execute({ action: 'create' }, {}), /creating needs `title`/);
+  await assert.rejects(TOOLS.reminders.execute({ action: 'complete' }, {}), /complete needs the reminder's `id`/);
+  await assert.rejects(TOOLS.reminders.execute({ action: 'delete' }, {}), /delete needs the reminder's `id`/);
+});
+
+test('reminders render their own cancelled writes as cancelled', () => {
+  const render = (action, value) => TOOLS.reminders.output.render({ action }, value)[0].text;
+  assert.match(render('create', { saved: false }), /declined.*Nothing was added/i);
+  assert.match(render('create', { saved: true }), /in their list/);
+  assert.match(render('complete', { unchanged: true }), /already done/);
+  assert.match(render('complete', { saved: false }), /still open/);
+  assert.match(render('delete', { deleted: false }), /still there/);
+
+  // An undated reminder must say so rather than render an empty column: "no due
+  // date" is the difference between a task and one that will actually alert.
+  const listed = render('list', {
+    reminders: [
+      { title: '买牛奶', completed: false, list: '家' },
+      { title: '交房租', due: '2026-11-10T09:00:00+08:00', completed: false, list: '家' },
+    ],
+  });
+  assert.match(listed, /no due date {2}买牛奶/);
+  assert.match(listed, /2026-11-10 09:00 {2}交房租/);
+  assert.match(render('list', { reminders: [] }), /Nothing on their reminders/);
 });
 
 test('a bare date means local midnight, not UTC midnight', () => {

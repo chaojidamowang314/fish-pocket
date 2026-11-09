@@ -93,6 +93,13 @@ struct NativeAuditEntry: Identifiable {
         switch (capability, op) {
         case ("calendar", "list"): return String(localized: "读取事件")
         case ("calendar", "calendars"): return String(localized: "读取日历列表")
+        case ("calendar", "create"): return String(localized: "新建日程")
+        case ("calendar", "update"): return String(localized: "修改日程")
+        case ("calendar", "delete"): return String(localized: "删除日程")
+        case ("reminders", "list"): return String(localized: "读取待办")
+        case ("reminders", "create"): return String(localized: "新建待办")
+        case ("reminders", "complete"): return String(localized: "标记完成")
+        case ("reminders", "delete"): return String(localized: "删除待办")
         case ("notify", "schedule"): return String(localized: "设定提醒")
         case ("notify", "cancel"): return String(localized: "取消提醒")
         case ("notify", "pending"): return String(localized: "查看待发提醒")

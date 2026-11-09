@@ -50,6 +50,7 @@ static const dsh_capability CAPABILITIES[] = {
   {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications"},
   {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL},
   {"calendar", dsh_native_calendar, {"list", "calendars", "create", "update", "delete", NULL}, "calendar"},
+  {"reminders", dsh_native_reminders, {"list", "create", "complete", "delete", NULL}, "reminders"},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
