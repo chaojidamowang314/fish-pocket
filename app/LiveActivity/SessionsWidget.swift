@@ -282,7 +282,9 @@ private struct CircularSessions: View {
             AccessoryWidgetBackground()
             VStack(spacing: 0) {
                 Image(systemName: "fish.fill").font(.system(size: 12, weight: .bold))
-                Text(entry.stale ? "?" : "\(entry.snapshot.active.count)")
+                // verbatim：问号是「读不到数」的占位符号，不是一句话。不这样写的话
+                // SwiftUI 会把它当文案抽进 String Catalog，三语各补一个问号。
+                Text(verbatim: entry.stale ? "?" : "\(entry.snapshot.active.count)")
                     .font(.system(size: 22, weight: .bold).monospacedDigit())
                 if !entry.stale, entry.snapshot.waitingCount > 0 {
                     Text("\(entry.snapshot.waitingCount) 待处理").font(.system(size: 9, weight: .semibold)).lineLimit(1)

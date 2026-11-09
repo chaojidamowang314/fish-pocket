@@ -78,6 +78,35 @@ test('reminders render their own cancelled writes as cancelled', () => {
   assert.match(render('list', { reminders: [] }), /Nothing on their reminders/);
 });
 
+test('the flags render the same whether the addon sends booleans or 0/1', () => {
+  // On a real device `@(a > b)` once boxed a C int, so `default` and `truncated`
+  // arrived as 0/1 while `writable` next to them arrived as true/false
+  // (native/ios-native/caps_calendar.m). The addon now casts to BOOL, but this
+  // file cannot see that table — so the renderer must not care either way.
+  const calendars = (flag) => TOOLS.calendar.output.render({ action: 'calendars' }, {
+    calendars: [{ title: '工作', writable: true, default: flag }],
+  })[0].text;
+  assert.equal(calendars(1), calendars(true));
+  assert.equal(calendars(0), calendars(false));
+  assert.match(calendars(1), /\(default\)/);
+  assert.doesNotMatch(calendars(0), /\(default\)/);
+
+  const listed = (flag) => TOOLS.calendar.output.render({ action: 'list' }, {
+    events: [{ title: 'x', start: '2026-11-09T09:00:00+08:00', end: '2026-11-09T10:00:00+08:00' }],
+    total: 480, truncated: flag,
+  })[0].text;
+  assert.equal(listed(1), listed(true));
+  assert.equal(listed(0), listed(false));
+  assert.match(listed(1), /showing the first/);
+  assert.doesNotMatch(listed(0), /showing the first/);
+
+  const reminders = (flag) => TOOLS.reminders.output.render({ action: 'list' }, {
+    reminders: [{ title: '买牛奶', completed: flag, list: '家' }],
+  })[0].text;
+  assert.equal(reminders(1), reminders(true));
+  assert.equal(reminders(0), reminders(false));
+});
+
 test('a bare date means local midnight, not UTC midnight', () => {
   // The whole point of the conversion. `new Date('2026-11-09')` is UTC midnight,
   // which lands on 8 November for anyone west of Greenwich and skips the first

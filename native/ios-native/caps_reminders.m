@@ -22,7 +22,7 @@ static NSString *const kDeniedMessage =
   @"Settings > Privacy & Security > Reminders. iOS only asks once, so it cannot be requested again from here";
 
 static void with_access(void (^next)(BOOL granted, NSString *error)) {
-  DshEventKitRequestAccess(EKEntityTypeReminder, kDeniedMessage, next);
+  DshEventKitRequireAccess(EKEntityTypeReminder, NO, kDeniedMessage, next);
 }
 
 /// EKReminder keeps its due date as components, not a date.
@@ -61,13 +61,18 @@ static NSDictionary *reminder_json(EKReminder *reminder) {
 
 /// Title and due date only: shown verbatim in a translated app, built natively
 /// from the reminder as it is right now (§4.3.1).
+/// 和 caps_calendar.m 的 event_summary 同理：要写进去的东西都得在框里看得见，
+/// 用户才有得可判断。
 static NSString *reminder_summary(EKReminder *reminder) {
   NSString *title = reminder.title.length > 0 ? reminder.title : @"(untitled)";
+  NSMutableString *summary = [NSMutableString stringWithString:title];
   NSDate *due = due_date(reminder);
-  if (due == nil) return title;
-  NSString *iso = DshISO8601(due);
-  return [NSString stringWithFormat:@"%@\n%@ %@", title,
-          [iso substringToIndex:10], [iso substringWithRange:NSMakeRange(11, 5)]];
+  if (due != nil) {
+    NSString *iso = DshISO8601(due);
+    [summary appendFormat:@"\n%@ %@", [iso substringToIndex:10], [iso substringWithRange:NSMakeRange(11, 5)]];
+  }
+  if (reminder.notes.length > 0) [summary appendFormat:@"\n%@", truncated(reminder.notes, 120)];
+  return summary;
 }
 
 static id<DshNativeBridging> require_bridge(DshNativeReply reply) {
@@ -117,7 +122,8 @@ static void list_reminders(NSDictionary *args, DshNativeReply reply) {
         }
         reply(@{@"reminders": reminders,
                 @"total": @(sorted.count),
-                @"truncated": @(sorted.count > reminders.count),
+                // (BOOL) for the same reason as caps_calendar.m: int 0/1 vs false.
+                @"truncated": @((BOOL)(sorted.count > reminders.count)),
                 @"auditSummary": [NSString stringWithFormat:@"· %lu", (unsigned long)sorted.count]}, nil);
       }];
     });
@@ -162,7 +168,8 @@ static void create_reminder(NSDictionary *args, DshNativeReply reply) {
       }
 
       NSString *summary = reminder_summary(reminder);
-      [bridge confirmChange:summary destructive:NO completion:^(BOOL confirmed) {
+      [bridge confirmChange:summary capability:@"reminders" op:@"create" destructive:NO
+              completion:^(BOOL confirmed) {
         dispatch_async(DshEventKitQueue(), ^{
           if (!confirmed) {
             reply(@{@"action": DshNativeActionCancelled, @"saved": @NO}, nil);
@@ -214,7 +221,8 @@ static void complete_reminder(NSDictionary *args, DshNativeReply reply) {
       return;
     }
     NSString *summary = reminder_summary(reminder);
-    [bridge confirmChange:summary destructive:NO completion:^(BOOL confirmed) {
+    [bridge confirmChange:summary capability:@"reminders" op:@"complete" destructive:NO
+            completion:^(BOOL confirmed) {
       dispatch_async(DshEventKitQueue(), ^{
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"saved": @NO}, nil);
@@ -238,7 +246,8 @@ static void delete_reminder(NSDictionary *args, DshNativeReply reply) {
 
   with_reminder(args[@"id"], reply, ^(EKEventStore *store, EKReminder *reminder) {
     NSString *summary = reminder_summary(reminder);
-    [bridge confirmChange:summary destructive:YES completion:^(BOOL confirmed) {
+    [bridge confirmChange:summary capability:@"reminders" op:@"delete" destructive:YES
+            completion:^(BOOL confirmed) {
       dispatch_async(DshEventKitQueue(), ^{
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"deleted": @NO}, nil);

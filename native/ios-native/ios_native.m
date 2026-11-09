@@ -16,6 +16,7 @@
 #import "dsh_ios_native.h"
 #import "DshNativeCapabilities.h"
 #import "DshNativeAudit.h"
+#import "eventkit_shared.h"
 #import <node_api.h>
 
 /// A capability may put a one-line account of what it did under this key. The
@@ -85,6 +86,42 @@ NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void) {
     [list addObject:entry];
   }
   return list;
+}
+
+void DshNativeRequestPermission(NSString *permission, void (^done)(BOOL granted, NSString *error)) {
+  // The screen is the caller, so settle where it can use the answer.
+  void (^reply)(BOOL, NSString *) = ^(BOOL granted, NSString *error) {
+    dsh_native_on_main(^{ done(granted, error); });
+  };
+
+  // Only a permission some capability in the table actually asks for. A name
+  // this build does not use must not come back looking like a refusal by the
+  // user, which is indistinguishable from a bug in the screen.
+  BOOL named = NO;
+  for (size_t i = 0; i < CAPABILITY_COUNT; i++) {
+    const char *needed = CAPABILITIES[i].systemPermission;
+    if (needed != NULL && [permission isEqualToString:@(needed)]) {
+      named = YES;
+      break;
+    }
+  }
+  if (!named) {
+    reply(NO, [NSString stringWithFormat:@"no capability in this build needs '%@'", permission]);
+    return;
+  }
+
+  if ([permission isEqualToString:@"calendar"]) {
+    DshEventKitGrantAccess(EKEntityTypeEvent, nil, reply);
+  } else if ([permission isEqualToString:@"reminders"]) {
+    DshEventKitGrantAccess(EKEntityTypeReminder, nil, reply);
+  } else if ([permission isEqualToString:@"notifications"]) {
+    DshNotifyGrantAccess(reply);
+  } else {
+    // In the table, but nothing here knows how to ask for it: a capability was
+    // added with a new `systemPermission` and this function was not extended.
+    // Loud, because the alternative is a switch on screen that does nothing.
+    reply(NO, [NSString stringWithFormat:@"'%@' has no grant path in DshNativeRequestPermission", permission]);
+  }
 }
 
 static BOOL capability_accepts(const dsh_capability *cap, NSString *op) {
@@ -279,7 +316,11 @@ static napi_value invoke(napi_env env, napi_callback_info info) {
       [stripped removeObjectForKey:kAuditSummaryKey];
       payload = stripped;
     }
-    if (audited && error == nil) {
+    // 摘要在，才算真的发生过：能力只在写成功时给摘要，用户点了取消的那一次没有。
+    // 用摘要在不在当条件，而不是另记一个标志，是因为这样「被拒绝的写不进审计」
+    // 不依赖以后每个新能力都记得这回事——审计页是用户唯一的事后凭据，记错一条
+    // 比少记一条更糟。
+    if (audited && error == nil && result[kAuditSummaryKey] != nil) {
       DshNativeAuditRecord(auditedCapability, op, callerClaim, result[kAuditSummaryKey]);
     }
     finish(call, payload, error);

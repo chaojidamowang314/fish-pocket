@@ -41,18 +41,23 @@ extern NSString *const DshNativeActionDeleted;
                                              NSString *_Nullable eventIdentifier,
                                              NSString *_Nullable error))completion;
 
-/// Ask the user to approve one change to something they already have, described
-/// exactly. Used where the system has no editor of its own to lend us: changing
-/// and deleting existing events.
+/// Ask the user to approve one write to something they already have, described
+/// exactly. Used where the system has no editor of its own to lend us:
+/// everything except creating an event.
 ///
 /// `summary` is the only trustworthy thing in the sheet — it is built natively
-/// from the event as it exists right now, not from whatever the caller said it
+/// from the record as it exists right now, not from whatever the caller said it
 /// was (§4.3.1).
 ///
 /// It is shown verbatim in an app that is translated while this file is not, so
-/// it holds only the event's own title and its dates, with an arrow for a change.
-/// The sheet's title and buttons are the app's, and are translated there.
+/// it holds only the record's own title and its dates, with an arrow for a
+/// change. The sheet's title and buttons are the app's, and are translated there
+/// — which is why `capability` and `op` come along: a sheet that says "change
+/// this event?" over a reminder being created is wrong about the one thing it
+/// exists to state. They are the same strings the dispatcher and the audit use.
 - (void)confirmChange:(NSString *)summary
+           capability:(NSString *)capability
+                   op:(NSString *)op
           destructive:(BOOL)destructive
            completion:(void (^)(BOOL confirmed))completion;
 

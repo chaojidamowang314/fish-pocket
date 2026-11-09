@@ -5650,6 +5650,38 @@
         }
       }
     },
+    "删除这一条？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this one?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este elemento?"
+          }
+        }
+      }
+    },
+    "删除这个提醒？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this reminder?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este recordatorio?"
+          }
+        }
+      }
+    },
     "删除这个日程？" : {
       "localizations" : {
         "en" : {
@@ -6302,6 +6334,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir a Descubrir"
+          }
+        }
+      }
+    },
+    "去设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
           }
         }
       }
@@ -10408,6 +10456,22 @@
         }
       }
     },
+    "开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once it is on, the agent and the third-party plugins you install can both use it, and the app does not tell callers apart. Make sure you trust where a plugin comes from before installing it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activada, tanto el agente como los plugins de terceros que instales pueden usarla, y la app no distingue quién la llama. Asegúrate de confiar en el origen de un plugin antes de instalarlo."
+          }
+        }
+      }
+    },
     "开始使用" : {
       "localizations" : {
         "en" : {
@@ -10468,6 +10532,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Código abierto · En App Store y TestFlight"
+          }
+        }
+      }
+    },
+    "开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once granted, changing or taking back access happens in Settings. iOS shows its permission dialog only once per app for the life of the install, so after a refusal that is the only way back."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez concedido, cambiar o retirar el acceso se hace en Ajustes. iOS muestra su diálogo de permiso una sola vez por app mientras esté instalada, así que tras un rechazo ese es el único camino."
           }
         }
       }
@@ -11704,6 +11784,22 @@
         }
       }
     },
+    "把这个提醒标记为完成？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark this reminder done?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Marcar este recordatorio como hecho?"
+          }
+        }
+      }
+    },
     "拒绝" : {
       "localizations" : {
         "en" : {
@@ -11828,6 +11924,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por fecha"
+          }
+        }
+      }
+    },
+    "授权" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permisos"
           }
         }
       }
@@ -13569,6 +13681,38 @@
         }
       }
     },
+    "新建这个提醒？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add this reminder?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Añadir este recordatorio?"
+          }
+        }
+      }
+    },
+    "新建这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Añadir este evento?"
+          }
+        }
+      }
+    },
     "新版 Web 搜索 API" : {
       "localizations" : {
         "en" : {
@@ -15269,6 +15413,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No instalado"
+          }
+        }
+      }
+    },
+    "未开启" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enabled"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No habilitado"
           }
         }
       }
@@ -17682,6 +17842,22 @@
         }
       }
     },
+    "没开的能力，智能体和你装的插件都用不了，也没法替你打开。系统的授权框只会在你点「开启」时出现。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A capability you have not switched on cannot be used by the agent or by the plugins you install, and neither of them can switch it on for you. The system permission dialog appears only when you tap Turn On."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una función que no hayas activado no pueden usarla ni el agente ni los plugins que instales, y ninguno de ellos puede activarla por ti. El diálogo de permiso del sistema solo aparece cuando tocas Activar."
+          }
+        }
+      }
+    },
     "没有与当前 DSH %@ 兼容的版本" : {
       "localizations" : {
         "en" : {
@@ -17966,6 +18142,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nada en curso"
+          }
+        }
+      }
+    },
+    "没能打开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not turn it on"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo activar"
           }
         }
       }
@@ -19134,6 +19326,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Habilitar la revisión automática (experimental)?"
+          }
+        }
+      }
+    },
+    "确认这个改动？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm this change?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Confirmar este cambio?"
           }
         }
       }
@@ -24423,6 +24631,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Incluido con DSH"
+          }
+        }
+      }
+    },
+    "随时可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always available"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siempre disponible"
           }
         }
       }

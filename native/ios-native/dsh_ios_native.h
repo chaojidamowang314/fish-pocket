@@ -24,6 +24,10 @@ void dsh_native_speak(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_calendar(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_reminders(NSString *op, NSDictionary *args, DshNativeReply reply);
 
+/// Raise the notification permission dialog, then run `done`. Only
+/// `DshNativeRequestPermission` calls this; see caps_notify.m.
+void DshNotifyGrantAccess(void (^done)(BOOL granted, NSString *error));
+
 /// Run `block` on the main thread and return without waiting. UIKit, AVFoundation
 /// and the permission prompts all want the main thread; the engine calls us from
 /// Node's thread, never that one.

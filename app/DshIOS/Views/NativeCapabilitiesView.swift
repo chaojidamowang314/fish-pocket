@@ -2,16 +2,30 @@ import SwiftUI
 import EventKit
 import UserNotifications
 
-/// 设置 →「本机能力」：智能体能用到手机的哪些东西，各自要不要系统授权。
+/// 「本机能力」：智能体能用到手机的哪些东西，各自要不要系统授权——以及由你在这里
+/// 一项项打开。
+///
+/// 这一页是**唯一**会弹出系统授权框的地方。能力本身在没拿到授权时直接拒绝调用，
+/// 不会自己去弹框（docs/native-services.md §5.5），所以「某个插件碰巧调了一下，
+/// 用户就被按头要权限」这件事不会发生；反过来，这一页要是不好找，这些能力就
+/// 永远开不起来——它在侧边栏有自己的入口，不只藏在设置里。
 ///
 /// 清单来自 addon 的能力表（`DshNativeCapabilityList`），不是这里写死的一份拷贝——
-/// 判定调用和展示清单读同一张表，两者就不会悄悄对不上（docs/native-services.md §9.3）。
-/// 这里只负责文案：没有文案的能力照样列出来（显示 id），所以原生加了能力而忘了加
-/// 中文名时，页面会少个名字，但不会漏掉它。
+/// 判定调用和展示清单读同一张表，两者就不会悄悄对不上（§9.3）。这里只负责文案：
+/// 没有文案的能力照样列出来（显示 id），所以原生加了能力而忘了加中文名时，页面会
+/// 少个名字，但不会漏掉它。
 struct NativeCapabilitiesView: View {
     @State private var capabilities: [NativeCapability] = []
     /// 按 `systemPermission` 存，所以新增一项要授权的能力时这里不用再加分支。
     @State private var permissions: [String: CapabilityPermission] = [:]
+    /// 正在等系统弹框答复的那一项，用来挡住重复点击。
+    @State private var requesting: String?
+    /// 只有 iOS 自己出错时才有东西——用户点「不允许」不算错，状态会直接变成已关闭。
+    @State private var failure: String?
+
+    private var needsPermission: Bool {
+        capabilities.contains { $0.systemPermission != nil }
+    }
 
     var body: some View {
         List {
@@ -19,20 +33,30 @@ struct NativeCapabilitiesView: View {
                 ForEach(capabilities) { capability in
                     CapabilityRow(
                         capability: capability,
-                        permission: capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded
+                        permission: capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded,
+                        busy: requesting != nil && requesting == capability.systemPermission,
+                        enable: { enable(capability) },
+                        openSettings: openSystemSettings
                     )
                 }
+            } header: {
+                // 这一段是整页的要点：没开的用不了，而且只有你能开。
+                Text("没开的能力，智能体和你装的插件都用不了，也没法替你打开。系统的授权框只会在你点「开启」时出现。")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.secondary)
+                    .textCase(nil)
+                    .padding(.bottom, 6)
             } footer: {
                 // 不含糊其辞：插件用的就是这些能力，而且 App 不区分谁在调用——
                 // 说清楚了，用户才知道该在装插件那一步把关。
-                Text("智能体和你装的第三方插件都能用这些能力，App 不区分谁在调用。装插件前请确认来源可信。")
+                Text("开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。")
             }
             .groupedRow()
 
-            if capabilities.contains(where: { $0.systemPermission != nil }) {
+            if needsPermission {
                 Section {
                     NavigationLink { NativeAuditView() } label: {
-                        Text("使用记录")
+                        Label("使用记录", systemImage: "list.bullet.rectangle")
                     }
                 } footer: {
                     // 没有应用层开关，这页就是用户事后唯一的查证途径（§5.4）。
@@ -41,12 +65,9 @@ struct NativeCapabilitiesView: View {
                 .groupedRow()
 
                 Section {
-                    Button("打开系统设置") {
-                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                        UIApplication.shared.open(url)
-                    }
+                    Button("打开系统设置", action: openSystemSettings)
                 } footer: {
-                    Text("系统授权只能在「设置」里改。iOS 的授权弹窗每个 App 只出现一次，拒绝之后也要回那里打开。")
+                    Text("开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。")
                 }
                 .groupedRow()
             }
@@ -59,11 +80,38 @@ struct NativeCapabilitiesView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             refreshPermissions()
         }
+        .alert("没能打开", isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
+            Button("好", role: .cancel) { failure = nil }
+        } message: {
+            Text(failure ?? "")
+        }
     }
 
     private func load() {
         capabilities = NativeCapability.all
         refreshPermissions()
+    }
+
+    /// 让用户亲自开一项。这是 App 里唯一一处会把系统授权框叫出来的调用。
+    private func enable(_ capability: NativeCapability) {
+        guard let permission = capability.systemPermission, requesting == nil else { return }
+        requesting = permission
+        // 回调按约定在主线程上，但那是 ObjC 头里的承诺，Swift 的并发检查看不见，
+        // 所以照这页另一处的写法再过一次 MainActor。
+        DshNativeRequestPermission(permission) { _, error in
+            Task { @MainActor in
+                requesting = nil
+                // 用户说「不允许」时 error 是空的：那不是故障，刷新后这一项会显示
+                // 「已关闭」，并给出去系统设置的路。
+                if let error, !error.isEmpty { failure = error }
+                refreshPermissions()
+            }
+        }
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     /// 只问清单里真的出现过的那些授权，别为一个这个构建没有的能力去碰框架。
@@ -116,22 +164,28 @@ enum CapabilityPermission {
 
     var label: LocalizedStringResource {
         switch self {
-        case .notNeeded: return "无需授权"
-        case .notDetermined: return "首次使用时询问"
-        case .allowed: return "已允许"
+        case .notNeeded: return "随时可用"
+        // 以前这里写的是「首次使用时询问」。现在没人会去问了——不开就是不能用。
+        case .notDetermined: return "未开启"
+        case .allowed: return "已开启"
         case .denied: return "已关闭"
         case .insufficient(let detail): return detail
         }
     }
 
-    /// 只有用户动手才能解决的那两档才值得被强调出来。
-    var needsAttention: Bool {
+    /// 用户动一下就能解决的那几档。决定右边给按钮还是给状态字。
+    var action: CapabilityAction {
         switch self {
-        case .denied, .insufficient: return true
-        case .notNeeded, .notDetermined, .allowed: return false
+        case .notNeeded, .allowed: return .none
+        case .notDetermined: return .enable
+        case .denied, .insufficient: return .settings
         }
     }
+
+    var isAllowed: Bool { if case .allowed = self { return true } else { return false } }
 }
+
+enum CapabilityAction { case none, enable, settings }
 
 /// 一项本机能力，连同它的中文说明。
 struct NativeCapability: Identifiable {
@@ -184,28 +238,103 @@ struct NativeCapability: Identifiable {
         default: return ops.joined(separator: " · ")
         }
     }
+
+    /// 不认识的能力也有个图标，不然新能力那一行会缺一块。
+    var icon: String {
+        switch id {
+        case "device": return "iphone"
+        case "notify": return "bell"
+        case "speak": return "speaker.wave.2"
+        case "calendar": return "calendar"
+        case "reminders": return "checklist"
+        default: return "square.grid.2x2"
+        }
+    }
 }
 
 private struct CapabilityRow: View {
     let capability: NativeCapability
     let permission: CapabilityPermission
+    let busy: Bool
+    let enable: () -> Void
+    let openSettings: () -> Void
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .top, spacing: 12) {
+            // 开着的那几项用实心底，扫一眼就知道这台手机上开了哪些。
+            Image(systemName: capability.icon)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(permission.isAllowed ? Palette.onInk : Palette.secondary)
+                .frame(width: 30, height: 30)
+                .background(
+                    permission.isAllowed ? Palette.ink : Palette.control,
+                    in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+                )
+                .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(capability.title).foregroundStyle(Palette.ink)
                 Text(capability.detail)
                     .font(.footnote)
                     .foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                if permission.action == .settings {
+                    Text(permission.label)
+                        .font(.footnote)
+                        .foregroundStyle(Palette.ink)
+                }
             }
-            Spacer(minLength: 12)
+
+            Spacer(minLength: 8)
+            trailing
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var trailing: some View {
+        switch permission.action {
+        case .none:
             Text(permission.label)
                 .font(.footnote)
-                .foregroundStyle(permission.needsAttention ? Palette.ink : Palette.secondary)
-                .multilineTextAlignment(.trailing)
-                .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(permission.isAllowed ? Palette.ink : Palette.faint)
+        case .enable:
+            Button(action: enable) {
+                if busy {
+                    ProgressView().controlSize(.small).frame(width: 44)
+                } else {
+                    Text("开启").font(.footnote.weight(.medium))
+                }
+            }
+            .buttonStyle(CapabilityActionStyle(filled: true))
+            .disabled(busy)
+        case .settings:
+            Button("去设置", action: openSettings)
+                .buttonStyle(CapabilityActionStyle(filled: false))
         }
-        .padding(.vertical, 2)
+    }
+}
+
+/// 列表行里的小胶囊按钮。实心是「这是你该点的那个」，描边是「去别处处理」。
+private struct CapabilityActionStyle: ButtonStyle {
+    let filled: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(filled ? Palette.onInk : Palette.ink)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background {
+                if filled {
+                    Capsule().fill(Palette.ink)
+                } else {
+                    Capsule().strokeBorder(Palette.stroke, lineWidth: 1)
+                }
+            }
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            // 列表行自己也可点时，按钮要把点击吃掉，不然点「开启」会连带触发整行。
+            .contentShape(Capsule())
     }
 }

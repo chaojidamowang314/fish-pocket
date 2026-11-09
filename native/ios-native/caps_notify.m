@@ -1,7 +1,8 @@
 // notify: local notifications. "Remind me in 20 minutes" is the single most
 // common assistant request, and this answers it without touching the Reminders
 // app or any privacy permission — notification authorisation is its own prompt,
-// requested here on first use.
+// raised by the capability screen when the user switches this on, never from
+// here (docs/native-services.md §5.5).
 //
 // These are the agent's own notifications, not calendar events or reminders:
 // nothing is written to the user's data, and they disappear once delivered.
@@ -10,20 +11,51 @@
 
 static NSString *const kIdentifierPrefix = @"dsh.agent.";
 
-/// Ask for notification authorisation, then run `next` with the outcome. Safe to
-/// call repeatedly: after the first answer iOS resolves without prompting again.
-static void with_authorization(void (^next)(BOOL granted, NSString *error)) {
-  UNUserNotificationCenter *center = UNUserNotificationCenter.currentNotificationCenter;
-  [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
-                        completionHandler:^(BOOL granted, NSError *error) {
+static NSString *const kDeniedMessage =
+    @"notifications are turned off for this app; turn them on in Settings > Notifications";
+
+/// The not-asked-yet refusal; see the matching one in eventkit_shared.m for why
+/// it names the screen rather than quoting its localised title.
+static NSString *const kNotEnabledMessage =
+    @"the user has not switched notifications on for this app yet. Nothing was scheduled. "
+     "Tell them they can turn it on themselves under Device capabilities, which is in the app's "
+     "sidebar — only they can grant it, and iOS asks once per app, so the app will not ask on its own.";
+
+/// Check notification authorisation and run `next` with the outcome. Never
+/// prompts: `requestAuthorizationWithOptions:` *is* the prompt, so calling it
+/// here would let whichever plugin schedules first raise a system dialog.
+static void require_authorization(void (^next)(BOOL granted, NSString *error)) {
+  [UNUserNotificationCenter.currentNotificationCenter getNotificationSettingsWithCompletionHandler:
+   ^(UNNotificationSettings *settings) {
+    switch (settings.authorizationStatus) {
+      case UNAuthorizationStatusAuthorized:
+      case UNAuthorizationStatusProvisional:
+      case UNAuthorizationStatusEphemeral:
+        next(YES, nil);
+        return;
+      case UNAuthorizationStatusDenied:
+        // Actionable, because the agent will read this out to the user: iOS only
+        // ever prompts once, so after a denial the Settings app is the only way back.
+        next(NO, kDeniedMessage);
+        return;
+      case UNAuthorizationStatusNotDetermined:
+      default:
+        next(NO, kNotEnabledMessage);
+        return;
+    }
+  }];
+}
+
+void DshNotifyGrantAccess(void (^done)(BOOL granted, NSString *error)) {
+  [UNUserNotificationCenter.currentNotificationCenter
+   requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
+                 completionHandler:^(BOOL granted, NSError *error) {
     if (error != nil) {
-      next(NO, error.localizedDescription);
+      done(NO, error.localizedDescription);
     } else if (!granted) {
-      // Actionable, because the agent will read this out to the user: iOS only
-      // ever prompts once, so after a denial the Settings app is the only way back.
-      next(NO, @"notifications are turned off for this app; turn them on in Settings > Notifications");
+      done(NO, kDeniedMessage);
     } else {
-      next(YES, nil);
+      done(YES, nil);
     }
   }];
 }
@@ -53,7 +85,7 @@ static void schedule(NSDictionary *args, DshNativeReply reply) {
                                          trigger:[UNTimeIntervalNotificationTrigger triggerWithTimeInterval:seconds.doubleValue
                                                                                                    repeats:NO]];
 
-  with_authorization(^(BOOL granted, NSString *error) {
+  require_authorization(^(BOOL granted, NSString *error) {
     if (!granted) {
       reply(nil, error);
       return;

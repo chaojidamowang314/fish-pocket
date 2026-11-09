@@ -26,4 +26,22 @@ NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void);
 /// from the app's own startup; it is cheap and safe to call again.
 void DshNativePrepare(void);
 
+/// Ask iOS for one capability's permission, and run `done` with what the user
+/// said. `permission` is a `systemPermission` value from the list above.
+///
+/// This is the ONLY place in the app that raises a system permission dialog. The
+/// capability handlers refuse a permission iOS has not been asked about instead
+/// of prompting, so a dialog only ever appears because the user tapped for it on
+/// the capability screen — not because a plugin called something
+/// (docs/native-services.md §5.5).
+///
+/// Already answered, either way: `done` reports that answer without a dialog,
+/// because iOS asks once per app and will not ask again.
+///
+/// `done` runs on the main thread. A plain "the user said no" is
+/// `granted: NO, error: nil` — the wording for that belongs to the screen, which
+/// is translated, and not to this file, which is not. `error` is non-nil only
+/// when iOS itself failed, and is then iOS's own localised description.
+void DshNativeRequestPermission(NSString *permission, void (^done)(BOOL granted, NSString *error));
+
 #endif
