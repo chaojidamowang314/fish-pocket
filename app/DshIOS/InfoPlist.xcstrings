@@ -32,19 +32,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saves share posters to your photo library."
+            "value" : "Saves share posters and the community group QR code to your photo library."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "把分享海报保存到相册。"
+            "value" : "把分享海报和交流群二维码保存到相册。"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Guarda los pósteres para compartir en tu fototeca."
+            "value" : "Guarda los pósteres para compartir y el código QR del grupo de la comunidad en tu fototeca."
           }
         }
       }

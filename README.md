@@ -117,6 +117,14 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 - [ ] bash 解释器移出引擎线程
 - [ ] Bot 模式：在聊天里给口袋里的 Agent 派任务
 
+## 交流群
+
+<p align="center">
+  <img src="docs/assets/wechat-group.png" width="260" alt="Fish Pocket 微信交流群二维码">
+</p>
+
+<p align="center">微信扫码加入 Fish Pocket 交流群。二维码过期了的话，欢迎<a href="https://github.com/imsai-sh/fish-pocket/issues">提 issue</a> 提醒我们更新。</p>
+
 ## 参与贡献
 
 欢迎提 issue 和 PR，让你的 Agent 看 [CONTRIBUTING.md](CONTRIBUTING.md)。
