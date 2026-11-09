@@ -75,14 +75,6 @@ static NSString *reminder_summary(EKReminder *reminder) {
   return summary;
 }
 
-static id<DshNativeBridging> require_bridge(DshNativeReply reply) {
-  id<DshNativeBridging> bridge = DshNativeCurrentBridge();
-  if (bridge == nil) {
-    reply(nil, @"the app cannot show a confirmation right now, so nothing was changed");
-  }
-  return bridge;
-}
-
 #pragma mark - Reading
 
 static void list_reminders(NSDictionary *args, DshNativeReply reply) {
@@ -143,8 +135,6 @@ static void create_reminder(NSDictionary *args, DshNativeReply reply) {
     reply(nil, @"'due' must be seconds since 1970");
     return;
   }
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_access(^(BOOL granted, NSString *error) {
     if (!granted) { reply(nil, error); return; }
@@ -168,9 +158,9 @@ static void create_reminder(NSDictionary *args, DshNativeReply reply) {
       }
 
       NSString *summary = reminder_summary(reminder);
-      [bridge confirmChange:summary capability:@"reminders" op:@"create" destructive:NO
-              completion:^(BOOL confirmed) {
+      DshNativeConfirmWrite(@"reminders", @"create", summary, NO, ^(BOOL confirmed, NSString *refusal) {
         dispatch_async(DshEventKitQueue(), ^{
+          if (refusal != nil) { reply(nil, refusal); return; }
           if (!confirmed) {
             reply(@{@"action": DshNativeActionCancelled, @"saved": @NO}, nil);
             return;
@@ -184,7 +174,7 @@ static void create_reminder(NSDictionary *args, DshNativeReply reply) {
                   @"id": reminder.calendarItemIdentifier ?: @"",
                   @"auditSummary": summary}, nil);
         });
-      }];
+      });
     });
   });
 }
@@ -211,8 +201,6 @@ static void with_reminder(NSString *identifier, DshNativeReply reply,
 }
 
 static void complete_reminder(NSDictionary *args, DshNativeReply reply) {
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_reminder(args[@"id"], reply, ^(EKEventStore *store, EKReminder *reminder) {
     if (reminder.completed) {
@@ -221,9 +209,9 @@ static void complete_reminder(NSDictionary *args, DshNativeReply reply) {
       return;
     }
     NSString *summary = reminder_summary(reminder);
-    [bridge confirmChange:summary capability:@"reminders" op:@"complete" destructive:NO
-            completion:^(BOOL confirmed) {
+    DshNativeConfirmWrite(@"reminders", @"complete", summary, NO, ^(BOOL confirmed, NSString *refusal) {
       dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { reply(nil, refusal); return; }
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"saved": @NO}, nil);
           return;
@@ -236,19 +224,17 @@ static void complete_reminder(NSDictionary *args, DshNativeReply reply) {
         }
         reply(@{@"action": DshNativeActionSaved, @"saved": @YES, @"auditSummary": summary}, nil);
       });
-    }];
+    });
   });
 }
 
 static void delete_reminder(NSDictionary *args, DshNativeReply reply) {
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_reminder(args[@"id"], reply, ^(EKEventStore *store, EKReminder *reminder) {
     NSString *summary = reminder_summary(reminder);
-    [bridge confirmChange:summary capability:@"reminders" op:@"delete" destructive:YES
-            completion:^(BOOL confirmed) {
+    DshNativeConfirmWrite(@"reminders", @"delete", summary, YES, ^(BOOL confirmed, NSString *refusal) {
       dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { reply(nil, refusal); return; }
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"deleted": @NO}, nil);
           return;
@@ -260,7 +246,7 @@ static void delete_reminder(NSDictionary *args, DshNativeReply reply) {
         }
         reply(@{@"action": DshNativeActionDeleted, @"deleted": @YES, @"auditSummary": summary}, nil);
       });
-    }];
+    });
   });
 }
 

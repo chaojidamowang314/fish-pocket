@@ -63,6 +63,23 @@ extern NSString *const DshNativeActionDeleted;
 
 @end
 
+/// The one way a capability asks "may I change this?".
+///
+/// It reads the capability's write policy and does the right thing: under
+/// `Direct` it answers yes without any UI at all (no bridge needed, so a write
+/// no longer depends on a window being up); under `Confirm` it raises the sheet
+/// above; under `Blocked` it refuses with a sentence the agent can read out.
+///
+/// Capabilities call this instead of `confirmChange:` directly, so the policy is
+/// decided in one place rather than once per capability — the same reason the
+/// dispatcher owns the permission check and the audit (§9.3).
+///
+/// `ok` is whether to go ahead. `error` is non-nil only when the write was
+/// refused outright; a plain "the user tapped Cancel" is `ok: NO, error: nil`,
+/// because that is a normal outcome and not a failure.
+void DshNativeConfirmWrite(NSString *capability, NSString *op, NSString *summary,
+                           BOOL destructive, void (^next)(BOOL ok, NSString *_Nullable error));
+
 /// Registered once by the app at launch. A capability that needs UI and finds
 /// no bridge refuses rather than acting unattended.
 void DshNativeSetBridge(id<DshNativeBridging> _Nullable bridge);

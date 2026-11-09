@@ -14,6 +14,8 @@
 ///   `id`                — capability name, as the engine and the addon use it
 ///   `ops`               — the operations it accepts
 ///   `systemPermission`  — the iOS permission it needs, absent when it needs none
+///   `writeOps`          — the subset of `ops` that changes the user's own data;
+///                         absent when the capability only reads
 ///
 /// The app supplies its own display names and wording for these ids; an id with
 /// no wording still appears, so a capability can never be added natively and go
@@ -25,6 +27,31 @@ NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void);
 /// switched on, and the agent usually asks only once. Call this once, early,
 /// from the app's own startup; it is cheap and safe to call again.
 void DshNativePrepare(void);
+
+/// What happens when a capability is asked to change the user's own data.
+///
+/// The gate the user already passed is the iOS permission, and iOS grants read
+/// and write together (§4.0) — so this is the only place left where "it may read
+/// my calendar" and "it may delete my calendar" can be told apart. It is per
+/// capability, not per caller: §2.2 settled that a caller cannot be told apart
+/// from the engine, so a plugin-only setting would be a lie.
+typedef NS_ENUM(NSInteger, DshWritePolicy) {
+  /// Write straight through. The default, and what the audit list exists for.
+  DshWritePolicyDirect = 0,
+  /// Stop in front of the user every time: the system editor for new events,
+  /// a native confirmation for everything else.
+  DshWritePolicyConfirm = 1,
+  /// Refuse, with a sentence the agent can read out. Reads still work.
+  DshWritePolicyBlocked = 2,
+};
+
+/// This capability's write policy. Unset reads as `DshWritePolicyDirect`, so a
+/// capability added later is not accidentally born blocked.
+DshWritePolicy DshNativeWritePolicyFor(NSString *capability);
+
+/// Change it. The capability screen is the only caller; nothing in JS can reach
+/// this, which is the point — a plugin must not be able to widen its own gate.
+void DshNativeSetWritePolicy(NSString *capability, DshWritePolicy policy);
 
 /// Ask iOS for one capability's permission, and run `done` with what the user
 /// said. `permission` is a `systemPermission` value from the list above.

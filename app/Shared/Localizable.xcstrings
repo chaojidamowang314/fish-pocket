@@ -2524,6 +2524,22 @@
         }
       }
     },
+    "不允许" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not allowed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No permitir"
+          }
+        }
+      }
+    },
     "不兼容" : {
       "localizations" : {
         "en" : {
@@ -9347,6 +9363,7 @@
       }
     },
     "已允许" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10468,6 +10485,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una vez activada, tanto el agente como los plugins de terceros que instales pueden usarla, y la app no distingue quién la llama. Asegúrate de confiar en el origen de un plugin antes de instalarlo."
+          }
+        }
+      }
+    },
+    "开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。改、删这类写操作默认直接执行，不会每次问你——想让它每次停下来问，把那一项的「写入」改成「每次确认」。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once it is on, the agent and the third-party plugins you install can both use it, and the app does not tell callers apart. Make sure you trust where a plugin comes from before installing it. Changes and deletions go ahead without asking by default — set that capability’s Write to \"Ask every time\" if you would rather be stopped on each one."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activada, tanto el agente como los plugins de terceros que instales pueden usarla, y la app no distingue quién la llama. Asegúrate de confiar en el origen de un plugin antes de instalarlo. Los cambios y eliminaciones se hacen directamente por omisión: pon la escritura de esa función en «Preguntar siempre» si prefieres que te consulte cada vez."
           }
         }
       }
@@ -11668,6 +11701,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir plan: %@"
+          }
+        }
+      }
+    },
+    "打开链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open links"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir enlaces"
           }
         }
       }
@@ -13419,6 +13468,22 @@
         }
       }
     },
+    "文本分析" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text analysis"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Análisis de texto"
+          }
+        }
+      }
+    },
     "文档渲染中..." : {
       "localizations" : {
         "en" : {
@@ -14280,6 +14345,7 @@
       }
     },
     "无需授权" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14618,6 +14684,7 @@
       }
     },
     "智能体和你装的第三方插件都能用这些能力，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -16041,6 +16108,22 @@
         }
       }
     },
+    "查看「提醒事项」里的待办，并按你设的写入方式增删改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what is on your Reminders, and adds, completes or deletes them the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tus Recordatorios y los añade, completa o elimina según lo que configures abajo"
+          }
+        }
+      }
+    },
     "查看任务、目标和排队" : {
       "localizations" : {
         "en" : {
@@ -16086,6 +16169,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Consulta tu agenda para responder preguntas sobre ella. Solo lectura: no puede cambiar ni eliminar nada"
+          }
+        }
+      }
+    },
+    "查看你的日程，并按你设的写入方式增删改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule, and adds, changes or deletes events the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda y añade, cambia o elimina eventos según lo que configures abajo"
           }
         }
       }
@@ -17826,6 +17925,22 @@
         }
       }
     },
+    "每次确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask every time"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preguntar siempre"
+          }
+        }
+      }
+    },
     "毫秒" : {
       "localizations" : {
         "en" : {
@@ -18850,6 +18965,22 @@
         }
       }
     },
+    "用对应的 App 打开地图、邮件草稿、电话号码或网页" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens a map, a draft email, a phone number or a web page in whichever app handles it"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre un mapa, un borrador de correo, un número de teléfono o una página web en la app que corresponda"
+          }
+        }
+      }
+    },
     "用对话定制 DSH：让 Agent 编写插件，添加新功能或界面；也能组合工具和提示词，创建自己的模式。" : {
       "localizations" : {
         "en" : {
@@ -19230,6 +19361,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acciones del objetivo"
+          }
+        }
+      }
+    },
+    "直接执行" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go ahead"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacerlo directamente"
           }
         }
       }
@@ -19967,6 +20114,7 @@
       }
     },
     "系统授权只能在「设置」里改。iOS 的授权弹窗每个 App 只出现一次，拒绝之后也要回那里打开。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -21174,6 +21322,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo plan"
+          }
+        }
+      }
+    },
+    "认语言、分词、情绪、认出人名地名。全在本机算，不出手机" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifies the language, splits text up, scores sentiment, finds names and places. All on the device"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifica el idioma, divide el texto, puntúa el sentimiento y encuentra nombres y lugares. Todo en el dispositivo"
           }
         }
       }
@@ -24882,6 +25046,7 @@
       }
     },
     "首次使用时询问" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

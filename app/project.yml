@@ -68,6 +68,8 @@ targets:
       - sdk: EventKit.framework
       # 写日历走系统自带的事件编辑器（EKEventEditViewController）。
       - sdk: EventKitUI.framework
+      # native/ios-native 的 nlp：认语言、分词、情绪、人名地名，全在本机算。
+      - sdk: NaturalLanguage.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm

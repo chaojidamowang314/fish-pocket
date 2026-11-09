@@ -38,20 +38,33 @@ typedef struct {
   /// Only for display in the app's capability list — the capability itself
   /// still asks iOS at use time, and nothing here gates on this field.
   const char *systemPermission;
+  /// The subset of `ops` that changes the user's own data, NULL-terminated.
+  /// Reads are already gated by the iOS permission; this is what the write
+  /// policy applies to, and what the capability screen offers a switch for.
+  /// Empty for a capability that only reads or only touches our own state.
+  const char *writeOps[6];
 } dsh_capability;
 
 // `calendar` is the first entry that reaches personal data, and the only one so
 // far that iOS guards with a privacy prompt. Its writes are listed here like
 // anything else, which is the point: the user's system grant already covers
-// writing (§4.0), so what actually protects their calendar is not this list but
-// the confirmation each write waits for on the native side (§4.3). A plugin
-// calling the addon directly reaches exactly the same confirmation.
+// writing (§4.0), so what separates "may read my calendar" from "may delete my
+// calendar" is not this list but the write policy the user sets per capability
+// (§4.3). `notify` has no writeOps on purpose — a local notification is this
+// app's own alert, it leaves nothing behind in the user's data, so it is not a
+// write in the sense this policy is about.
 static const dsh_capability CAPABILITIES[] = {
-  {"device",   dsh_native_device,   {"info", NULL}, NULL},
-  {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications"},
-  {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL},
-  {"calendar", dsh_native_calendar, {"list", "calendars", "create", "update", "delete", NULL}, "calendar"},
-  {"reminders", dsh_native_reminders, {"list", "create", "complete", "delete", NULL}, "reminders"},
+  {"device",   dsh_native_device,   {"info", NULL}, NULL, {NULL}},
+  {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications", {NULL}},
+  {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL, {NULL}},
+  {"calendar", dsh_native_calendar, {"list", "calendars", "create", "update", "delete", NULL}, "calendar",
+   {"create", "update", "delete", NULL}},
+  {"reminders", dsh_native_reminders, {"list", "create", "complete", "delete", NULL}, "reminders",
+   {"create", "complete", "delete", NULL}},
+  // `open` leaves the app, so it reaches no user data of ours and needs no
+  // permission — what it needs instead is a scheme allowlist, in caps_open.m.
+  {"open",     dsh_native_open,     {"url", NULL}, NULL, {NULL}},
+  {"nlp",      dsh_native_nlp,      {"language", "tokenize", "sentiment", "entities", NULL}, NULL, {NULL}},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -73,12 +86,49 @@ static NSArray<NSString *> *capability_ops(const dsh_capability *cap) {
   return ops;
 }
 
+/// Same shape as `capability_ops`, for the operations that change user data.
+static NSArray<NSString *> *capability_write_ops(const dsh_capability *cap) {
+  NSMutableArray<NSString *> *ops = [NSMutableArray array];
+  for (size_t i = 0; i < sizeof(cap->writeOps) / sizeof(cap->writeOps[0]) && cap->writeOps[i] != NULL; i++) {
+    [ops addObject:@(cap->writeOps[i])];
+  }
+  return ops;
+}
+
+/// One key per capability rather than one dictionary, so a capability added
+/// later starts at 0 (direct) without a migration, and so a corrupted value for
+/// one capability cannot take the others with it.
+static NSString *write_policy_key(NSString *capability) {
+  return [@"dsh.native.write." stringByAppendingString:capability];
+}
+
+DshWritePolicy DshNativeWritePolicyFor(NSString *capability) {
+  if (capability.length == 0) return DshWritePolicyDirect;
+  NSInteger stored = [NSUserDefaults.standardUserDefaults integerForKey:write_policy_key(capability)];
+  // Anything we do not recognise is treated as the strictest setting rather than
+  // the loosest: a value we cannot read is not a reason to widen a gate.
+  switch (stored) {
+    case DshWritePolicyDirect:
+    case DshWritePolicyConfirm:
+    case DshWritePolicyBlocked:
+      return (DshWritePolicy)stored;
+    default:
+      return DshWritePolicyBlocked;
+  }
+}
+
+void DshNativeSetWritePolicy(NSString *capability, DshWritePolicy policy) {
+  if (capability.length == 0) return;
+  [NSUserDefaults.standardUserDefaults setInteger:policy forKey:write_policy_key(capability)];
+}
+
 NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void) {
   NSMutableArray *list = [NSMutableArray arrayWithCapacity:CAPABILITY_COUNT];
   for (size_t i = 0; i < CAPABILITY_COUNT; i++) {
     NSMutableDictionary *entry = [@{
       @"id": @(CAPABILITIES[i].capability),
       @"ops": capability_ops(&CAPABILITIES[i]),
+      @"writeOps": capability_write_ops(&CAPABILITIES[i]),
     } mutableCopy];
     if (CAPABILITIES[i].systemPermission != NULL) {
       entry[@"systemPermission"] = @(CAPABILITIES[i].systemPermission);

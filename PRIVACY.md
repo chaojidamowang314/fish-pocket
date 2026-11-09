@@ -16,7 +16,7 @@ Fish Pocket 是独立的开源社区项目，与深度求索（DeepSeek）不存
 
 小组件要显示的会话标题、状态和当前工作区名称，由 App 写进设备上 App 与小组件共用的存储空间，同样不会离开设备。设备锁定时标题会被打码，也可以在 设置 → 小组件 里关掉标题。
 
-你授权过的本机数据（日历、提醒事项）不会被 App 另存一份，每次用到都是现读。App 只在本机留一份使用记录：哪项能力、什么操作、什么时候、调用方自报的名字，最近若干条，可以在「设置 → 本机能力 → 使用记录」里查看和清空。
+你授权过的本机数据（日历、提醒事项）不会被 App 另存一份，每次用到都是现读。增、删、改默认直接执行，不会每次问你——想让它每次停下来问，或者干脆设成只读，都在侧边栏的「本机能力」里按项设置。App 只在本机留一份使用记录：哪项能力、什么操作、什么时候、调用方自报的名字，最近若干条，可以在同一页里查看和清空。
 
 ### 会发送到第三方的内容
 
@@ -48,7 +48,7 @@ Sessions, workspace files, settings and model provider credentials are stored on
 
 For the widgets, the app writes session titles, their status and the current workspace name to storage on your device shared by the app and its widgets; this also never leaves the device. Titles are hidden while the device is locked, and you can turn them off in Settings → Widgets.
 
-Device data you have allowed (Calendar, Reminders) is never copied into the app's own storage; it is read fresh each time it is used. The app keeps one local record of that use — which capability, which operation, when, and the name the caller gave for itself — for the most recent entries only. You can read and clear it under Settings → Device capabilities → Activity.
+Device data you have allowed (Calendar, Reminders) is never copied into the app’s own storage; it is read fresh each time it is used. Adding, changing and deleting go ahead without asking by default; you can set any capability to ask every time, or to read-only, under Device capabilities in the sidebar. The app keeps one local record of that use — which capability, which operation, when, and the name the caller gave for itself — for the most recent entries only. You can read and clear it on the same screen.
 
 ### What is sent to third parties
 

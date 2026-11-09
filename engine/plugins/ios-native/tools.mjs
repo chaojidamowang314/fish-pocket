@@ -367,6 +367,82 @@ const reminders = defineTool({
   },
 });
 
+const openUrl = defineTool({
+  name: 'open_url',
+  description:
+    'Hand a URL to the app that owns it on this phone: a map, a draft email or text, the dialler '
+    + 'with a number filled in, the App Store, or a web page in the browser. Use it when the user '
+    + 'asked you to take them somewhere; to merely offer a link, write a Markdown link in your '
+    + 'reply instead, which works for any scheme and leaves the choice to them. Only a short list '
+    + 'of schemes is allowed, each one landing somewhere the user still has to act.',
+  parameters: {
+    url: { type: 'string', description: 'the URL, with its scheme', required: true },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => text(`Opened ${value.url} in whichever app handles it.`),
+  },
+  // `url` is required in the schema above, so defineTool refuses a call without
+  // it before we get here — no second check.
+  execute: async (args) => invoke('open', 'url', { url: args.url }),
+});
+
+const nlp = defineTool({
+  name: 'text_analysis',
+  description:
+    'Analyse text on the device with Apple\'s NaturalLanguage framework: identify its language, '
+    + 'split it into words or sentences, score its sentiment, or pull out people, places and '
+    + 'organisations. Nothing leaves the phone and it costs no tokens, so prefer it over doing the '
+    + 'same work yourself when there is a lot of text — classifying a thousand files is a loop '
+    + 'here and a thousand requests otherwise.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['language', 'tokenize', 'sentiment', 'entities'],
+      description: 'which analysis to run',
+      required: true,
+    },
+    text: { type: 'string', description: 'the text to analyse', required: true },
+    unit: {
+      type: 'string',
+      enum: ['word', 'sentence', 'paragraph'],
+      description: 'tokenize: what counts as one token; defaults to word',
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'language') {
+        if (!value.language) return text('Could not tell what language that is.');
+        const ranked = (value.hypotheses ?? [])
+          .map((row) => `${row.language} ${(row.confidence * 100).toFixed(0)}%`)
+          .join(', ');
+        return text(`Language: ${value.language}${ranked ? ` (${ranked})` : ''}`);
+      }
+      if (args.action === 'sentiment') {
+        // The number, not a verdict: -1 … 1, and where the line falls is the
+        // caller's judgement. Saying "negative" here would make that call for them.
+        return text(`Sentiment score ${value.score.toFixed(2)} (-1 negative … 1 positive).`);
+      }
+      if (args.action === 'entities') {
+        if (!value.entities?.length) return text('No people, places or organisations found.');
+        const lines = value.entities.map((row) => `${row.type.replace(/Name$/, '')}  ${row.text}`);
+        if (value.truncated) lines.push(`… showing the first ${value.entities.length} of ${value.total}`);
+        return text(lines.join('\n'));
+      }
+      const unit = args.unit ?? 'word';
+      if (!value.tokens?.length) return text(`No ${unit}s found.`);
+      const lines = [`${value.total} ${unit}${value.total === 1 ? '' : 's'}`, value.tokens.join(' | ')];
+      if (value.truncated) lines.push(`… showing the first ${value.tokens.length}`);
+      return text(lines.join('\n'));
+    },
+  },
+  execute: async (args) => invoke('nlp', args.action, {
+    text: args.text,
+    ...(args.unit === undefined ? {} : { unit: args.unit }),
+  }),
+});
+
 /** Tool definitions by the capability each one needs. */
 export const TOOLS = {
   device: device,
@@ -374,4 +450,6 @@ export const TOOLS = {
   speak: speak,
   calendar: calendar,
   reminders: reminders,
+  open: openUrl,
+  nlp: nlp,
 };

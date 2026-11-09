@@ -23,6 +23,8 @@ void dsh_native_notify(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_speak(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_calendar(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_reminders(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_open(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_nlp(NSString *op, NSDictionary *args, DshNativeReply reply);
 
 /// Raise the notification permission dialog, then run `done`. Only
 /// `DshNativeRequestPermission` calls this; see caps_notify.m.

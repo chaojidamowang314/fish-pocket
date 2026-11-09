@@ -48,7 +48,8 @@ test('tool names are unique and stable', () => {
   assert.deepEqual(names, [...new Set(names)]);
   // Pinned because they reach the model's prompt and a rename is a breaking
   // change for any skill or plugin that mentions them.
-  assert.deepEqual(names.sort(), ['calendar', 'device_info', 'notify', 'reminders', 'speak']);
+  assert.deepEqual(names.sort(),
+    ['calendar', 'device_info', 'notify', 'open_url', 'reminders', 'speak', 'text_analysis']);
 });
 
 test('a reminders write is refused before the addon when it has nothing to act on', async () => {
@@ -105,6 +106,34 @@ test('the flags render the same whether the addon sends booleans or 0/1', () => 
   })[0].text;
   assert.equal(reminders(1), reminders(true));
   assert.equal(reminders(0), reminders(false));
+});
+
+test('open_url and text_analysis refuse before the addon when they have nothing to act on', async () => {
+  // These two arguments are always required, so the schema refuses first and the
+  // tool does not check again. Pinned because dropping `required` would turn a
+  // clear refusal into an addon call with an undefined argument.
+  await assert.rejects(TOOLS.open.execute({}, {}), /missing required property "url"/);
+  await assert.rejects(TOOLS.nlp.execute({ action: 'language' }, {}), /missing required property "text"/);
+});
+
+test('text_analysis renders each analysis as something a model can relay', () => {
+  const render = (action, value, extra = {}) => TOOLS.nlp.output.render({ action, ...extra }, value)[0].text;
+
+  assert.match(render('language', { language: 'zh-Hans', hypotheses: [{ language: 'zh-Hans', confidence: 0.98 }] }),
+               /zh-Hans 98%/);
+  // A string with nothing to go on — digits, emoji — has no dominant language.
+  // Saying so beats naming whichever language scored least badly.
+  assert.match(render('language', { language: null, hypotheses: [] }), /Could not tell/);
+
+  // The score stays a number: where "negative" begins is the caller's call.
+  assert.match(render('sentiment', { score: -0.734 }), /-0\.73/);
+
+  assert.match(render('entities', { entities: [{ text: '北京', type: 'PlaceName' }], total: 1 }), /Place {2}北京/);
+  assert.match(render('entities', { entities: [], total: 0 }), /No people, places or organisations/);
+
+  assert.match(render('tokenize', { tokens: ['a', 'b'], total: 2 }, { unit: 'word' }), /2 words/);
+  assert.match(render('tokenize', { tokens: ['a'], total: 9, truncated: true }), /showing the first 1/);
+  assert.match(render('tokenize', { tokens: [], total: 0 }, { unit: 'sentence' }), /No sentences found/);
 });
 
 test('a bare date means local midnight, not UTC midnight', () => {

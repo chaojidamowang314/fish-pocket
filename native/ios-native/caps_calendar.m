@@ -14,6 +14,7 @@
 // the same stop. There is no unchecked variant.
 #import "dsh_ios_native.h"
 #import "DshNativeBridge.h"
+#import "DshNativeCapabilities.h"
 #import "eventkit_shared.h"
 #import <EventKit/EventKit.h>
 
@@ -190,9 +191,17 @@ static NSDate *date_arg(NSDictionary *args, NSString *key, NSString **error) {
   return [NSDate dateWithTimeIntervalSince1970:value.doubleValue];
 }
 
-/// Hand a prefilled event to the system's own editor. Nothing is written unless
-/// the user taps Add there: Apple's interface, Apple's button, and the strongest
-/// write path we have, because a plugin can neither suppress it nor press it.
+/// Create an event. Which of the two ways depends on this capability's write
+/// policy, and they are genuinely different experiences, not one with a dialog
+/// bolted on:
+///
+/// - **Direct** (the default): save it. The user asked for an event, they get an
+///   event, and the audit list is what they look at afterwards. The whole reason
+///   the audit is not optional.
+/// - **Confirm**: hand the prefilled event to `EKEventEditViewController` —
+///   Apple's interface, Apple's Add button, and the strongest write path we
+///   have, because a plugin can neither suppress it nor press it. Also the one
+///   that lets the user fix the time before it lands.
 static void create_event(NSDictionary *args, DshNativeReply reply) {
   NSString *title = args[@"title"];
   if (![title isKindOfClass:NSString.class] || title.length == 0) {
@@ -204,9 +213,6 @@ static void create_event(NSDictionary *args, DshNativeReply reply) {
   NSDate *end = date_arg(args, @"end", &dateError);
   if (dateError != nil) { reply(nil, dateError); return; }
   if (start == nil) { reply(nil, @"create needs 'start' as seconds since 1970"); return; }
-
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_add_access(^(BOOL granted, NSString *accessError) {
     if (!granted) { reply(nil, accessError); return; }
@@ -226,6 +232,30 @@ static void create_event(NSDictionary *args, DshNativeReply reply) {
       if ([notes isKindOfClass:NSString.class]) event.notes = notes;
       event.calendar = store.defaultCalendarForNewEvents;
 
+      DshWritePolicy policy = DshNativeWritePolicyFor(@"calendar");
+      if (policy == DshWritePolicyBlocked) {
+        reply(nil, @"the user has set 'calendar' to read-only under Device capabilities, which is in "
+                    "the app's sidebar. Nothing was added. Only they can change that setting.");
+        return;
+      }
+      if (policy == DshWritePolicyDirect) {
+        if (event.calendar == nil) {
+          reply(nil, @"this device has no calendar that can take new events");
+          return;
+        }
+        NSError *saveError = nil;
+        if (![store saveEvent:event span:EKSpanThisEvent commit:YES error:&saveError]) {
+          reply(nil, saveError.localizedDescription ?: @"the event could not be saved");
+          return;
+        }
+        reply(@{@"action": DshNativeActionSaved, @"saved": @YES,
+                @"id": event.eventIdentifier ?: @"",
+                @"auditSummary": event_summary(event)}, nil);
+        return;
+      }
+
+      id<DshNativeBridging> bridge = require_bridge(reply);
+      if (bridge == nil) return;
       [bridge presentEventEditorForEvent:event inStore:store
                               completion:^(NSString *action, NSString *identifier, NSString *error) {
         if (error != nil) {
@@ -265,8 +295,6 @@ static void with_event(NSString *identifier, DshNativeReply reply, void (^next)(
 }
 
 static void update_event(NSDictionary *args, DshNativeReply reply) {
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_event(args[@"id"], reply, ^(EKEventStore *store, EKEvent *event) {
     NSString *before = event_summary(event);
@@ -292,9 +320,9 @@ static void update_event(NSDictionary *args, DshNativeReply reply) {
     }
 
     NSString *summary = [NSString stringWithFormat:@"%@\n→\n%@", before, event_summary(event)];
-    [bridge confirmChange:summary capability:@"calendar" op:@"update" destructive:NO
-                completion:^(BOOL confirmed) {
+    DshNativeConfirmWrite(@"calendar", @"update", summary, NO, ^(BOOL confirmed, NSString *refusal) {
       dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { [event reset]; reply(nil, refusal); return; }
         if (!confirmed) {
           // Put the store's copy back the way it was; these edits were never saved.
           [event reset];
@@ -311,19 +339,17 @@ static void update_event(NSDictionary *args, DshNativeReply reply) {
         reply(@{@"action": DshNativeActionSaved, @"saved": @YES, @"id": event.eventIdentifier ?: @"",
                 @"auditSummary": summary}, nil);
       });
-    }];
+    });
   });
 }
 
 static void delete_event(NSDictionary *args, DshNativeReply reply) {
-  id<DshNativeBridging> bridge = require_bridge(reply);
-  if (bridge == nil) return;
 
   with_event(args[@"id"], reply, ^(EKEventStore *store, EKEvent *event) {
     NSString *summary = event_summary(event);
-    [bridge confirmChange:summary capability:@"calendar" op:@"delete" destructive:YES
-                completion:^(BOOL confirmed) {
+    DshNativeConfirmWrite(@"calendar", @"delete", summary, YES, ^(BOOL confirmed, NSString *refusal) {
       dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { reply(nil, refusal); return; }
         if (!confirmed) {
           reply(@{@"action": DshNativeActionCancelled, @"deleted": @NO}, nil);
           return;
@@ -335,7 +361,7 @@ static void delete_event(NSDictionary *args, DshNativeReply reply) {
         }
         reply(@{@"action": DshNativeActionDeleted, @"deleted": @YES, @"auditSummary": summary}, nil);
       });
-    }];
+    });
   });
 }
 

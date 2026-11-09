@@ -18,6 +18,8 @@ struct NativeCapabilitiesView: View {
     @State private var capabilities: [NativeCapability] = []
     /// 按 `systemPermission` 存，所以新增一项要授权的能力时这里不用再加分支。
     @State private var permissions: [String: CapabilityPermission] = [:]
+    /// 每项能力的写入策略，按能力 id 存。
+    @State private var policies: [String: DshWritePolicy] = [:]
     /// 正在等系统弹框答复的那一项，用来挡住重复点击。
     @State private var requesting: String?
     /// 只有 iOS 自己出错时才有东西——用户点「不允许」不算错，状态会直接变成已关闭。
@@ -34,8 +36,10 @@ struct NativeCapabilitiesView: View {
                     CapabilityRow(
                         capability: capability,
                         permission: capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded,
+                        policy: policies[capability.id] ?? .direct,
                         busy: requesting != nil && requesting == capability.systemPermission,
                         enable: { enable(capability) },
+                        setPolicy: { policies[capability.id] = $0; DshNativeSetWritePolicy(capability.id, $0) },
                         openSettings: openSystemSettings
                     )
                 }
@@ -49,7 +53,7 @@ struct NativeCapabilitiesView: View {
             } footer: {
                 // 不含糊其辞：插件用的就是这些能力，而且 App 不区分谁在调用——
                 // 说清楚了，用户才知道该在装插件那一步把关。
-                Text("开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。")
+                Text("开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。改、删这类写操作默认直接执行，不会每次问你——想让它每次停下来问，把那一项的「写入」改成「每次确认」。")
             }
             .groupedRow()
 
@@ -89,6 +93,9 @@ struct NativeCapabilitiesView: View {
 
     private func load() {
         capabilities = NativeCapability.all
+        for capability in capabilities where capability.canWrite {
+            policies[capability.id] = DshNativeWritePolicyFor(capability.id)
+        }
         refreshPermissions()
     }
 
@@ -197,6 +204,10 @@ struct NativeCapability: Identifiable {
     let ops: [String]
     /// 需要的 iOS 授权；为空表示不需要任何授权。
     let systemPermission: String?
+    /// 会改用户自己数据的那些操作。空的话这项只读，不需要写入开关。
+    let writeOps: [String]
+
+    var canWrite: Bool { !writeOps.isEmpty }
 
     /// addon 的能力表。表在二进制里是固定的，读一次就够——设置页那行计数会随
     /// SwiftUI 每次重绘求值，不该每次都过一遍桥。
@@ -204,7 +215,8 @@ struct NativeCapability: Identifiable {
         NativeCapability(
             id: entry["id"] as? String ?? "",
             ops: entry["ops"] as? [String] ?? [],
-            systemPermission: entry["systemPermission"] as? String
+            systemPermission: entry["systemPermission"] as? String,
+            writeOps: entry["writeOps"] as? [String] ?? []
         )
     }
 
@@ -222,6 +234,8 @@ struct NativeCapability: Identifiable {
         case "device": return String(localized: "设备状态")
         case "notify": return String(localized: "通知提醒")
         case "speak": return String(localized: "朗读")
+        case "open": return String(localized: "打开链接")
+        case "nlp": return String(localized: "文本分析")
         case "calendar": return String(localized: "日历")
         case "reminders": return String(localized: "提醒事项")
         default: return id
@@ -233,8 +247,10 @@ struct NativeCapability: Identifiable {
         case "device": return String(localized: "机型、系统版本、电量、存储空间")
         case "notify": return String(localized: "按你的要求定时提醒你，App 关着也会响")
         case "speak": return String(localized: "把文字念出来")
-        case "calendar": return String(localized: "查看你的日程。新建、修改和删除都要你当场确认")
-        case "reminders": return String(localized: "查看「提醒事项」里的待办。新建、完成和删除都要你当场确认")
+        case "open": return String(localized: "用对应的 App 打开地图、邮件草稿、电话号码或网页")
+        case "nlp": return String(localized: "认语言、分词、情绪、认出人名地名。全在本机算，不出手机")
+        case "calendar": return String(localized: "查看你的日程，并按你设的写入方式增删改")
+        case "reminders": return String(localized: "查看「提醒事项」里的待办，并按你设的写入方式增删改")
         default: return ops.joined(separator: " · ")
         }
     }
@@ -245,6 +261,8 @@ struct NativeCapability: Identifiable {
         case "device": return "iphone"
         case "notify": return "bell"
         case "speak": return "speaker.wave.2"
+        case "open": return "arrow.up.forward.app"
+        case "nlp": return "text.magnifyingglass"
         case "calendar": return "calendar"
         case "reminders": return "checklist"
         default: return "square.grid.2x2"
@@ -252,11 +270,25 @@ struct NativeCapability: Identifiable {
     }
 }
 
+extension DshWritePolicy {
+    var label: LocalizedStringResource {
+        switch self {
+        case .confirm: return "每次确认"
+        case .blocked: return "不允许"
+        // 默认档。叫「直接执行」而不是「允许」，因为用户要知道的是"不会再问我"，
+        // 不是"有权限"——权限那一栏在同一行的右边，两件事别混。
+        default: return "直接执行"
+        }
+    }
+}
+
 private struct CapabilityRow: View {
     let capability: NativeCapability
     let permission: CapabilityPermission
+    let policy: DshWritePolicy
     let busy: Bool
     let enable: () -> Void
+    let setPolicy: (DshWritePolicy) -> Void
     let openSettings: () -> Void
 
     var body: some View {
@@ -282,6 +314,26 @@ private struct CapabilityRow: View {
                     Text(permission.label)
                         .font(.footnote)
                         .foregroundStyle(Palette.ink)
+                }
+                // 只在这项真的能改用户数据、而且已经开着的时候才出现：没开的
+                // 能力给个写入开关，是在问一个还不成立的问题。
+                if capability.canWrite, permission.isAllowed {
+                    Menu {
+                        Picker("写入", selection: Binding(get: { policy }, set: setPolicy)) {
+                            Text(DshWritePolicy.direct.label).tag(DshWritePolicy.direct)
+                            Text(DshWritePolicy.confirm.label).tag(DshWritePolicy.confirm)
+                            Text(DshWritePolicy.blocked.label).tag(DshWritePolicy.blocked)
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("写入").foregroundStyle(Palette.secondary)
+                            Text(policy.label).foregroundStyle(Palette.ink)
+                            Image(systemName: "chevron.up.chevron.down").font(.caption2)
+                                .foregroundStyle(Palette.faint)
+                        }
+                        .font(.footnote)
+                    }
+                    .padding(.top, 2)
                 }
             }
 
