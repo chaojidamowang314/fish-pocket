@@ -76,77 +76,42 @@ static void search(NSDictionary *args, DshNativeReply reply) {
   }];
 }
 
-/// Turn `fromQuery`/`toQuery` (or coordinates) into map items, then run `next`.
-static void resolve_ends(NSDictionary *args, DshNativeReply reply,
-                         void (^next)(MKMapItem *from, MKMapItem *to)) {
-  __block MKMapItem *resolvedFrom = nil;
-  __block MKMapItem *resolvedTo = nil;
-
-  // Each end is either a coordinate the caller already has, or a name to look
-  // up. Looking it up is one more round trip, which is why a caller that has
-  // coordinates should pass them.
-  void (^resolve)(NSString *, NSString *, void (^)(MKMapItem *, NSString *)) =
-  ^(NSString *prefix, NSString *queryKey, void (^done)(MKMapItem *, NSString *)) {
-    CLLocationCoordinate2D point = coordinate_arg(args, prefix);
-    if (CLLocationCoordinate2DIsValid(point)) {
-      MKPlacemark *place = [[MKPlacemark alloc] initWithCoordinate:point];
-      MKMapItem *item = [[MKMapItem alloc] initWithPlacemark:place];
-      // Without a name MapKit calls it "Unknown Location", which reads in the
-      // result as if the lookup failed. The coordinates are what the caller
-      // gave; echoing them back says plainly that they were used as given.
-      item.name = [NSString stringWithFormat:@"%.5f, %.5f", point.latitude, point.longitude];
-      done(item, nil);
-      return;
-    }
-    NSString *query = args[queryKey];
-    if (![query isKindOfClass:NSString.class] || query.length == 0) {
-      done(nil, [NSString stringWithFormat:@"needs '%@', or '%@Latitude' and '%@Longitude'",
-                 queryKey, prefix, prefix]);
-      return;
-    }
-    // Geocoding, not local search. `MKLocalSearch` ranks businesses near the
-    // device: asked to resolve "San Francisco" from a phone in Hong Kong it
-    // answers "San Francisco Bakery", and the route that follows is confidently
-    // wrong — far worse than an error. `CLGeocoder` resolves place names as
-    // places, which is the question being asked here.
-    [[CLGeocoder new] geocodeAddressString:query
-                                  inRegion:nil
-                           preferredLocale:DshGeocodeLocaleForQuery(query)
-                         completionHandler:^(NSArray<CLPlacemark *> *places, NSError *error) {
-      CLPlacemark *first = places.firstObject;
-      if (first == nil) {
-        done(nil, [NSString stringWithFormat:@"no place found for '%@'", query]);
-        return;
-      }
-      // Geocoding answers *something* even when it does not know the place, and
-      // two ends resolved to the same wrong town produce a one-metre route that
-      // reads as a real answer. Refuse rather than route between guesses.
-      NSString *resolved = [@[first.name ?: @"", first.locality ?: @"",
-                              first.administrativeArea ?: @"", first.country ?: @""]
-                            componentsJoinedByString:@" "];
-      if (!DshGeocodePlausible(query, resolved)) {
-        done(nil, [NSString stringWithFormat:
-                   @"'%@' could not be resolved here — the nearest answer was '%@', which is not the "
-                    "same place. Geocoding is answered by the provider for this device's region and "
-                    "may not know places elsewhere. Give coordinates instead.", query, resolved]);
-        return;
-      }
-      MKPlacemark *place = [[MKPlacemark alloc] initWithPlacemark:first];
-      MKMapItem *item = [[MKMapItem alloc] initWithPlacemark:place];
-      item.name = first.name ?: query;
-      done(item, nil);
-    }];
+/// Both ends, as coordinates, or nil with the reason.
+///
+/// **Names are not accepted here, on purpose.** Resolving a name means picking
+/// one answer out of several, and a geocoder answers *something* even when it
+/// does not know the place: measured on a device in the China region, "San
+/// Francisco" resolved to a township in Yunnan, and with both ends resolved the
+/// same way the route came back as one metre and one second — an answer that
+/// looks real. We tried refusing when the resolution looked implausible, and
+/// that worked, but it was a string-similarity guess of our own that already
+/// needed one patch (a Chinese query against an English answer shares no
+/// letters) and would need more for abbreviations and transliterations.
+///
+/// So the choice goes back to the caller, who is a language model and is far
+/// better placed to notice that Yunnan is not San Francisco: run `maps search`
+/// or `location geocode` first, look at the candidates, then ask for a route
+/// between two points. One more call, and nothing is decided on their behalf.
+static BOOL ends_from_args(NSDictionary *args, MKMapItem **from, MKMapItem **to, NSString **error) {
+  CLLocationCoordinate2D start = coordinate_arg(args, @"from");
+  CLLocationCoordinate2D finish = coordinate_arg(args, @"to");
+  if (!CLLocationCoordinate2DIsValid(start) || !CLLocationCoordinate2DIsValid(finish)) {
+    *error = @"this operation needs 'fromLatitude'/'fromLongitude' and 'toLatitude'/'toLongitude'. "
+              "Place names are not resolved here — run `search` or `location geocode` first and pick "
+              "the right one, so a wrong match cannot hide inside a route.";
+    return NO;
+  }
+  // The name echoes the coordinates the caller gave. Without one MapKit calls it
+  // "Unknown Location", which reads in the result as if the lookup failed.
+  MKMapItem *(^item)(CLLocationCoordinate2D) = ^(CLLocationCoordinate2D point) {
+    MKMapItem *made = [[MKMapItem alloc] initWithPlacemark:
+                       [[MKPlacemark alloc] initWithCoordinate:point]];
+    made.name = [NSString stringWithFormat:@"%.5f, %.5f", point.latitude, point.longitude];
+    return made;
   };
-
-  resolve(@"from", @"fromQuery", ^(MKMapItem *from, NSString *error) {
-    if (from == nil) { reply(nil, error); return; }
-    resolvedFrom = from;
-    resolve(@"to", @"toQuery", ^(MKMapItem *to, NSString *error2) {
-      if (to == nil) { reply(nil, error2); return; }
-      resolvedTo = to;
-      next(resolvedFrom, resolvedTo);
-    });
-  });
+  *from = item(start);
+  *to = item(finish);
+  return YES;
 }
 
 static MKDirectionsTransportType transport_type(NSDictionary *args) {
@@ -165,7 +130,10 @@ static MKDirectionsRequest *directions_request(MKMapItem *from, MKMapItem *to, N
 }
 
 static void eta(NSDictionary *args, DshNativeReply reply) {
-  resolve_ends(args, reply, ^(MKMapItem *from, MKMapItem *to) {
+  MKMapItem *from = nil, *to = nil;
+  NSString *error = nil;
+  if (!ends_from_args(args, &from, &to, &error)) { reply(nil, error); return; }
+  {
     MKDirections *directions =
       [[MKDirections alloc] initWithRequest:directions_request(from, to, args)];
     [directions calculateETAWithCompletionHandler:^(MKETAResponse *response, NSError *error) {
@@ -179,11 +147,14 @@ static void eta(NSDictionary *args, DshNativeReply reply) {
               @"meters": @(response.distance),
               @"mode": args[@"mode"] ?: @"driving"}, nil);
     }];
-  });
+  }
 }
 
 static void route(NSDictionary *args, DshNativeReply reply) {
-  resolve_ends(args, reply, ^(MKMapItem *from, MKMapItem *to) {
+  MKMapItem *from = nil, *to = nil;
+  NSString *argError = nil;
+  if (!ends_from_args(args, &from, &to, &argError)) { reply(nil, argError); return; }
+  {
     MKDirections *directions =
       [[MKDirections alloc] initWithRequest:directions_request(from, to, args)];
     [directions calculateDirectionsWithCompletionHandler:^(MKDirectionsResponse *response, NSError *error) {
@@ -211,7 +182,7 @@ static void route(NSDictionary *args, DshNativeReply reply) {
               @"name": best.name ?: @"",
               @"steps": steps}, nil);
     }];
-  });
+  }
 }
 
 void dsh_native_maps(NSString *op, NSDictionary *args, DshNativeReply reply) {

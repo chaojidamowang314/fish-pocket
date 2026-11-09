@@ -478,20 +478,20 @@ const maps = defineTool({
     'Find places, and work out how long it takes to get between two of them. Apple Maps answers '
     + 'these, so it needs no permission and never reads where the user is — "near me" needs their '
     + 'location first, which is a separate capability they have to switch on.\n'
-    + '`search` finds places by name or kind, optionally around a coordinate. `eta` gives the '
-    + 'travel time and distance between two places. `route` adds the turn-by-turn steps.',
+    + '`search` finds places by name or kind, optionally around a coordinate. `eta` and `route` '
+    + 'take COORDINATES, not names: look the two ends up first with `search` or `location geocode` '
+    + 'and pick them yourself. That is on purpose — a geocoder answers something even when it does '
+    + 'not know a place, and a wrong match hidden inside a route reads like a real answer.',
   parameters: {
     action: { type: 'string', enum: ['search', 'eta', 'route'], description: 'which one', required: true },
     query: { type: 'string', description: 'search: what to look for, e.g. "pharmacy" or a place name' },
     nearLatitude: { type: 'number', description: 'search: centre the search here' },
     nearLongitude: { type: 'number', description: 'search: centre the search here' },
     radiusMeters: { type: 'number', description: 'search: how far around the centre to look; defaults to 10 km' },
-    fromQuery: { type: 'string', description: 'eta/route: where to start, by name' },
-    fromLatitude: { type: 'number', description: 'eta/route: where to start; skips a lookup' },
-    fromLongitude: { type: 'number', description: 'eta/route: where to start; skips a lookup' },
-    toQuery: { type: 'string', description: 'eta/route: where to end, by name' },
-    toLatitude: { type: 'number', description: 'eta/route: where to end; skips a lookup' },
-    toLongitude: { type: 'number', description: 'eta/route: where to end; skips a lookup' },
+    fromLatitude: { type: 'number', description: 'eta/route: where to start' },
+    fromLongitude: { type: 'number', description: 'eta/route: where to start' },
+    toLatitude: { type: 'number', description: 'eta/route: where to end' },
+    toLongitude: { type: 'number', description: 'eta/route: where to end' },
     mode: {
       type: 'string',
       enum: ['driving', 'walking', 'transit'],
@@ -527,14 +527,13 @@ const maps = defineTool({
       });
     }
     const ends = {};
-    for (const key of ['fromQuery', 'fromLatitude', 'fromLongitude', 'toQuery', 'toLatitude', 'toLongitude']) {
+    for (const key of ['fromLatitude', 'fromLongitude', 'toLatitude', 'toLongitude']) {
       if (args[key] !== undefined) ends[key] = args[key];
     }
-    if (!ends.fromQuery && ends.fromLatitude === undefined) {
-      throw new Error(`maps: \`${args.action}\` needs \`fromQuery\`, or \`fromLatitude\` and \`fromLongitude\``);
-    }
-    if (!ends.toQuery && ends.toLatitude === undefined) {
-      throw new Error(`maps: \`${args.action}\` needs \`toQuery\`, or \`toLatitude\` and \`toLongitude\``);
+    if (Object.keys(ends).length < 4) {
+      throw new Error(`maps: \`${args.action}\` needs both ends as coordinates`
+        + ' (`fromLatitude`/`fromLongitude` and `toLatitude`/`toLongitude`).'
+        + ' Find them with `search` or `location geocode` first and choose which result you meant.');
     }
     return invoke('maps', args.action, { ...ends, ...(args.mode === undefined ? {} : { mode: args.mode }) });
   },
@@ -565,7 +564,6 @@ const vision = defineTool({
       items: { type: 'string' },
       description: 'text: BCP-47 codes to recognise; defaults to Chinese and English',
     },
-    minimumConfidence: { type: 'number', description: 'classify: drop labels below this; defaults to 0.1' },
   },
   output: {
     schema: { type: 'json' },
@@ -584,16 +582,18 @@ const vision = defineTool({
                                       : `${value.count} face${value.count === 1 ? '' : 's'} found.`);
       }
       if (!value.labels?.length) return text('Nothing recognisable in that image.');
-      return text(value.labels
-        .map((row) => `${(row.confidence * 100).toFixed(0)}%  ${row.label}`)
-        .join('\n'));
+      // Vision names over a thousand things in any photo and most scores are near
+      // zero. The confidences come through as they are: where "relevant" begins
+      // is your judgement about this image, not a number we picked.
+      const lines = value.labels.map((row) => `${(row.confidence * 100).toFixed(0)}%  ${row.label}`);
+      if (value.truncated) lines.push(`… the most confident ${value.labels.length} of ${value.total}`);
+      return text(lines.join('\n'));
     },
   },
   execute: async (args) => invoke('vision', args.action, {
     path: args.path,
     ...(args.level === undefined ? {} : { level: args.level }),
     ...(args.languages === undefined ? {} : { languages: args.languages }),
-    ...(args.minimumConfidence === undefined ? {} : { minimumConfidence: args.minimumConfidence }),
   }),
 });
 
@@ -643,8 +643,10 @@ const location = defineTool({
     'Where the phone is right now, and turning addresses into coordinates and back. One reading at '
     + 'a time, only while the app is open — there is no tracking and no history. `geocode` and '
     + '`reverse` are Apple\'s servers and cost the user no privacy at all, so prefer them when the '
-    + 'question is about a place rather than about where the user is. Feed the coordinates to '
-    + '`maps` for "what is near me".',
+    + 'question is about a place rather than about where the user is.\n'
+    + 'They return EVERY candidate, not a best guess: a geocoder answers something even when it '
+    + 'does not know the place, so read the list and choose. Feed the coordinates you chose to '
+    + '`maps` for a route, or for "what is near me".',
   parameters: {
     action: {
       type: 'string',
@@ -668,13 +670,18 @@ const location = defineTool({
         return text(`${value.latitude.toFixed(5)}, ${value.longitude.toFixed(5)}`
           + ` (±${Math.round(value.accuracyMeters)} m)`);
       }
-      if (args.action === 'geocode') {
-        const where = [value.name, value.locality, value.country].filter(Boolean).join(', ');
-        return text(`${where}: ${value.latitude.toFixed(5)}, ${value.longitude.toFixed(5)}`);
+      // Every candidate the geocoder gave, in its order — choosing among them is
+      // the caller's job, and the numbering is how they say which one they meant.
+      if (!value.places?.length) return text('Nothing was found for that.');
+      const lines = value.places.map((place, i) => {
+        const where = [place.name, place.thoroughfare, place.locality, place.administrativeArea,
+                       place.postalCode, place.country].filter(Boolean).join(', ');
+        return `${i + 1}. ${where}  (${place.latitude.toFixed(5)}, ${place.longitude.toFixed(5)})`;
+      });
+      if (value.places.length > 1) {
+        lines.unshift(`${value.total} places match — pick the one you meant before routing:`);
       }
-      const parts = [value.name, value.thoroughfare, value.locality, value.administrativeArea,
-                     value.postalCode, value.country].filter(Boolean);
-      return text(parts.length ? parts.join(', ') : 'Nothing is known about that point.');
+      return text(lines.join('\n'));
     },
   },
   execute: async (args) => {

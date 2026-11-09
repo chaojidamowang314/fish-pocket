@@ -154,14 +154,22 @@ test('similar refuses before the addon when it has nothing to rank against', asy
   );
 });
 
-test('maps refuses before the addon when an end is missing', async () => {
+test('maps routes between coordinates only, never between names', async () => {
   await assert.rejects(TOOLS.maps.execute({ action: 'search' }, {}), /`search` needs `query`/);
-  await assert.rejects(TOOLS.maps.execute({ action: 'eta', toQuery: '上海' }, {}), /needs `fromQuery`/);
-  await assert.rejects(TOOLS.maps.execute({ action: 'route', fromQuery: '北京' }, {}), /needs `toQuery`/);
-  // Coordinates stand in for a name, and 0 is a real coordinate — a check that
-  // tested truthiness would reject the equator and the prime meridian.
+  // A name is not accepted, however reasonable it looks: resolving it would mean
+  // picking one answer out of several, and a geocoder answers something even
+  // when it does not know the place (§4.5).
   await assert.rejects(
-    TOOLS.maps.execute({ action: 'eta', fromLatitude: 0, fromLongitude: 0, toQuery: '上海' }, {}),
+    TOOLS.maps.execute({ action: 'eta', fromQuery: 'San Francisco', toQuery: 'San Jose' }, {}),
+    /needs both ends as coordinates/,
+  );
+  await assert.rejects(
+    TOOLS.maps.execute({ action: 'route', fromLatitude: 1, fromLongitude: 2, toLatitude: 3 }, {}),
+    /needs both ends as coordinates/,
+  );
+  // 0, 0 is a real point in the Gulf of Guinea; a truthiness check would reject it.
+  await assert.rejects(
+    TOOLS.maps.execute({ action: 'eta', fromLatitude: 0, fromLongitude: 0, toLatitude: 1, toLongitude: 1 }, {}),
     /only available in the iOS app/,
   );
 });
@@ -204,8 +212,14 @@ test('read_image says what it found, or plainly that it found nothing', () => {
   assert.match(render('faces', { count: 3, faces: [] }), /3 faces found/);
   assert.match(render('faces', { count: 0, faces: [] }), /No faces found/);
 
-  assert.match(render('classify', { labels: [{ label: 'receipt', confidence: 0.91 }] }), /91% {2}receipt/);
-  assert.match(render('classify', { labels: [] }), /Nothing recognisable/);
+  // No confidence threshold: a near-zero score is reported as a near-zero score,
+  // because whether 0.09 matters is a question about this image, not a number
+  // for us to pick.
+  assert.match(render('classify', { labels: [{ label: 'receipt', confidence: 0.91 }], total: 1 }), /91% {2}receipt/);
+  assert.match(render('classify', { labels: [{ label: 'paper', confidence: 0.04 }], total: 1 }), /4% {2}paper/);
+  assert.match(render('classify', { labels: [{ label: 'x', confidence: 0.5 }], total: 900, truncated: true }),
+               /the most confident 1 of 900/);
+  assert.match(render('classify', { labels: [], total: 0 }), /Nothing recognisable/);
 });
 
 test('clipboard and location refuse before the addon when an argument is missing', async () => {
@@ -234,22 +248,26 @@ test('clipboard and location say plainly when there is nothing to report', () =>
   const loc = (action, value) => TOOLS.location.output.render({ action }, value)[0].text;
   assert.match(loc('current', { latitude: 39.9042, longitude: 116.4074, accuracyMeters: 65 }),
                /39\.90420, 116\.40740 \(±65 m\)/);
-  assert.match(loc('geocode', { name: '故宫', locality: '北京', country: '中国', latitude: 39.9163, longitude: 116.3972 }),
-               /故宫, 北京, 中国: 39\.91630/);
-  // Reverse geocoding the open ocean returns a placemark with nothing in it.
-  assert.match(loc('reverse', { name: '', thoroughfare: '', locality: '', administrativeArea: '', country: '' }),
-               /Nothing is known about that point/);
-});
 
-test('a place that resolves to something else is a refusal, not a route', async () => {
-  // Measured on a device in the China region: CLGeocoder answered "San Francisco"
-  // with a township in Yunnan, and both ends of a route resolved to the same
-  // wrong town — a confident one-metre answer. The addon now refuses; this test
-  // pins the engine-side half, that the tool does not paper over the refusal.
-  await assert.rejects(
-    TOOLS.maps.execute({ action: 'eta', fromQuery: 'San Francisco', toQuery: 'San Jose' }, {}),
-    /only available in the iOS app/,
-  );
+  // Every candidate, numbered, because choosing among them is the caller's job.
+  // Measured on a device in the China region, asking for "San Francisco" really
+  // did return a township in Yunnan — which a reader spots at once and a
+  // string-similarity rule of ours would spend forever trying to.
+  const many = loc('geocode', {
+    total: 2,
+    places: [
+      { name: '旧金山', country: '美国', latitude: 37.7749, longitude: -122.4194 },
+      { name: '上安宁', locality: '普洱', country: '中国', latitude: 23.2325, longitude: 101.6679 },
+    ],
+  });
+  assert.match(many, /2 places match — pick the one you meant/);
+  assert.match(many, /1\. 旧金山, 美国 {2}\(37\.77490, -122\.41940\)/);
+  assert.match(many, /2\. 上安宁, 普洱, 中国/);
+  // One match needs no "pick one" line; it is still a list, not a verdict.
+  const one = loc('geocode', { total: 1, places: [{ name: '故宫', locality: '北京', latitude: 39.9163, longitude: 116.3972 }] });
+  assert.doesNotMatch(one, /pick the one/);
+  assert.match(one, /1\. 故宫, 北京/);
+  assert.match(loc('reverse', { total: 0, places: [] }), /Nothing was found/);
 });
 
 test('maps names the coordinates it was given rather than "Unknown Location"', () => {

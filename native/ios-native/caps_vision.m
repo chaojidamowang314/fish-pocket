@@ -18,6 +18,9 @@
 #import <ImageIO/ImageIO.h>
 
 static const NSUInteger kMaxItems = 200;
+/// Vision names over a thousand things in any photo. This bounds the reply; it
+/// is not a view about which of them matter.
+static const NSUInteger kMaxLabels = 25;
 
 /// Vision is CPU-bound and can take seconds on a large image. Node's thread must
 /// not wait on it and the main thread must not either.
@@ -133,18 +136,24 @@ static void detect_barcodes(NSDictionary *args, DshNativeReply reply) {
 static void classify(NSDictionary *args, DshNativeReply reply) {
   VNClassifyImageRequest *request = [[VNClassifyImageRequest alloc] init];
   with_vision(args[@"path"], reply, @[request], ^{
-    // Vision returns a long tail of near-zero scores. A threshold keeps the
-    // answer to the part that means anything; the default is deliberately
-    // generous rather than clever.
-    NSNumber *minimum = args[@"minimumConfidence"];
-    float floor = [minimum isKindOfClass:NSNumber.class] ? minimum.floatValue : 0.1f;
+    // No confidence threshold. Vision reports well over a thousand labels with a
+    // long tail of near-zero scores, and the obvious move is to cut the tail —
+    // but any cut is a number we invented, and "is 0.09 relevant here" is the
+    // caller's question, not ours. What is left is a count cap, which is about
+    // the size of the reply rather than about which answers are any good; the
+    // confidence comes along so the caller can draw its own line.
+    NSArray *sorted = [request.results sortedArrayUsingComparator:
+                       ^NSComparisonResult(VNClassificationObservation *a, VNClassificationObservation *b) {
+      return [@(b.confidence) compare:@(a.confidence)];
+    }];
     NSMutableArray *labels = [NSMutableArray array];
-    for (VNClassificationObservation *observation in request.results) {
-      if (labels.count >= 20) break;
-      if (observation.confidence < floor) continue;
+    for (VNClassificationObservation *observation in sorted) {
+      if (labels.count >= kMaxLabels) break;
       [labels addObject:@{@"label": observation.identifier, @"confidence": @(observation.confidence)}];
     }
-    reply(@{@"labels": labels}, nil);
+    reply(@{@"labels": labels,
+            @"total": @(sorted.count),
+            @"truncated": @((BOOL)(sorted.count > labels.count))}, nil);
   });
 }
 

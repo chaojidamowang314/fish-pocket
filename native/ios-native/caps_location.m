@@ -71,33 +71,6 @@ NSLocale *DshGeocodeLocaleForQuery(NSString *query) {
   return [NSLocale localeWithLocaleIdentifier:@"en_US"];
 }
 
-BOOL DshGeocodePlausible(NSString *query, NSString *resolved) {
-  if (query.length == 0 || resolved.length == 0) return NO;
-  NSString *q = query.lowercaseString, *r = resolved.lowercaseString;
-  // Either contains the other: "the louvre" → "musée du louvre", "故宫" →
-  // "故宫博物院". This covers most honest answers.
-  if ([r containsString:q] || [q containsString:r]) return YES;
-
-  // Otherwise require one shared piece. Latin words of three letters or more,
-  // and for scripts without spaces, any two adjacent characters — "北京市" and
-  // "北京" share "北京" even though neither contains the other whole.
-  NSMutableCharacterSet *breaks = [NSMutableCharacterSet whitespaceAndNewlineCharacterSet];
-  [breaks formUnionWithCharacterSet:NSCharacterSet.punctuationCharacterSet];
-  for (NSString *word in [q componentsSeparatedByCharactersInSet:breaks]) {
-    if (word.length >= 3 && [r containsString:word]) return YES;
-  }
-  for (NSUInteger i = 0; i + 1 < q.length; i++) {
-    NSRange pair = [q rangeOfComposedCharacterSequencesForRange:NSMakeRange(i, 2)];
-    NSString *gram = [q substringWithRange:pair];
-    // Only for characters that are not plain letters-with-spaces scripts; a
-    // two-letter Latin fragment matches far too much.
-    unichar first = [gram characterAtIndex:0];
-    if (first < 0x2E80) continue;
-    if ([r containsString:gram]) return YES;
-  }
-  return NO;
-}
-
 static void read_current(NSDictionary *args, DshNativeReply reply) {
   dsh_native_on_main(^{
     CLLocationManager *manager = [CLLocationManager new];
@@ -146,6 +119,29 @@ static void read_current(NSDictionary *args, DshNativeReply reply) {
   });
 }
 
+/// A placemark as the same shape `maps search` returns, so a caller can move
+/// between the two without re-learning the fields.
+static NSDictionary *placemark_json(CLPlacemark *place) {
+  NSMutableDictionary *entry = [@{
+    @"name": place.name ?: @"",
+    @"latitude": @(place.location.coordinate.latitude),
+    @"longitude": @(place.location.coordinate.longitude),
+  } mutableCopy];
+  for (NSString *key in @[@"thoroughfare", @"locality", @"administrativeArea", @"country", @"postalCode"]) {
+    NSString *value = [place valueForKey:key];
+    if (value.length > 0) entry[key] = value;
+  }
+  return entry;
+}
+
+/// **Every candidate, in the geocoder's own order.** Not the first one.
+///
+/// A geocoder answers *something* even when it does not know the place, so
+/// picking one here is picking blind: measured on a device in the China region,
+/// "San Francisco" came back as a township in Yunnan. The caller is a language
+/// model and can see at a glance that Yunnan is not San Francisco; this
+/// function cannot, and a string-similarity guess that tries to is a rule we
+/// would be patching forever (§4.5).
 static void geocode(NSDictionary *args, DshNativeReply reply) {
   NSString *address = args[@"address"];
   if (![address isKindOfClass:NSString.class] || address.length == 0) {
@@ -153,32 +149,20 @@ static void geocode(NSDictionary *args, DshNativeReply reply) {
     return;
   }
   // CLGeocoder is deprecated from iOS 26 in favour of MKGeocodingRequest, but
-  // this app deploys to iOS 17 and MKGeocodingRequest does not exist there. An
-  // availability split would double this code for no difference in behaviour
-  // today; revisit when the deployment target moves past 26.
+  // this app deploys to iOS 17, where MKGeocodingRequest does not exist. An
+  // availability split would double this for no difference in behaviour today.
   [[CLGeocoder new] geocodeAddressString:address
                                 inRegion:nil
                          preferredLocale:DshGeocodeLocaleForQuery(address)
                        completionHandler:^(NSArray<CLPlacemark *> *places, NSError *error) {
-    CLPlacemark *first = places.firstObject;
-    if (first == nil) {
-      reply(nil, error.localizedDescription ?: [NSString stringWithFormat:@"no place found for '%@'", address]);
+    if (places.count == 0) {
+      reply(nil, error.localizedDescription
+                 ?: [NSString stringWithFormat:@"no place found for '%@'", address]);
       return;
     }
-    NSString *resolved = [@[first.name ?: @"", first.locality ?: @"", first.administrativeArea ?: @"",
-                            first.country ?: @""] componentsJoinedByString:@" "];
-    if (!DshGeocodePlausible(address, resolved)) {
-      reply(nil, [NSString stringWithFormat:
-                  @"'%@' could not be resolved here — the nearest answer was '%@', which is not the "
-                   "same place. Geocoding is answered by the provider for this device's region and "
-                   "may not know places elsewhere. Give coordinates instead.", address, resolved]);
-      return;
-    }
-    reply(@{@"latitude": @(first.location.coordinate.latitude),
-            @"longitude": @(first.location.coordinate.longitude),
-            @"name": first.name ?: @"",
-            @"locality": first.locality ?: @"",
-            @"country": first.country ?: @""}, nil);
+    NSMutableArray *found = [NSMutableArray arrayWithCapacity:places.count];
+    for (CLPlacemark *place in places) [found addObject:placemark_json(place)];
+    reply(@{@"places": found, @"total": @(places.count)}, nil);
   }];
 }
 
@@ -190,18 +174,15 @@ static void reverse_geocode(NSDictionary *args, DshNativeReply reply) {
   }
   CLLocation *point = [[CLLocation alloc] initWithLatitude:lat.doubleValue longitude:lon.doubleValue];
   [[CLGeocoder new] reverseGeocodeLocation:point
+                           preferredLocale:nil
                          completionHandler:^(NSArray<CLPlacemark *> *places, NSError *error) {
-    CLPlacemark *first = places.firstObject;
-    if (first == nil) {
+    if (places.count == 0) {
       reply(nil, error.localizedDescription ?: @"nothing is known about that point");
       return;
     }
-    reply(@{@"name": first.name ?: @"",
-            @"thoroughfare": first.thoroughfare ?: @"",
-            @"locality": first.locality ?: @"",
-            @"administrativeArea": first.administrativeArea ?: @"",
-            @"country": first.country ?: @"",
-            @"postalCode": first.postalCode ?: @""}, nil);
+    NSMutableArray *found = [NSMutableArray arrayWithCapacity:places.count];
+    for (CLPlacemark *place in places) [found addObject:placemark_json(place)];
+    reply(@{@"places": found, @"total": @(places.count)}, nil);
   }];
 }
 
