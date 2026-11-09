@@ -1610,7 +1610,40 @@
     "Fish Pocket" : {
       "shouldTranslate" : false
     },
+    "Fish Pocket 分享海报，带二维码" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket share poster with QR code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster de Fish Pocket con código QR"
+          }
+        }
+      }
+    },
+    "Fish Pocket 分享海报，带链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket share poster with link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster de Fish Pocket con enlace"
+          }
+        }
+      }
+    },
     "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：%@\nGitHub：%@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1628,6 +1661,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：%1$@\nGitHub：%2$@"
+          }
+        }
+      }
+    },
+    "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，支持第三方插件市场，不连电脑，不连服务器。\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket: run DeepSeek Harness right on your iPhone and iPad, with third-party plugin markets — no computer, no server.\n%@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fish Pocket: ejecuta DeepSeek Harness directamente en tu iPhone y iPad, con mercados de plugins de terceros, sin ordenador ni servidor.\n%@"
           }
         }
       }
@@ -2715,6 +2764,22 @@
         }
       }
     },
+    "二维码海报" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QR Poster"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster con QR"
+          }
+        }
+      }
+    },
     "交付失败" : {
       "localizations" : {
         "en" : {
@@ -3505,6 +3570,22 @@
         }
       }
     },
+    "保存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Photos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar en Fotos"
+          }
+        }
+      }
+    },
     "保存后自动生效。内容无法解析时会恢复原内容。" : {
       "localizations" : {
         "en" : {
@@ -3517,6 +3598,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los cambios surten efecto al guardar. Si el contenido no se puede analizar, se restaura el original."
+          }
+        }
+      }
+    },
+    "保存失败：%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar: %@"
           }
         }
       }
@@ -4845,6 +4942,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compartir"
+          }
+        }
+      }
+    },
+    "分享 Fish Pocket" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Fish Pocket"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir Fish Pocket"
           }
         }
       }
@@ -6353,6 +6466,22 @@
         }
       }
     },
+    "口袋里的\nDeepSeek Harness" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pocket-sized\nDeepSeek Harness"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeepSeek Harness\nde bolsillo"
+          }
+        }
+      }
+    },
     "另有 %lld 个" : {
       "localizations" : {
         "en" : {
@@ -7137,6 +7266,22 @@
         }
       }
     },
+    "在 iPhone 和 iPad 上本机运行\n不连电脑，不连服务器" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runs right on iPhone and iPad\nNo computer, no server"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ejecuta en tu iPhone y iPad\nSin ordenador ni servidor"
+          }
+        }
+      }
+    },
     "在\"%@\"中新建文件夹" : {
       "localizations" : {
         "en" : {
@@ -7245,6 +7390,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en una ventana nueva"
+          }
+        }
+      }
+    },
+    "在浏览器打开，了解和下载" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in a browser to learn more and download"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ábrelo en el navegador para saber más y descargar"
           }
         }
       }
@@ -7629,6 +7790,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar salida"
+          }
+        }
+      }
+    },
+    "复制链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar enlace"
           }
         }
       }
@@ -8321,6 +8498,22 @@
         }
       }
     },
+    "将发送这段文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This text will be shared"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se compartirá este texto"
+          }
+        }
+      }
+    },
     "将当前会话内容导出为 ZIP" : {
       "localizations" : {
         "en" : {
@@ -8749,6 +8942,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardado, pero no disponible actualmente"
+          }
+        }
+      }
+    },
+    "已保存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en Fotos"
           }
         }
       }
@@ -9959,6 +10168,38 @@
         }
       }
     },
+    "开源项目\nApp Store 与 TestFlight 均可安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open source\nOn the App Store and TestFlight"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código abierto\nEn App Store y TestFlight"
+          }
+        }
+      }
+    },
+    "开源项目 · App Store 与 TestFlight 均可安装" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open source · On the App Store and TestFlight"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código abierto · En App Store y TestFlight"
+          }
+        }
+      }
+    },
     "异常" : {
       "localizations" : {
         "en" : {
@@ -11095,6 +11336,22 @@
         }
       }
     },
+    "扫码了解和下载" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scan to learn more and download"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea para saber más y descargar"
+          }
+        }
+      }
+    },
     "找不到该插件" : {
       "localizations" : {
         "en" : {
@@ -12083,6 +12340,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compatible con paquetes npm, repositorios Git y carpetas"
+          }
+        }
+      }
+    },
+    "支持第三方插件市场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Third-party plugin markets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mercados de plugins de terceros"
           }
         }
       }
@@ -16909,6 +17182,22 @@
         }
       }
     },
+    "没有相册权限，可以在系统设置里允许 Fish Pocket 添加照片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No access to Photos. Allow Fish Pocket to add photos in Settings."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Fotos. Permite que Fish Pocket añada fotos en Ajustes."
+          }
+        }
+      }
+    },
     "没有符合条件的插件" : {
       "localizations" : {
         "en" : {
@@ -17037,6 +17326,22 @@
         }
       }
     },
+    "浏览、安装社区插件，手机上直接启用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browse and install community plugins"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instala plugins de la comunidad"
+          }
+        }
+      }
+    },
     "浏览器" : {
       "localizations" : {
         "en" : {
@@ -17049,6 +17354,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Navegador"
+          }
+        }
+      }
+    },
+    "海报、二维码或链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poster, QR code or link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster, código QR o enlace"
           }
         }
       }
@@ -19057,6 +19378,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dale una estrella"
+          }
+        }
+      }
+    },
+    "给个评分" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate on the App Store"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valorar en App Store"
           }
         }
       }
@@ -22454,6 +22791,7 @@
       }
     },
     "选择文件夹" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -22997,6 +23335,22 @@
         }
       }
     },
+    "链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enlace"
+          }
+        }
+      }
+    },
     "链接已复制" : {
       "localizations" : {
         "en" : {
@@ -23009,6 +23363,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enlace copiado"
+          }
+        }
+      }
+    },
+    "链接海报" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link Poster"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Póster con enlace"
           }
         }
       }
