@@ -12,12 +12,13 @@ import { fileURLToPath } from 'node:url';
 import { binding, capabilities, invoke } from '../plugins/ios-native/binding.mjs';
 import { TOOLS, toEpochSeconds } from '../plugins/ios-native/tools.mjs';
 
-test('the example plugin at least parses', () => {
+test('the boundary-check plugin at least parses', () => {
   // It cannot be imported here: it resolves `@deepseek-ai/dsh-tools` from the
   // engine's node_modules, which only exists once it is installed on a device.
   // A syntax check still catches the failure mode that would otherwise surface
-  // as a plugin that silently refuses to load on someone's phone.
-  const example = fileURLToPath(new URL('../../examples/dsh-plugin-native-demo/index.mjs', import.meta.url));
+  // as a plugin that silently refuses to load on the device it was meant to
+  // check — the one place its silence would be mistaken for a passing boundary.
+  const example = fileURLToPath(new URL('./native-boundary-plugin/index.mjs', import.meta.url));
   const result = spawnSync(process.execPath, ['--check', example], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
 });

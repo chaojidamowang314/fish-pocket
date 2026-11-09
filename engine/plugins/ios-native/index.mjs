@@ -16,13 +16,19 @@ import { TOOLS } from './tools.mjs';
 /**
  * `ctx.iosNative` — the same path the engine's own tools take.
  *
- * **Internal, not an API.** A third-party plugin can reach it, and reach the
- * addon underneath it, and nothing here can stop that (§5.3 — measured: a
- * plugin writes one `new Worker(code, {eval: true})` and has a fresh realm with
- * its own `process`, both binding handles intact). Reachable is not the same as
- * promised: capability names, operation names and argument shapes change with
- * the app, and nothing here is versioned. The agent keeps up because it reads
- * the skill file; a plugin that wrote these names down would break on an update.
+ * **For the agent. Not an API, and not aimed at plugins** (§1.1): a plugin
+ * calling the device capabilities is out of scope for now — the security model
+ * is not worked out and the value case is not there. If that changes it means a
+ * versioned API protocol of its own, which is a different piece of work.
+ *
+ * A third-party plugin can reach it anyway, and reach the addon underneath it,
+ * and nothing here can stop that (§5.3.1 — measured: a plugin writes one
+ * `new Worker(code, {eval: true})` and has a fresh realm with its own
+ * `process`, both binding handles intact). Saying "plugins may not" would be a
+ * promise we cannot keep. What we can say is that nothing is promised to them:
+ * capability names, operation names and argument shapes change with the app and
+ * nothing here is versioned. The agent keeps up because it re-reads the skill
+ * file; a plugin that wrote these names down would break on an update.
  *
  * It stays exposed anyway, rather than being hidden to discourage use, because
  * hiding it would not close anything — it would only push an honest plugin onto

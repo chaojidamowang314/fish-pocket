@@ -1,6 +1,8 @@
-# dsh-plugin-native-demo
+# dsh-plugin-native-boundary-check
 
 **边界验证插件，不是接入范例。** 它的作用是从外面验证一件事，不是给你照抄。
+
+它住在 `engine/test/` 而不是 `examples/`，这是刻意的：插件调本机 API **不在当前设计目标里**（[§1.1](../../../docs/native-services.md)），而一个叫 `examples` 的目录本身就是在招手。
 
 装上它就验证了设计里那个核心主张（[`docs/native-services.md`](../../docs/native-services.md) §5.3）：
 
@@ -11,8 +13,8 @@
 
 ## ⚠️ 不要照着它写插件
 
-本机能力**不是公开 API**（§5.6）。能力名、操作名、参数形状都随版本改，不作
-任何兼容承诺：
+本机能力是**做给智能体用的**，插件调它不在目标里（§1.1）。而且它**不是公开
+API**（§5.6）：能力名、操作名、参数形状都随版本改，不作任何兼容承诺：
 
 - **智能体不受影响**——它每次对话都重读 `SKILL.md`，能力改名改一行文档就行。
 - **硬编码的插件会直接断**，而且是悄无声息地断在别人手机上。
@@ -48,7 +50,7 @@
 
 2. 让它告诉你插件目录的绝对路径：
 
-   > `examples/dsh-plugin-native-demo` 的绝对路径是什么
+   > `examples/dsh-plugin-native-boundary-check` 的绝对路径是什么
 
 3. 设置 → 插件 → 安装，把那个路径粘进去。
 
@@ -76,7 +78,7 @@ healthkit.read  → refused (unknown capability 'healthkit')
 ```
 
 最后去**设置 → 本机能力 → 使用记录**。你会看到刚才那次日历读取，
-**调用方写的是 `dsh-plugin-native-demo`，不是「智能体」**。
+**调用方写的是 `dsh-plugin-native-boundary-check`，不是「智能体」**。
 
 这正是整套设计要你看见的东西：插件和本体走同一条路、拿同样的权限，
 区别只在事后那一行记录里——而那一行也只是插件自报的名字，不是证据。

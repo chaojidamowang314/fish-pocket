@@ -106,7 +106,8 @@ The app has two interfaces onto the same engine and profile. The user normally w
 - **Report where it appears.** Being in the profile, loading in the engine, or working in a web page does not show that it appears in the native interface. Name the interface you checked, and do not say a plugin's interface is in the app without saying it is the web interface.
 - **`localStorage` belongs to the web interface.** Data a browser half keeps there never reaches the engine or the native interface.
 - **Dynamic Cordis plugins** with Client code cannot be activated from the native interface. Define a Host-only version, or run it from the web interface.
-- **A plugin's Host half can reach the device capabilities too**, and nothing stops it: whatever the app is allowed to do, a plugin they install is allowed to do. Say that when you build one for them. Do not build a plugin *on* these capabilities, though, and do not write the call shape into one: the names and arguments are internal and change between versions. You keep up by reading this file; a plugin that hard-coded them would simply break on an update.
+- **Device capabilities are for you, not for plugins.** Building a plugin on them is out of scope — do not do it and do not offer to, even if the user's idea would work. Say why if they ask: nothing is promised here, the names and arguments change between versions, and a plugin that wrote them down breaks silently on an update. You are fine because you re-read this file every session.
+- **A plugin they install can still reach them**, and nothing stops that: whatever the app is allowed to do, a plugin they install is allowed to do. That is a fact about installing plugins, so say it plainly when you build one for them — it is the reason the install warning reads the way it does.
 
 ## git
 

@@ -6,9 +6,11 @@
 // privileged path — this plugin asks for `iosNative` and gets exactly what the
 // agent's own tools get, no more.
 //
-// **Do not build a plugin on these capabilities by copying this file.** The
-// capability names, operation names and argument shapes are internal and change
-// with the app; nothing here is versioned and nothing is promised (§5.6). The
+// **Do not build a plugin on these capabilities by copying this file.** They are
+// for the agent; a plugin calling them is out of scope (§1.1), which is why this
+// lives under engine/test and not under examples. The capability names,
+// operation names and argument shapes are internal and change with the app;
+// nothing here is versioned and nothing is promised (§5.6). The
 // agent keeps up because it re-reads the skill file every session. A plugin that
 // wrote `calendar`/`list`/`from`/`to` into its source would break on an update,
 // quietly, on someone else's phone.
@@ -56,7 +58,7 @@ function briefingText(device, events, reminders) {
 }
 
 export default {
-  name: 'dsh-plugin-native-demo',
+  name: 'dsh-plugin-native-boundary-check',
   // Without the host's native capabilities this plugin has nothing to do, so it
   // simply does not load elsewhere — the same stance the host's own plugin takes.
   inject: ['iosNative', 'tools'],

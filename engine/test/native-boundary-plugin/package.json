@@ -1,7 +1,7 @@
 {
-  "name": "dsh-plugin-native-demo",
+  "name": "dsh-plugin-native-boundary-check",
   "version": "0.1.0",
-  "description": "Official example: a third-party DSH plugin that builds on Fish Pocket's native device capabilities.",
+  "description": "Installs on a device to check that the native-capability boundary is what the design says it is. Not a template for building plugins.",
   "type": "module",
   "main": "index.mjs",
   "exports": "./index.mjs",
