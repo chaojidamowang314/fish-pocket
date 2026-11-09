@@ -49,7 +49,8 @@ test('tool names are unique and stable', () => {
   // Pinned because they reach the model's prompt and a rename is a breaking
   // change for any skill or plugin that mentions them.
   assert.deepEqual(names.sort(),
-    ['calendar', 'device_info', 'notify', 'open_url', 'reminders', 'speak', 'text_analysis']);
+    ['calendar', 'clipboard', 'device_info', 'location', 'maps', 'notify', 'open_url', 'read_image',
+     'reminders', 'speak', 'text_analysis']);
 });
 
 test('a reminders write is refused before the addon when it has nothing to act on', async () => {
@@ -119,21 +120,145 @@ test('open_url and text_analysis refuse before the addon when they have nothing 
 test('text_analysis renders each analysis as something a model can relay', () => {
   const render = (action, value, extra = {}) => TOOLS.nlp.output.render({ action, ...extra }, value)[0].text;
 
+  // `similar` prints the index because the caller usually holds a parallel array
+  // (the file paths these names came from) and has to map back to it.
+  // The cosine value must never reach the rendered text: on device a correct
+  // best match measured 0.10 while an identical string measured 1.00, so a
+  // reader shown the number treats a right answer as a bad one.
+  const ranked = render('similar', {
+    compared: 120,
+    matches: [
+      { rank: 1, index: 7, text: '差旅报销指南.md', cosine: 0.1021 },
+      { rank: 2, index: 2, text: '发票整理', cosine: -0.0659 },
+    ],
+  });
+  assert.match(ranked, /an order, not a score/);
+  assert.match(ranked, /1\. \[7\] {2}差旅报销指南\.md/);
+  assert.doesNotMatch(ranked, /0\.10|-0\.06/);
+  assert.match(render('similar', { matches: [], compared: 0 }), /Nothing to rank/);
+
   assert.match(render('language', { language: 'zh-Hans', hypotheses: [{ language: 'zh-Hans', confidence: 0.98 }] }),
                /zh-Hans 98%/);
   // A string with nothing to go on — digits, emoji — has no dominant language.
   // Saying so beats naming whichever language scored least badly.
   assert.match(render('language', { language: null, hypotheses: [] }), /Could not tell/);
 
-  // The score stays a number: where "negative" begins is the caller's call.
-  assert.match(render('sentiment', { score: -0.734 }), /-0\.73/);
-
   assert.match(render('entities', { entities: [{ text: '北京', type: 'PlaceName' }], total: 1 }), /Place {2}北京/);
   assert.match(render('entities', { entities: [], total: 0 }), /No people, places or organisations/);
+});
 
-  assert.match(render('tokenize', { tokens: ['a', 'b'], total: 2 }, { unit: 'word' }), /2 words/);
-  assert.match(render('tokenize', { tokens: ['a'], total: 9, truncated: true }), /showing the first 1/);
-  assert.match(render('tokenize', { tokens: [], total: 0 }, { unit: 'sentence' }), /No sentences found/);
+test('similar refuses before the addon when it has nothing to rank against', async () => {
+  await assert.rejects(
+    TOOLS.nlp.execute({ action: 'similar', text: '报销' }, {}),
+    /`similar` needs `candidates`/,
+  );
+});
+
+test('maps refuses before the addon when an end is missing', async () => {
+  await assert.rejects(TOOLS.maps.execute({ action: 'search' }, {}), /`search` needs `query`/);
+  await assert.rejects(TOOLS.maps.execute({ action: 'eta', toQuery: '上海' }, {}), /needs `fromQuery`/);
+  await assert.rejects(TOOLS.maps.execute({ action: 'route', fromQuery: '北京' }, {}), /needs `toQuery`/);
+  // Coordinates stand in for a name, and 0 is a real coordinate — a check that
+  // tested truthiness would reject the equator and the prime meridian.
+  await assert.rejects(
+    TOOLS.maps.execute({ action: 'eta', fromLatitude: 0, fromLongitude: 0, toQuery: '上海' }, {}),
+    /only available in the iOS app/,
+  );
+});
+
+test('maps renders distances and durations the way a person says them', () => {
+  const render = (action, value) => TOOLS.maps.output.render({ action }, value)[0].text;
+
+  assert.match(render('eta', { from: '北京', to: '上海', seconds: 5100, meters: 1_214_000, mode: 'driving' }),
+               /1 h 25 min, 1214\.0 km by driving/);
+  assert.match(render('eta', { from: 'A', to: 'B', seconds: 480, meters: 650, mode: 'walking' }),
+               /8 min, 650 m by walking/);
+
+  const routed = render('route', {
+    from: 'A', to: 'B', seconds: 480, meters: 650, mode: 'walking', name: '中山路',
+    steps: [{ instruction: '向北走', meters: 120 }],
+  });
+  assert.match(routed, /via 中山路/);
+  assert.match(routed, /向北走 \(120 m\)/);
+
+  assert.match(render('search', { places: [{ name: '同仁堂', address: '朝阳区' }], total: 1 }), /同仁堂 {2}朝阳区/);
+  assert.match(render('search', { places: [], total: 0 }), /No places found/);
+});
+
+test('read_image says what it found, or plainly that it found nothing', () => {
+  const render = (action, value) => TOOLS.vision.output.render({ action }, value)[0].text;
+
+  assert.match(render('text', { text: '合计 ¥128.00', lines: [{}], total: 1 }), /合计 ¥128\.00/);
+  // An image with no text is a normal outcome, not a failure to retry.
+  assert.match(render('text', { text: '', lines: [], total: 0 }), /No text found/);
+  assert.match(render('text', { text: 'a', lines: [{}], total: 9, truncated: true }),
+               /showing the first 1 of 9 lines/);
+
+  assert.match(render('barcodes', { codes: [{ symbology: 'VNBarcodeSymbologyQR', payload: 'https://x' }] }),
+               /VNBarcodeSymbologyQR {2}https:\/\/x/);
+  assert.match(render('barcodes', { codes: [] }), /No barcodes/);
+
+  // Singular and plural both have to read right: "1 faces found" is the kind of
+  // thing a model repeats verbatim to the user.
+  assert.match(render('faces', { count: 1, faces: [{}] }), /^1 face found\.$/);
+  assert.match(render('faces', { count: 3, faces: [] }), /3 faces found/);
+  assert.match(render('faces', { count: 0, faces: [] }), /No faces found/);
+
+  assert.match(render('classify', { labels: [{ label: 'receipt', confidence: 0.91 }] }), /91% {2}receipt/);
+  assert.match(render('classify', { labels: [] }), /Nothing recognisable/);
+});
+
+test('clipboard and location refuse before the addon when an argument is missing', async () => {
+  await assert.rejects(TOOLS.clipboard.execute({ action: 'set' }, {}), /`set` needs `text`/);
+  // An empty string is a legitimate thing to copy; only `undefined` is missing.
+  await assert.rejects(TOOLS.clipboard.execute({ action: 'set', text: '' }, {}), /only available in the iOS app/);
+  await assert.rejects(TOOLS.location.execute({ action: 'geocode' }, {}), /`geocode` needs `address`/);
+  await assert.rejects(TOOLS.location.execute({ action: 'reverse', latitude: 0 }, {}), /needs `latitude` and `longitude`/);
+  // 0, 0 is a real point in the Gulf of Guinea; a truthiness check would reject it.
+  await assert.rejects(
+    TOOLS.location.execute({ action: 'reverse', latitude: 0, longitude: 0 }, {}),
+    /only available in the iOS app/,
+  );
+});
+
+test('clipboard and location say plainly when there is nothing to report', () => {
+  const clip = (action, value) => TOOLS.clipboard.output.render({ action }, value)[0].text;
+  assert.match(clip('get', { text: null, kinds: ['image'] }), /no text.*It holds: image/s);
+  assert.match(clip('get', { text: 'abc', characters: 3, truncated: false }), /^abc$/);
+  assert.match(clip('get', { text: 'a', characters: 20000, truncated: true }), /it is longer/);
+  // A declined write must never read as done — the same rule as the calendar.
+  assert.match(clip('set', { saved: false }), /declined.*unchanged/i);
+  assert.match(clip('set', { saved: true, characters: 12 }), /Copied 12 characters/);
+  assert.match(clip('clear', { cleared: false }), /declined.*unchanged/i);
+
+  const loc = (action, value) => TOOLS.location.output.render({ action }, value)[0].text;
+  assert.match(loc('current', { latitude: 39.9042, longitude: 116.4074, accuracyMeters: 65 }),
+               /39\.90420, 116\.40740 \(±65 m\)/);
+  assert.match(loc('geocode', { name: '故宫', locality: '北京', country: '中国', latitude: 39.9163, longitude: 116.3972 }),
+               /故宫, 北京, 中国: 39\.91630/);
+  // Reverse geocoding the open ocean returns a placemark with nothing in it.
+  assert.match(loc('reverse', { name: '', thoroughfare: '', locality: '', administrativeArea: '', country: '' }),
+               /Nothing is known about that point/);
+});
+
+test('a place that resolves to something else is a refusal, not a route', async () => {
+  // Measured on a device in the China region: CLGeocoder answered "San Francisco"
+  // with a township in Yunnan, and both ends of a route resolved to the same
+  // wrong town — a confident one-metre answer. The addon now refuses; this test
+  // pins the engine-side half, that the tool does not paper over the refusal.
+  await assert.rejects(
+    TOOLS.maps.execute({ action: 'eta', fromQuery: 'San Francisco', toQuery: 'San Jose' }, {}),
+    /only available in the iOS app/,
+  );
+});
+
+test('maps names the coordinates it was given rather than "Unknown Location"', () => {
+  const rendered = TOOLS.maps.output.render({ action: 'eta' }, {
+    from: '39.90420, 116.40740', to: '39.08510, 117.19940',
+    seconds: 6910, meters: 137096, mode: 'driving',
+  })[0].text;
+  assert.match(rendered, /39\.90420, 116\.40740 → 39\.08510, 117\.19940/);
+  assert.match(rendered, /1 h 55 min, 137\.1 km/);
 });
 
 test('a bare date means local midnight, not UTC midnight', () => {

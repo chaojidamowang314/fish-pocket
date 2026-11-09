@@ -68,8 +68,14 @@ targets:
       - sdk: EventKit.framework
       # 写日历走系统自带的事件编辑器（EKEventEditViewController）。
       - sdk: EventKitUI.framework
-      # native/ios-native 的 nlp：认语言、分词、情绪、人名地名，全在本机算。
+      # native/ios-native 的 nlp：认语言、人名地名、按语义排序，全在本机算。
       - sdk: NaturalLanguage.framework
+      # native/ios-native 的 maps：搜地点、算路线和到达时间，不读用户位置。
+      - sdk: MapKit.framework
+      # native/ios-native 的 vision：OCR、条码、图像分类、人脸框，全在本机算。
+      - sdk: Vision.framework
+      # native/ios-native 的 location：取一次位置、地址与坐标互转。
+      - sdk: CoreLocation.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm
@@ -116,6 +122,9 @@ targets:
         # 本机能力「提醒」。同样的理由：第二句是产品选择，不是硬性要求。
         NSRemindersFullAccessUsageDescription: 让智能体按你的要求查看和创建提醒。为回答你的问题，相关提醒内容会随对话发送给你选择的模型服务商。
         NSPhotoLibraryAddUsageDescription: 把分享海报保存到相册。
+        # 本机能力「位置」。只要 when-in-use，不做任何后台或持续定位，所以第一句
+        # 就说清楚是「用到的时候问一次」，免得用户以为我们在跟着他。
+        NSLocationWhenInUseUsageDescription: 让智能体在你问「我在哪」「附近有什么」时读取一次当前位置。只在用到时读，不会持续记录。为回答你的问题，位置会随对话发送给你选择的模型服务商。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.
@@ -145,7 +154,7 @@ targets:
         # Design tokens (docs/design/README.md §3) live in Assets.xcassets; the accent is the ink colour.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-        HEADER_SEARCH_PATHS: ["$(SRCROOT)/../vendor/nodejs-mobile/ios/include/node", "$(SRCROOT)/../vendor/libgit2/ios-arm64/include", "$(SRCROOT)/../native/ios-native"]
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/../vendor/nodejs-mobile/ios/include/node", "$(SRCROOT)/../vendor/libgit2/ios-arm64/include", "$(SRCROOT)/../native/ios-native", "$(SRCROOT)/../native/root"]
         # Lets SwiftUI read the addon's capability table (DshNativeCapabilities.h).
         SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/DshIOS/DshIOS-Bridging-Header.h"
         GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DSH_GIT_LINKED=1", "DSH_IMAGE_LINKED=1", "DSH_IOS_NATIVE_LINKED=1"]

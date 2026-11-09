@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 import EventKit
 import UserNotifications
 
@@ -18,6 +19,8 @@ struct NativeCapabilitiesView: View {
     @State private var capabilities: [NativeCapability] = []
     /// 按 `systemPermission` 存，所以新增一项要授权的能力时这里不用再加分支。
     @State private var permissions: [String: CapabilityPermission] = [:]
+    /// iOS 管不到、由 App 自己把门的那几项，开没开。
+    @State private var appEnabled: [String: Bool] = [:]
     /// 每项能力的写入策略，按能力 id 存。
     @State private var policies: [String: DshWritePolicy] = [:]
     /// 正在等系统弹框答复的那一项，用来挡住重复点击。
@@ -35,9 +38,16 @@ struct NativeCapabilitiesView: View {
                 ForEach(capabilities) { capability in
                     CapabilityRow(
                         capability: capability,
-                        permission: capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded,
+                        permission: capability.appGated
+                            ? (appEnabled[capability.id] == true ? .allowed : .notDetermined)
+                            : (capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded),
                         policy: policies[capability.id] ?? .direct,
                         busy: requesting != nil && requesting == capability.systemPermission,
+                        enabled: capability.appGated ? (appEnabled[capability.id] ?? false) : nil,
+                        setEnabled: { on in
+                            DshNativeSetCapabilityEnabled(capability.id, on)
+                            appEnabled[capability.id] = on
+                        },
                         enable: { enable(capability) },
                         setPolicy: { policies[capability.id] = $0; DshNativeSetWritePolicy(capability.id, $0) },
                         openSettings: openSystemSettings
@@ -96,11 +106,20 @@ struct NativeCapabilitiesView: View {
         for capability in capabilities where capability.canWrite {
             policies[capability.id] = DshNativeWritePolicyFor(capability.id)
         }
+        for capability in capabilities where capability.appGated {
+            appEnabled[capability.id] = DshNativeCapabilityEnabled(capability.id)
+        }
         refreshPermissions()
     }
 
     /// 让用户亲自开一项。这是 App 里唯一一处会把系统授权框叫出来的调用。
     private func enable(_ capability: NativeCapability) {
+        // 没有系统授权可问的那几项，开关就在本机：按下就是开了。
+        if capability.appGated {
+            DshNativeSetCapabilityEnabled(capability.id, true)
+            appEnabled[capability.id] = true
+            return
+        }
         guard let permission = capability.systemPermission, requesting == nil else { return }
         requesting = permission
         // 回调按约定在主线程上，但那是 ObjC 头里的承诺，Swift 的并发检查看不见，
@@ -131,6 +150,11 @@ struct NativeCapabilitiesView: View {
         ] where needed.contains(permission) {
             permissions[permission] = .ofEventKit(EKEventStore.authorizationStatus(for: entity))
         }
+        if needed.contains(NativeCapability.locationPermission) {
+            // Synchronous, like EventKit: reading the status costs nothing and
+            // raises nothing. Only `requestWhenInUseAuthorization` shows a dialog.
+            permissions[NativeCapability.locationPermission] = .ofLocation(CLLocationManager().authorizationStatus)
+        }
         if needed.contains(NativeCapability.notificationPermission) {
             UNUserNotificationCenter.current().getNotificationSettings { settings in
                 Task { @MainActor in
@@ -154,6 +178,14 @@ enum CapabilityPermission {
         switch status {
         case .authorized, .provisional, .ephemeral: return .allowed
         case .denied: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofLocation(_ status: CLAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .authorizedAlways, .authorizedWhenInUse: return .allowed
+        case .denied, .restricted: return .denied
         default: return .notDetermined
         }
     }
@@ -197,6 +229,7 @@ enum CapabilityAction { case none, enable, settings }
 /// 一项本机能力，连同它的中文说明。
 struct NativeCapability: Identifiable {
     static let notificationPermission = "notifications"
+    static let locationPermission = "location"
     static let calendarPermission = "calendar"
     static let remindersPermission = "reminders"
 
@@ -206,6 +239,8 @@ struct NativeCapability: Identifiable {
     let systemPermission: String?
     /// 会改用户自己数据的那些操作。空的话这项只读，不需要写入开关。
     let writeOps: [String]
+    /// iOS 没有对应授权可问，由 App 自己把门——剪贴板就是这种。
+    let appGated: Bool
 
     var canWrite: Bool { !writeOps.isEmpty }
 
@@ -216,7 +251,8 @@ struct NativeCapability: Identifiable {
             id: entry["id"] as? String ?? "",
             ops: entry["ops"] as? [String] ?? [],
             systemPermission: entry["systemPermission"] as? String,
-            writeOps: entry["writeOps"] as? [String] ?? []
+            writeOps: entry["writeOps"] as? [String] ?? [],
+            appGated: entry["appGated"] as? Bool ?? false
         )
     }
 
@@ -236,6 +272,10 @@ struct NativeCapability: Identifiable {
         case "speak": return String(localized: "朗读")
         case "open": return String(localized: "打开链接")
         case "nlp": return String(localized: "文本分析")
+        case "maps": return String(localized: "地图")
+        case "vision": return String(localized: "图像识别")
+        case "clipboard": return String(localized: "剪贴板")
+        case "location": return String(localized: "位置")
         case "calendar": return String(localized: "日历")
         case "reminders": return String(localized: "提醒事项")
         default: return id
@@ -248,7 +288,11 @@ struct NativeCapability: Identifiable {
         case "notify": return String(localized: "按你的要求定时提醒你，App 关着也会响")
         case "speak": return String(localized: "把文字念出来")
         case "open": return String(localized: "用对应的 App 打开地图、邮件草稿、电话号码或网页")
-        case "nlp": return String(localized: "认语言、分词、情绪、认出人名地名。全在本机算，不出手机")
+        case "nlp": return String(localized: "认语言、认出人名地名、按意思给一堆文字排序。全在本机算，不出手机")
+        case "maps": return String(localized: "搜地点、算路线和到达时间。不读你的位置")
+        case "vision": return String(localized: "认出图里的文字、二维码和内容。全在本机算，图片不上传")
+        case "clipboard": return String(localized: "读你复制的内容。每次读取 iOS 都会提示你")
+        case "location": return String(localized: "问到的时候读一次当前位置。不持续记录，也没有轨迹")
         case "calendar": return String(localized: "查看你的日程，并按你设的写入方式增删改")
         case "reminders": return String(localized: "查看「提醒事项」里的待办，并按你设的写入方式增删改")
         default: return ops.joined(separator: " · ")
@@ -263,6 +307,10 @@ struct NativeCapability: Identifiable {
         case "speak": return "speaker.wave.2"
         case "open": return "arrow.up.forward.app"
         case "nlp": return "text.magnifyingglass"
+        case "maps": return "map"
+        case "vision": return "eye"
+        case "clipboard": return "doc.on.clipboard"
+        case "location": return "location"
         case "calendar": return "calendar"
         case "reminders": return "checklist"
         default: return "square.grid.2x2"
@@ -287,6 +335,9 @@ private struct CapabilityRow: View {
     let permission: CapabilityPermission
     let policy: DshWritePolicy
     let busy: Bool
+    /// nil unless this capability is gated by the app rather than by iOS.
+    let enabled: Bool?
+    let setEnabled: (Bool) -> Void
     let enable: () -> Void
     let setPolicy: (DshWritePolicy) -> Void
     let openSettings: () -> Void
@@ -346,6 +397,19 @@ private struct CapabilityRow: View {
 
     @ViewBuilder
     private var trailing: some View {
+        // iOS has nothing to ask about these, so the switch is ours and it has to
+        // turn off as easily as it turns on. A one-way "Turn On" button would
+        // leave the user no way back except deleting the app.
+        if let enabled {
+            Toggle("", isOn: Binding(get: { enabled }, set: setEnabled))
+                .labelsHidden()
+        } else {
+            systemTrailing
+        }
+    }
+
+    @ViewBuilder
+    private var systemTrailing: some View {
         switch permission.action {
         case .none:
             Text(permission.label)

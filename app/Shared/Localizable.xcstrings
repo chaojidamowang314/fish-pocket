@@ -3570,6 +3570,22 @@
         }
       }
     },
+    "位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        }
+      }
+    },
     "作者" : {
       "localizations" : {
         "en" : {
@@ -5778,6 +5794,22 @@
         }
       }
     },
+    "剪贴板" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clipboard"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portapapeles"
+          }
+        }
+      }
+    },
     "功能与计费说明" : {
       "localizations" : {
         "en" : {
@@ -7426,6 +7458,22 @@
         }
       }
     },
+    "图像识别" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image reading"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lectura de imágenes"
+          }
+        }
+      }
+    },
     "图片" : {
       "localizations" : {
         "en" : {
@@ -7774,6 +7822,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configura y administra los complementos aquí. Los complementos con módulos nativos no se pueden cargar en iOS."
+          }
+        }
+      }
+    },
+    "地图" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mapas"
           }
         }
       }
@@ -12680,6 +12744,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La dirección falló. Intentar otra vez."
+          }
+        }
+      }
+    },
+    "搜地点、算路线和到达时间。不读你的位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finds places and works out travel times. Does not read where you are"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encuentra lugares y calcula tiempos de viaje. No lee dónde estás"
           }
         }
       }
@@ -21326,7 +21406,24 @@
         }
       }
     },
+    "认出图里的文字、二维码和内容。全在本机算，图片不上传" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads the text, QR codes and contents of an image. On the device; the picture is never uploaded"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee el texto, los códigos QR y el contenido de una imagen. En el dispositivo; la foto nunca se sube"
+          }
+        }
+      }
+    },
     "认语言、分词、情绪、认出人名地名。全在本机算，不出手机" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -21338,6 +21435,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Identifica el idioma, divide el texto, puntúa el sentimiento y encuentra nombres y lugares. Todo en el dispositivo"
+          }
+        }
+      }
+    },
+    "认语言、认出人名地名、按意思给一堆文字排序。全在本机算，不出手机" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifies languages, finds names and places, and sorts text by meaning. On the device; nothing leaves the phone"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifica idiomas, encuentra nombres y lugares y ordena textos por significado. En el dispositivo; nada sale del teléfono"
           }
         }
       }
@@ -22298,6 +22411,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inicia sesión nuevamente para continuar."
+          }
+        }
+      }
+    },
+    "读你复制的内容。每次读取 iOS 都会提示你" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what you copied. iOS tells you every time it is read"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee lo que has copiado. iOS te avisa cada vez que se lee"
           }
         }
       }
@@ -24731,6 +24860,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mantén presionado para intervenir"
+          }
+        }
+      }
+    },
+    "问到的时候读一次当前位置。不持续记录，也没有轨迹" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your position once when asked. No continuous tracking and no history"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee tu posición una vez cuando se le pide. Sin seguimiento continuo ni historial"
           }
         }
       }

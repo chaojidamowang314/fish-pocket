@@ -16,6 +16,9 @@
 ///   `systemPermission`  — the iOS permission it needs, absent when it needs none
 ///   `writeOps`          — the subset of `ops` that changes the user's own data;
 ///                         absent when the capability only reads
+///   `appGated`          — true when the capability reaches the user's data but
+///                         iOS has no permission to ask for, so this app's own
+///                         switch is the only gate there can be
 ///
 /// The app supplies its own display names and wording for these ids; an id with
 /// no wording still appears, so a capability can never be added natively and go
@@ -44,6 +47,18 @@ typedef NS_ENUM(NSInteger, DshWritePolicy) {
   /// Refuse, with a sentence the agent can read out. Reads still work.
   DshWritePolicyBlocked = 2,
 };
+
+/// Whether an app-gated capability is switched on. Always NO until the user
+/// switches it on, like every capability iOS guards — the difference is only
+/// where the answer is kept, not what it means.
+///
+/// Asked by the dispatcher before a capability runs, so there is one check in
+/// one place rather than one per capability (§9.3). A capability with no
+/// `appGated` flag is not affected.
+BOOL DshNativeCapabilityEnabled(NSString *capability);
+
+/// Switch one on or off. The capability screen is the only caller.
+void DshNativeSetCapabilityEnabled(NSString *capability, BOOL enabled);
 
 /// This capability's write policy. Unset reads as `DshWritePolicyDirect`, so a
 /// capability added later is not accidentally born blocked.

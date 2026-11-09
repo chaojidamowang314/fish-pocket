@@ -43,6 +43,10 @@ typedef struct {
   /// policy applies to, and what the capability screen offers a switch for.
   /// Empty for a capability that only reads or only touches our own state.
   const char *writeOps[6];
+  /// True when the capability reaches the user's data but iOS has no permission
+  /// for it. Then this app's own switch is the only gate there can be, and the
+  /// dispatcher enforces it exactly where it enforces everything else.
+  bool appGated;
 } dsh_capability;
 
 // `calendar` is the first entry that reaches personal data, and the only one so
@@ -54,17 +58,33 @@ typedef struct {
 // app's own alert, it leaves nothing behind in the user's data, so it is not a
 // write in the sense this policy is about.
 static const dsh_capability CAPABILITIES[] = {
-  {"device",   dsh_native_device,   {"info", NULL}, NULL, {NULL}},
-  {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications", {NULL}},
-  {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL, {NULL}},
+  {"device",   dsh_native_device,   {"info", NULL}, NULL, {NULL}, false},
+  {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications", {NULL}, false},
+  {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL, {NULL}, false},
   {"calendar", dsh_native_calendar, {"list", "calendars", "create", "update", "delete", NULL}, "calendar",
-   {"create", "update", "delete", NULL}},
+   {"create", "update", "delete", NULL}, false},
   {"reminders", dsh_native_reminders, {"list", "create", "complete", "delete", NULL}, "reminders",
-   {"create", "complete", "delete", NULL}},
+   {"create", "complete", "delete", NULL}, false},
   // `open` leaves the app, so it reaches no user data of ours and needs no
   // permission — what it needs instead is a scheme allowlist, in caps_open.m.
-  {"open",     dsh_native_open,     {"url", NULL}, NULL, {NULL}},
-  {"nlp",      dsh_native_nlp,      {"language", "tokenize", "sentiment", "entities", NULL}, NULL, {NULL}},
+  {"open",     dsh_native_open,     {"url", NULL}, NULL, {NULL}, false},
+  {"nlp",      dsh_native_nlp,      {"language", "entities", "similar", NULL}, NULL, {NULL}, false},
+  // MapKit's search and directions are Apple's servers answering a query, not
+  // the user's position — no permission, and "near me" stays a `location` question.
+  {"maps",     dsh_native_maps,     {"search", "eta", "route", NULL}, NULL, {NULL}, false},
+  // Vision reads an image the caller already has — no camera, no photo library.
+  // Its one risky argument is the path, and that goes through the engine's own
+  // filesystem view, so it reaches nothing `fs` could not already open.
+  {"vision",   dsh_native_vision,   {"text", "barcodes", "classify", "faces", NULL}, NULL, {NULL}, false},
+  // iOS asks for no up-front grant to read the clipboard, but it raises a
+  // banner on every read, and what someone copied last is often the most
+  // sensitive thing on their phone. So it is gated like the rest: the user
+  // turns it on, and `set`/`clear` obey the write policy.
+  {"clipboard", dsh_native_clipboard, {"get", "set", "clear", NULL}, NULL, {"set", "clear", NULL}, true},
+  // One reading at a time, "when in use", no tracking. `geocode`/`reverse` are
+  // Apple's servers and cost the user nothing, but they live here because that
+  // is where a caller looks for them.
+  {"location", dsh_native_location,  {"current", "geocode", "reverse", NULL}, "location", {NULL}, false},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -102,6 +122,20 @@ static NSString *write_policy_key(NSString *capability) {
   return [@"dsh.native.write." stringByAppendingString:capability];
 }
 
+static NSString *enabled_key(NSString *capability) {
+  return [@"dsh.native.enabled." stringByAppendingString:capability];
+}
+
+BOOL DshNativeCapabilityEnabled(NSString *capability) {
+  if (capability.length == 0) return NO;
+  return [NSUserDefaults.standardUserDefaults boolForKey:enabled_key(capability)];
+}
+
+void DshNativeSetCapabilityEnabled(NSString *capability, BOOL enabled) {
+  if (capability.length == 0) return;
+  [NSUserDefaults.standardUserDefaults setBool:enabled forKey:enabled_key(capability)];
+}
+
 DshWritePolicy DshNativeWritePolicyFor(NSString *capability) {
   if (capability.length == 0) return DshWritePolicyDirect;
   NSInteger stored = [NSUserDefaults.standardUserDefaults integerForKey:write_policy_key(capability)];
@@ -129,6 +163,7 @@ NSArray<NSDictionary<NSString *, id> *> *DshNativeCapabilityList(void) {
       @"id": @(CAPABILITIES[i].capability),
       @"ops": capability_ops(&CAPABILITIES[i]),
       @"writeOps": capability_write_ops(&CAPABILITIES[i]),
+      @"appGated": @(CAPABILITIES[i].appGated),
     } mutableCopy];
     if (CAPABILITIES[i].systemPermission != NULL) {
       entry[@"systemPermission"] = @(CAPABILITIES[i].systemPermission);
@@ -166,6 +201,8 @@ void DshNativeRequestPermission(NSString *permission, void (^done)(BOOL granted,
     DshEventKitGrantAccess(EKEntityTypeReminder, nil, reply);
   } else if ([permission isEqualToString:@"notifications"]) {
     DshNotifyGrantAccess(reply);
+  } else if ([permission isEqualToString:@"location"]) {
+    DshLocationGrantAccess(reply);
   } else {
     // In the table, but nothing here knows how to ask for it: a capability was
     // added with a new `systemPermission` and this function was not extended.
@@ -353,11 +390,23 @@ static napi_value invoke(napi_env env, napi_callback_info info) {
   // reason the permission check is: this is the only path, so nothing can be
   // added later that quietly skips it.
   //
-  // Only the capabilities iOS itself guards are recorded, and only when they
-  // succeeded. That is what the list is for — "what reached my data" — and
+  // An app-gated capability is refused here rather than inside itself, for the
+  // same reason the operation whitelist lives here: one check on the one path
+  // every caller takes, including a plugin holding the binding directly.
+  if (cap->appGated && !DshNativeCapabilityEnabled(capabilityName)) {
+    finish(call, nil,
+           [NSString stringWithFormat:
+            @"the user has not switched '%@' on for this app yet. Nothing was read or changed. Tell "
+             "them they can turn it on themselves under Device capabilities, which is in the app's "
+             "sidebar — only they can do it.", capabilityName]);
+    return promise;
+  }
+
+  // Only the capabilities iOS itself guards, or that this app gates itself, are
+  // recorded, and only when they succeeded. That is what the list is for — "what reached my data" — and
   // recording `device.info` or every `speak.say` would push the one calendar
   // read the user is looking for out of the ring.
-  BOOL audited = cap->systemPermission != NULL;
+  BOOL audited = cap->systemPermission != NULL || cap->appGated;
   NSString *auditedCapability = capabilityName;
   cap->handler(op, args, ^(NSDictionary *result, NSString *error) {
     NSDictionary *payload = result;

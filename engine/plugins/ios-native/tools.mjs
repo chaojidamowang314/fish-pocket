@@ -390,23 +390,34 @@ const openUrl = defineTool({
 const nlp = defineTool({
   name: 'text_analysis',
   description:
-    'Analyse text on the device with Apple\'s NaturalLanguage framework: identify its language, '
-    + 'split it into words or sentences, score its sentiment, or pull out people, places and '
-    + 'organisations. Nothing leaves the phone and it costs no tokens, so prefer it over doing the '
-    + 'same work yourself when there is a lot of text — classifying a thousand files is a loop '
-    + 'here and a thousand requests otherwise.',
+    'On-device text work that is cheaper or more private than doing it yourself, using Apple\'s '
+    + 'NaturalLanguage framework. Nothing leaves the phone and it costs no tokens.\n'
+    + '`similar` ranks a list of strings by how close their MEANING is to a query, which you cannot '
+    + 'do yourself — it needs embedding vectors. Use it to narrow hundreds of file names, note '
+    + 'titles or subjects down to the few worth opening.\n'
+    + 'It gives you an ORDER, not a relevance score, and the order is only roughly right: treat the '
+    + 'top handful as candidates to check, never as the answer, and do not conclude that a low '
+    + 'number means "not relevant" — a correct best match often scores near zero.\n'
+    + '`language` and `entities` are for bulk only. On text you can already see, your own reading '
+    + 'is better than theirs — only call them when the text is not in front of you and there is a '
+    + 'lot of it.',
   parameters: {
     action: {
       type: 'string',
-      enum: ['language', 'tokenize', 'sentiment', 'entities'],
-      description: 'which analysis to run',
+      enum: ['similar', 'language', 'entities'],
+      description: 'rank candidates by meaning, identify the language, or pull out names and places',
       required: true,
     },
-    text: { type: 'string', description: 'the text to analyse', required: true },
-    unit: {
+    text: { type: 'string', description: 'the query for `similar`; the text to analyse otherwise', required: true },
+    candidates: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'similar: the strings to rank against `text`',
+    },
+    limit: { type: 'number', description: 'similar: how many matches to return; defaults to 10' },
+    language: {
       type: 'string',
-      enum: ['word', 'sentence', 'paragraph'],
-      description: 'tokenize: what counts as one token; defaults to word',
+      description: 'similar: BCP-47 code of the query, when guessing it from a short query would be unreliable',
     },
   },
   output: {
@@ -419,28 +430,266 @@ const nlp = defineTool({
           .join(', ');
         return text(`Language: ${value.language}${ranked ? ` (${ranked})` : ''}`);
       }
-      if (args.action === 'sentiment') {
-        // The number, not a verdict: -1 … 1, and where the line falls is the
-        // caller's judgement. Saying "negative" here would make that call for them.
-        return text(`Sentiment score ${value.score.toFixed(2)} (-1 negative … 1 positive).`);
-      }
       if (args.action === 'entities') {
         if (!value.entities?.length) return text('No people, places or organisations found.');
         const lines = value.entities.map((row) => `${row.type.replace(/Name$/, '')}  ${row.text}`);
         if (value.truncated) lines.push(`… showing the first ${value.entities.length} of ${value.total}`);
         return text(lines.join('\n'));
       }
-      const unit = args.unit ?? 'word';
-      if (!value.tokens?.length) return text(`No ${unit}s found.`);
-      const lines = [`${value.total} ${unit}${value.total === 1 ? '' : 's'}`, value.tokens.join(' | ')];
-      if (value.truncated) lines.push(`… showing the first ${value.tokens.length}`);
+      if (!value.matches?.length) return text('Nothing to rank.');
+      // The cosine value is deliberately NOT printed. It is not a relevance
+      // score — a correct best match measured 0.10 on device while an identical
+      // string measured 1.00 — and a reader shown "0.10" discards a right
+      // answer. The rank is the finding; the number stays in the JSON.
+      // The index is printed because the caller usually holds a parallel array,
+      // the file paths it took these names from, and has to map back to it.
+      const lines = value.matches.map((row) => `${row.rank}. [${row.index}]  ${row.text}`);
+      lines.unshift(`Closest in meaning, of ${value.compared} compared (an order, not a score):`);
       return text(lines.join('\n'));
     },
   },
-  execute: async (args) => invoke('nlp', args.action, {
-    text: args.text,
-    ...(args.unit === undefined ? {} : { unit: args.unit }),
+  execute: async (args) => {
+    if (args.action === 'similar' && !args.candidates?.length) {
+      throw new Error('text_analysis: `similar` needs `candidates` to rank');
+    }
+    return invoke('nlp', args.action, {
+      text: args.text,
+      ...(args.candidates === undefined ? {} : { candidates: args.candidates }),
+      ...(args.limit === undefined ? {} : { limit: args.limit }),
+      ...(args.language === undefined ? {} : { language: args.language }),
+    });
+  },
+});
+
+/** Seconds as something a person says out loud: "1 h 25 min", "8 min". */
+const duration = (seconds) => {
+  const total = Math.round(seconds / 60);
+  if (total < 60) return `${total} min`;
+  return `${Math.floor(total / 60)} h ${total % 60} min`;
+};
+
+/** Metres, in the unit the distance deserves. */
+const distance = (meters) =>
+  (meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`);
+
+const maps = defineTool({
+  name: 'maps',
+  description:
+    'Find places, and work out how long it takes to get between two of them. Apple Maps answers '
+    + 'these, so it needs no permission and never reads where the user is — "near me" needs their '
+    + 'location first, which is a separate capability they have to switch on.\n'
+    + '`search` finds places by name or kind, optionally around a coordinate. `eta` gives the '
+    + 'travel time and distance between two places. `route` adds the turn-by-turn steps.',
+  parameters: {
+    action: { type: 'string', enum: ['search', 'eta', 'route'], description: 'which one', required: true },
+    query: { type: 'string', description: 'search: what to look for, e.g. "pharmacy" or a place name' },
+    nearLatitude: { type: 'number', description: 'search: centre the search here' },
+    nearLongitude: { type: 'number', description: 'search: centre the search here' },
+    radiusMeters: { type: 'number', description: 'search: how far around the centre to look; defaults to 10 km' },
+    fromQuery: { type: 'string', description: 'eta/route: where to start, by name' },
+    fromLatitude: { type: 'number', description: 'eta/route: where to start; skips a lookup' },
+    fromLongitude: { type: 'number', description: 'eta/route: where to start; skips a lookup' },
+    toQuery: { type: 'string', description: 'eta/route: where to end, by name' },
+    toLatitude: { type: 'number', description: 'eta/route: where to end; skips a lookup' },
+    toLongitude: { type: 'number', description: 'eta/route: where to end; skips a lookup' },
+    mode: {
+      type: 'string',
+      enum: ['driving', 'walking', 'transit'],
+      description: 'eta/route: how they are travelling; defaults to driving',
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'search') {
+        if (!value.places?.length) return text('No places found for that.');
+        const lines = value.places.map((place) => {
+          const where = place.address ? `  ${place.address}` : '';
+          return `${place.name}${where}`;
+        });
+        if (value.truncated) lines.push(`… showing the first ${value.places.length} of ${value.total}`);
+        return text(lines.join('\n'));
+      }
+      const head = `${value.from} → ${value.to}: ${duration(value.seconds)}, ${distance(value.meters)} by ${value.mode}`;
+      if (args.action === 'eta') return text(head);
+      const steps = (value.steps ?? []).map((step) => `  ${step.instruction} (${distance(step.meters)})`);
+      return text([head, ...(value.name ? [`via ${value.name}`] : []), ...steps].join('\n'));
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'search') {
+      if (!args.query) throw new Error('maps: `search` needs `query`');
+      return invoke('maps', 'search', {
+        query: args.query,
+        ...(args.nearLatitude === undefined ? {} : { nearLatitude: args.nearLatitude }),
+        ...(args.nearLongitude === undefined ? {} : { nearLongitude: args.nearLongitude }),
+        ...(args.radiusMeters === undefined ? {} : { radiusMeters: args.radiusMeters }),
+      });
+    }
+    const ends = {};
+    for (const key of ['fromQuery', 'fromLatitude', 'fromLongitude', 'toQuery', 'toLatitude', 'toLongitude']) {
+      if (args[key] !== undefined) ends[key] = args[key];
+    }
+    if (!ends.fromQuery && ends.fromLatitude === undefined) {
+      throw new Error(`maps: \`${args.action}\` needs \`fromQuery\`, or \`fromLatitude\` and \`fromLongitude\``);
+    }
+    if (!ends.toQuery && ends.toLatitude === undefined) {
+      throw new Error(`maps: \`${args.action}\` needs \`toQuery\`, or \`toLatitude\` and \`toLongitude\``);
+    }
+    return invoke('maps', args.action, { ...ends, ...(args.mode === undefined ? {} : { mode: args.mode }) });
+  },
+});
+
+const vision = defineTool({
+  name: 'read_image',
+  description:
+    'Read what is in an image file on this device: the text in it, barcodes and QR codes, what it '
+    + 'is a picture of, or how many faces are in it. Runs on the phone — the image is never '
+    + 'uploaded and it costs no tokens, so prefer it over attaching a picture when you only need '
+    + 'the text out of it. Faces are counted and located, never identified.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['text', 'barcodes', 'classify', 'faces'],
+      description: 'read the text, find barcodes, say what it is a picture of, or count faces',
+      required: true,
+    },
+    path: { type: 'string', description: 'path to the image file', required: true },
+    level: {
+      type: 'string',
+      enum: ['accurate', 'fast'],
+      description: 'text: accuracy over speed; defaults to accurate',
+    },
+    languages: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'text: BCP-47 codes to recognise; defaults to Chinese and English',
+    },
+    minimumConfidence: { type: 'number', description: 'classify: drop labels below this; defaults to 0.1' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'text') {
+        if (!value.text) return text('No text found in that image.');
+        const note = value.truncated ? `\n… showing the first ${value.lines.length} of ${value.total} lines` : '';
+        return text(value.text + note);
+      }
+      if (args.action === 'barcodes') {
+        if (!value.codes?.length) return text('No barcodes or QR codes found.');
+        return text(value.codes.map((code) => `${code.symbology}  ${code.payload}`).join('\n'));
+      }
+      if (args.action === 'faces') {
+        return text(value.count === 0 ? 'No faces found.'
+                                      : `${value.count} face${value.count === 1 ? '' : 's'} found.`);
+      }
+      if (!value.labels?.length) return text('Nothing recognisable in that image.');
+      return text(value.labels
+        .map((row) => `${(row.confidence * 100).toFixed(0)}%  ${row.label}`)
+        .join('\n'));
+    },
+  },
+  execute: async (args) => invoke('vision', args.action, {
+    path: args.path,
+    ...(args.level === undefined ? {} : { level: args.level }),
+    ...(args.languages === undefined ? {} : { languages: args.languages }),
+    ...(args.minimumConfidence === undefined ? {} : { minimumConfidence: args.minimumConfidence }),
   }),
+});
+
+const clipboard = defineTool({
+  name: 'clipboard',
+  description:
+    'Read, replace or empty what the user last copied. Reading raises a banner naming this app '
+    + 'every time — that is iOS telling them, and it is why this is worth asking for only when they '
+    + 'actually meant the clipboard ("what did I just copy", "paste that into the file"). What '
+    + 'someone copied last is often the most sensitive thing on their phone, so do not read it to '
+    + 'see whether it might be useful.',
+  parameters: {
+    action: { type: 'string', enum: ['get', 'set', 'clear'], description: 'read it, replace it, or empty it', required: true },
+    text: { type: 'string', description: 'set: what to put there' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'get') {
+        if (value.text === null || value.text === undefined) {
+          const kinds = value.kinds?.length ? ` It holds: ${value.kinds.join(', ')}.` : '';
+          return text(`The clipboard holds no text.${kinds}`);
+        }
+        return text(value.truncated
+          ? `${value.text}\n… ${value.characters} characters shown; it is longer`
+          : value.text);
+      }
+      if (args.action === 'clear') {
+        return text(value.cleared ? 'Clipboard emptied.' : 'They declined; the clipboard is unchanged.');
+      }
+      return text(value.saved
+        ? `Copied ${value.characters} characters to the clipboard.`
+        : 'They declined; the clipboard is unchanged.');
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'set' && args.text === undefined) {
+      throw new Error('clipboard: `set` needs `text`');
+    }
+    return invoke('clipboard', args.action, args.action === 'set' ? { text: args.text } : {});
+  },
+});
+
+const location = defineTool({
+  name: 'location',
+  description:
+    'Where the phone is right now, and turning addresses into coordinates and back. One reading at '
+    + 'a time, only while the app is open — there is no tracking and no history. `geocode` and '
+    + '`reverse` are Apple\'s servers and cost the user no privacy at all, so prefer them when the '
+    + 'question is about a place rather than about where the user is. Feed the coordinates to '
+    + '`maps` for "what is near me".',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['current', 'geocode', 'reverse'],
+      description: 'read the current position, an address → a point, or a point → an address',
+      required: true,
+    },
+    address: { type: 'string', description: 'geocode: the address or place name' },
+    latitude: { type: 'number', description: 'reverse: the point' },
+    longitude: { type: 'number', description: 'reverse: the point' },
+    accuracy: {
+      type: 'string',
+      enum: ['coarse', 'precise'],
+      description: 'current: precise costs battery and takes longer; defaults to coarse, which answers "which city"',
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'current') {
+        return text(`${value.latitude.toFixed(5)}, ${value.longitude.toFixed(5)}`
+          + ` (±${Math.round(value.accuracyMeters)} m)`);
+      }
+      if (args.action === 'geocode') {
+        const where = [value.name, value.locality, value.country].filter(Boolean).join(', ');
+        return text(`${where}: ${value.latitude.toFixed(5)}, ${value.longitude.toFixed(5)}`);
+      }
+      const parts = [value.name, value.thoroughfare, value.locality, value.administrativeArea,
+                     value.postalCode, value.country].filter(Boolean);
+      return text(parts.length ? parts.join(', ') : 'Nothing is known about that point.');
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'geocode' && !args.address) {
+      throw new Error('location: `geocode` needs `address`');
+    }
+    if (args.action === 'reverse' && (args.latitude === undefined || args.longitude === undefined)) {
+      throw new Error('location: `reverse` needs `latitude` and `longitude`');
+    }
+    if (args.action === 'geocode') return invoke('location', 'geocode', { address: args.address });
+    if (args.action === 'reverse') {
+      return invoke('location', 'reverse', { latitude: args.latitude, longitude: args.longitude });
+    }
+    return invoke('location', 'current', args.accuracy === undefined ? {} : { accuracy: args.accuracy });
+  },
 });
 
 /** Tool definitions by the capability each one needs. */
@@ -452,4 +701,8 @@ export const TOOLS = {
   reminders: reminders,
   open: openUrl,
   nlp: nlp,
+  maps: maps,
+  vision: vision,
+  clipboard: clipboard,
+  location: location,
 };

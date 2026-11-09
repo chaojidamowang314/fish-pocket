@@ -58,6 +58,8 @@
 	<string>让智能体按你的要求查看和安排日程。为回答你的问题，相关日程内容会随对话发送给你选择的模型服务商。</string>
 	<key>NSCameraUsageDescription</key>
 	<string>拍照后作为附件发给智能体。</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>让智能体在你问「我在哪」「附近有什么」时读取一次当前位置。只在用到时读，不会持续记录。为回答你的问题，位置会随对话发送给你选择的模型服务商。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>把分享海报保存到相册。</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
