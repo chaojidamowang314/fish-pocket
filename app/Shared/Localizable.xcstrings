@@ -11144,6 +11144,22 @@
         }
       }
     },
+    "打开 Fish Pocket，开始一个新对话。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Fish Pocket and start a new conversation."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre Fish Pocket y empieza una conversación nueva."
+          }
+        }
+      }
+    },
     "打开「发现」时，App 会访问这里列出的地址。左滑可移除。" : {
       "localizations" : {
         "en" : {
@@ -12644,6 +12660,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Descartar los cambios?"
+          }
+        }
+      }
+    },
+    "放进输入框，不会自动发送。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placed in the message box, not sent."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se coloca en el cuadro de mensaje, no se envía."
           }
         }
       }
@@ -20018,6 +20050,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecciona al menos un modelo para guardar."
+          }
+        }
+      }
+    },
+    "草稿" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrador"
           }
         }
       }

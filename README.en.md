@@ -39,7 +39,7 @@ https://github.com/user-attachments/assets/618e690f-3873-4f08-811d-3213b3b9a056
 - **Built-in Git.** Statically linked libgit2, no child processes. `clone`, `commit`, `branch`, `merge`, `stash`, `pull`, `push` and the rest of everyday git work, with output that matches real git so the agent reads it as usual. Private repositories authenticate over HTTPS with a token.
 - **The DSH plugin ecosystem.** Install pure JavaScript plugins from npm and enable them on the phone.
 - **A workbench.** Terminal, file preview, built-in browser and change review in one panel.
-- **Made for iOS.** Dynamic Island and Lock Screen Live Activities, Home Screen and Lock Screen widgets, and tasks that continue in the background.
+- **Made for iOS.** Dynamic Island and Lock Screen Live Activities, Home Screen and Lock Screen widgets, a Control Center button, Siri and Shortcuts, and tasks that continue in the background.
 - **Made for iPad too.** A persistent sidebar, a side workbench, multiple windows, file drag and drop, and keyboard shortcuts.
 - **More private.** Sessions and workspaces stay on your device.
 
