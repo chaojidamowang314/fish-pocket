@@ -1,11 +1,11 @@
 import SwiftUI
 
 /// The last section of 设置, shown only while the app is in Chinese: the QR code of the
-/// Fish Pocket WeChat group. A group's code expires after 7 days, so it is not bundled: it is
-/// `docs/assets/wechat-group.png` in the repository, the same file the README shows, loaded from
-/// GitHub and, where GitHub's raw host is unreachable, from jsDelivr. The row loads it only once
-/// it scrolls into view. A code on this very screen cannot be scanned, so it saves to the album
-/// for WeChat's 「扫一扫」 to pick from there.
+/// Fish Pocket WeChat group. A group's code expires after 7 days, so it is not bundled. It loads
+/// from the website first, `wechat-group.png` beside its page, since GitHub is out of reach in
+/// some regions; then from the repository's `docs/assets/wechat-group.png`, the file the README
+/// shows. The row loads it only once it scrolls into view. A code on this very screen cannot be
+/// scanned, so it saves to the album for WeChat's 「扫一扫」 to pick from there.
 struct WeChatGroupSection: View {
     private enum Phase { case loading, loaded(UIImage), failed }
 
@@ -13,10 +13,12 @@ struct WeChatGroupSection: View {
     @State private var phase = Phase.loading
     @State private var saving = false
 
-    static let sources = [
-        "https://raw.githubusercontent.com/\(UpdateChecker.repository)/main/docs/assets/wechat-group.png",
-        "https://cdn.jsdelivr.net/gh/\(UpdateChecker.repository)@main/docs/assets/wechat-group.png",
-    ].compactMap { URL(string: $0) }
+    /// The website lives on VibeVibi, which serves each published version from a directory of its
+    /// own; the work's public record names the live one.
+    private static let siteWork = URL(string: "https://vibevibi.com/api/works/fish-pocket")!
+    private static let github = URL(string: "https://raw.githubusercontent.com/\(UpdateChecker.repository)/main/docs/assets/wechat-group.png")!
+
+    private struct Work: Decodable { let contentUrl: String }
 
     var body: some View {
         Section {
@@ -76,18 +78,32 @@ struct WeChatGroupSection: View {
         }
     }
 
-    /// Once per visit to 设置: the image is small, and the URL cache keeps GitHub's few minutes.
+    /// Once per visit to 设置. The website's files never change under one version directory, and
+    /// GitHub's are cached for a few minutes, so the URL cache does the rest.
     private func load() async {
         if case .loaded = phase { return }
         phase = .loading
-        for url in Self.sources {
-            let request = URLRequest(url: url, timeoutInterval: 10)
-            guard let (data, response) = try? await URLSession.shared.data(for: request),
-                  (response as? HTTPURLResponse)?.statusCode == 200,
-                  let image = UIImage(data: data) else { continue }
-            phase = .loaded(image)
-            return
+        var sources: [URL] = []
+        if let data = await Self.get(Self.siteWork, fresh: true),
+           let work = try? JSONDecoder().decode(Work.self, from: data),
+           let url = URL(string: "wechat-group.png", relativeTo: URL(string: work.contentUrl)) {
+            sources.append(url.absoluteURL)
+        }
+        sources.append(Self.github)
+        for url in sources {
+            if let data = await Self.get(url), let image = UIImage(data: data) {
+                phase = .loaded(image)
+                return
+            }
         }
         phase = .failed
+    }
+
+    /// `fresh` skips the URL cache: the work's record names a new directory after each publish.
+    private static func get(_ url: URL, fresh: Bool = false) async -> Data? {
+        let request = URLRequest(url: url, cachePolicy: fresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy, timeoutInterval: 10)
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return data
     }
 }
