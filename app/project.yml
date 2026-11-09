@@ -42,10 +42,17 @@ targets:
       - path: ../native/image
       # The engine's filesystem view, for the Node entry points libc cannot reach: linked binding `dsh_root`.
       - path: ../native/root/binding.c
+      # Python for the engine: embedded CPython, one subinterpreter per process: linked binding `dsh_python`.
+      - path: ../native/python
+        # CPython's framework headers include each other with quotes.
+        compilerFlags: [-Wno-quoted-include-in-framework-header]
     dependencies:
       # First: the app's own libc calls (libgit2) bind to it by link order, as Node's do by its load command.
       - target: DshRoot
       - framework: ../vendor/nodejs-mobile/rooted/NodeMobile.xcframework
+        embed: true
+      # python.org's iOS CPython, pointed at DshRoot (scripts/fetch-python.sh).
+      - framework: ../vendor/python/rooted/Python.xcframework
         embed: true
       # Static libgit2 (scripts/build-libgit2.sh); HTTPS through Security.framework.
       - framework: ../vendor/libgit2/Libgit2.xcframework
@@ -57,6 +64,18 @@ targets:
       - sdk: libiconv.tbd
       - package: SwiftTerm
       - target: DshLiveActivity
+    postBuildScripts:
+      # CPython's standard library into the bundle (python/lib), and each extension
+      # module turned into a framework under Frameworks, as App Store binaries must be:
+      # the steps CPython documents for iOS apps (Python.xcframework/build/utils.sh).
+      - name: Install Python standard library
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          source "$PROJECT_DIR/../vendor/python/rooted/Python.xcframework/build/utils.sh"
+          # Unsigned builds (CI) still need a valid identity for codesign: ad hoc.
+          export EXPANDED_CODE_SIGN_IDENTITY="${EXPANDED_CODE_SIGN_IDENTITY:--}"
+          install_python ../vendor/python/rooted/Python.xcframework
     info:
       path: DshIOS/Info.plist
       properties:

@@ -30,6 +30,12 @@ rm -rf "$nm"/@deepseek-ai/libreoffice-kit-* "$nm"/sherpa-onnx-* "$nm"/@img/sharp
        "$nm"/@vscode/ripgrep/bin "$nm"/koffi/build
 # Optional for just-bash and useless without its native half; tar -J reports xz as unavailable either way.
 rm -rf "$nm"/node-liblzma
+# just-bash's own Python (CPython compiled to WebAssembly) runs only with its
+# `python` option, which runtime/shell.mjs leaves off: the app embeds CPython
+# (runtime/python). Fail rather than ship it if a just-bash update moves it.
+jb_python="$nm/just-bash/vendor/cpython-emscripten"
+[ -d "$jb_python" ] || { echo "build-engine: just-bash no longer has $jb_python; update the prune" >&2; exit 1; }
+rm -rf "$jb_python"
 # Development-only payload. Licence texts stay: their terms require shipping them.
 find "$nm" -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' -o -name '*.md' -o -name '*.markdown' \) \
   ! -iname 'licen[cs]e*' ! -iname 'notice*' ! -iname 'copying*' -delete

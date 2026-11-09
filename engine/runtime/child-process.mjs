@@ -1,8 +1,9 @@
 // node:child_process for a platform without processes. iOS forbids fork/exec,
 // so the async APIs (spawn, execFile, exec, fork) are re-implemented on the
 // in-process execution world: JavaScript programs (node, pnpm, npx, `#!…node`
-// scripts, .bin shims — see direct.mjs) run as worker threads, everything
-// else through just-bash. The
+// scripts, .bin shims — see direct.mjs) run as worker threads, Python
+// programs as embedded interpreters (python/index.mjs), everything else
+// through just-bash. The
 // returned objects are ChildProcess instances with the usual streams and
 // events, so execa, cross-spawn and plugins' own spawns keep working. The
 // *Sync variants run the same emulation on a helper thread (sync-helper.mjs)
@@ -18,19 +19,22 @@ import { syncBuiltinESMExports } from 'node:module';
 import { parseNodeArgv, startNodeWorker } from './node-worker.mjs';
 import { planDirect } from './direct.mjs';
 import { COMMANDS, planArgv, shell, stringEnv } from './shell.mjs';
+import { drained, planPython, startPython } from './python/index.mjs';
 
 let nextPid = 10000;
 // When a caller keeps stdin open without ending it, run a non-JS command with
 // what arrived so far after this much quiet (most commands never read stdin).
 const STDIN_SETTLE_MS = 100;
 
-/** How a spawn will be served: a Node worker, the shell, or not at all. */
+/** How a spawn will be served: a Node worker, Python, the shell, or not at all. */
 function route(file, args, options, env) {
   // Node itself under the app's executable name (process.execPath is the app on iOS).
   if (file === process.execPath) return { kind: 'node', ...parseNodeArgv(args, options.cwd) };
   // A command that is just "run this Node program" streams from a worker (direct.mjs).
   const direct = planDirect(options.shell ? ['sh', '-c', [file, ...args].join(' ')] : [file, ...args], { cwd: options.cwd, env });
   if (direct) return { kind: 'node', ...direct };
+  const python = planPython(options.shell ? ['sh', '-c', [file, ...args].join(' ')] : [file, ...args], { cwd: options.cwd, env });
+  if (python) return { kind: 'python', python };
   if (options.shell) return { kind: 'shell', plan: { script: [file, ...args].join(' ') } };
   if (COMMANDS.has(path.basename(file))) return { kind: 'shell', plan: planArgv([file, ...args], (f) => fs.readFileSync(path.resolve(options.cwd, f), 'utf8')) };
   return { kind: 'missing' };
@@ -149,6 +153,7 @@ function spawn(file, args, options) {
     }
     child.emit('spawn');
     if (plan.kind === 'node') runNode(plan);
+    else if (plan.kind === 'python') runPython(plan.python);
     else runShell(plan.plan);
   });
 
@@ -171,6 +176,26 @@ function spawn(file, args, options) {
     let killedWith = null;
     stop = (signal) => { killedWith = signal; worker.worker.terminate(); };
     worker.exited.then((code) => finish(killedWith ? null : code, killedWith));
+  }
+
+  function runPython(planned) {
+    let python;
+    try {
+      python = startPython({ ...planned, cwd: options.cwd });
+    } catch (error) {
+      sink(2)?.write(`${error?.message ?? error}\n`);
+      return finish(127, null);
+    }
+    if (child.stdin) child.stdin.pipe(python.stdin); else python.stdin.end();
+    for (const [source, target] of [[python.stdout, sink(1)], [python.stderr, sink(2)]]) {
+      if (target) source.pipe(target, { end: false }); else source.resume();
+    }
+    if (options.signal) options.signal.addEventListener('abort', () => child.kill(), { once: true });
+    stop = (signal) => python.kill(signal);
+    python.exited.then(async ({ code, signal }) => {
+      await Promise.race([drained(python), new Promise((resolve) => setTimeout(resolve, 100))]);
+      finish(code, signal);
+    });
   }
 
   async function runShell({ script, args: shellArgs, scriptFromStdin }) {

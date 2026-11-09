@@ -11,9 +11,12 @@
 | [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`@deepseek-ai/dsh` 及其插件包） | 0.2.2-rc.1 | MIT | Copyright (c) 2026 DeepSeek | 引擎 |
 | [nodejs-mobile](https://github.com/digidem/nodejs-mobile)（digidem 分支，上游为 [nodejs-mobile/nodejs-mobile](https://github.com/nodejs-mobile/nodejs-mobile)） | 24.20.0-0 | Node.js 许可证（MIT 及其捆绑组件的各自许可证） | Node.js 贡献者等 | 内嵌 Node 运行时，以预编译的 `NodeMobile.xcframework` 下载 |
 | [just-bash](https://github.com/vercel-labs/just-bash) | 3.6.0 | Apache-2.0 | Copyright 2025 Vercel Inc. | bash 解释器和内置命令 |
+| [CPython](https://github.com/python/cpython)（python.org 的 iOS 构建） | 3.15.2 | PSF 许可证第 2 版（及其捆绑组件的各自许可证） | Copyright (c) 2001 Python Software Foundation 等 | 内嵌 Python 运行时，以预编译的 `Python.xcframework` 下载，含标准库和 `ensurepip` 自带的 pip |
 | [libgit2](https://github.com/libgit2/libgit2) | 1.9.7 | GPLv2 + 链接例外 | libgit2 贡献者 | git 能力，未修改源码，静态链接 |
 | [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) | 1.10.0 | MIT | Copyright (c) 2019-2022 Miguel de Icaza 等 | 终端界面 |
 | [pnpm](https://github.com/pnpm/pnpm) | 11.28.5 | MIT | Rico Sta. Cruz、Zoltan Kochan 及贡献者 | 插件安装 |
+
+CPython 的完整许可证及其捆绑组件（OpenSSL、SQLite、libffi、zlib、bzip2、xz、zstd、expat、mpdecimal 等）的许可证见 [Python 文档的许可证页](https://docs.python.org/3.15/license.html)；标准库里的 `LICENSE.txt` 随 App 一起分发。
 
 libgit2 的完整许可证见其仓库的 [COPYING](https://github.com/libgit2/libgit2/blob/main/COPYING)。其中的链接例外允许把未修改的库链接进其他程序并分发，只有修改库本身时才受 GPLv2 约束。
 

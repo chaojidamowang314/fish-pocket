@@ -20,6 +20,11 @@
 // keep seeing real paths. Out of reach: code inside libc++'s std::filesystem
 // (see engine/runtime/real-paths.mjs for what that leaves to JavaScript).
 //
+// Emulated processes that run on threads of their own (Python, see
+// native/python) each have a working directory: dsh_root_enter() gives the
+// calling thread one, the threads it starts share it, and relative paths,
+// chdir() and getcwd() on those threads use it instead of the process's.
+//
 // native/root/imports.txt lists what NodeMobile imports; a new import fails
 // scripts/check-root-imports.sh, which is how a path function added by a Node
 // upgrade gets noticed.
@@ -30,6 +35,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -73,9 +79,38 @@ static const char *inside(const Place *place, const char *path) {
   return rest;
 }
 
-/** `path` in the real tree: `buffer` when it changes, NULL with errno when it does not fit. */
-static const char *toReal(const char *path, char *buffer) {
-  if (path == NULL || path[0] != '/' || !installed) return path;
+/** A working directory shared by the threads of one emulated process: an engine path. */
+typedef struct {
+  pthread_mutex_t lock;
+  int references;
+  char path[PATH_MAX];
+} Directory;
+
+static __thread Directory *currentDirectory;
+static pthread_key_t directoryKey;
+static pthread_once_t directoryOnce = PTHREAD_ONCE_INIT;
+
+static void retainDirectory(Directory *directory) { __atomic_fetch_add(&directory->references, 1, __ATOMIC_RELAXED); }
+
+static void releaseDirectory(void *value) {
+  Directory *directory = value;
+  if (directory == NULL || __atomic_sub_fetch(&directory->references, 1, __ATOMIC_ACQ_REL) != 0) return;
+  pthread_mutex_destroy(&directory->lock);
+  free(directory);
+}
+
+static void makeDirectoryKey(void) { pthread_key_create(&directoryKey, releaseDirectory); }
+
+/** Make `directory` the calling thread's, holding one reference that thread exit releases. */
+static void adoptDirectory(Directory *directory) {
+  pthread_once(&directoryOnce, makeDirectoryKey);
+  currentDirectory = directory;
+  pthread_setspecific(directoryKey, directory);
+}
+
+/** `path` in the real tree when absolute. */
+static const char *absoluteToReal(const char *path, char *buffer) {
+  if (!installed) return path;
   if (inside(&containerPlace, path) != NULL || inside(&bundlePlace, path) != NULL) return path;
   // /etc is a link to private/etc: resolving it passes through /private itself.
   if (strcmp(path, "/private") == 0) return path;
@@ -90,6 +125,34 @@ static const char *toReal(const char *path, char *buffer) {
     return NULL;
   }
   return buffer;
+}
+
+/**
+ * `path` in the real tree: `buffer` when it changes, NULL with errno when it
+ * does not fit. A relative path is the kernel's to resolve, except on a thread
+ * with its own working directory, where it is resolved against that.
+ */
+static const char *toReal(const char *path, char *buffer) {
+  if (path == NULL || path[0] == '\0') return path;
+  if (path[0] == '/') return absoluteToReal(path, buffer);
+  Directory *directory = currentDirectory;
+  if (directory == NULL) return path;
+  char joined[PATH_MAX];
+  pthread_mutex_lock(&directory->lock);
+  int length = snprintf(joined, sizeof joined, "%s%s%s", directory->path, strcmp(directory->path, "/") == 0 ? "" : "/", path);
+  pthread_mutex_unlock(&directory->lock);
+  if (length >= (int)sizeof joined) {
+    errno = ENAMETOOLONG;
+    return NULL;
+  }
+  const char *mapped = absoluteToReal(joined, buffer);
+  if (mapped == joined) mapped = strcpy(buffer, joined);
+  return mapped;
+}
+
+/** A path relative to the directory `directory` (or the working directory) in the real tree. */
+static const char *atToReal(int directory, const char *path, char *buffer) {
+  return directory == AT_FDCWD || (path != NULL && path[0] == '/') ? toReal(path, buffer) : path;
 }
 
 /** Rewrite a path the kernel produced, in place. `path` holds PATH_MAX bytes. */
@@ -141,7 +204,10 @@ static bool relativePath(const char *from, const char *target, char *out, size_t
 REAL(access); REAL(bind); REAL(chdir); REAL(chmod); REAL(chown); REAL(connect); REAL(getcwd); REAL(getenv);
 REAL(lchown); REAL(link); REAL(lstat); REAL(mkdir); REAL(mkdtemp); REAL(mkstemp); REAL(opendir); REAL(pathconf);
 REAL(readlink); REAL(remove); REAL(rename); REAL(rmdir); REAL(scandir); REAL(stat); REAL(statfs); REAL(symlink);
-REAL(unlink); REAL(utimensat); REAL(utimes);
+REAL(unlink); REAL(utimensat); REAL(utimes); REAL(fchdir); REAL(truncate); REAL(mkfifo); REAL(mknod); REAL(chflags);
+REAL(lchflags); REAL(lchmod); REAL(faccessat); REAL(fchmodat); REAL(fchownat); REAL(fstatat); REAL(mkdirat);
+REAL(mkfifoat); REAL(mknodat); REAL(unlinkat); REAL(readlinkat); REAL(renameat); REAL(linkat); REAL(pthread_create);
+static int (*real_openat)(int, const char *, int, ...);
 static int (*real_open)(const char *, int, ...);
 static FILE *(*real_fopen)(const char *, const char *);
 static FILE *(*real_fopenExtended)(const char *, const char *);
@@ -154,7 +220,10 @@ __attribute__((constructor)) static void resolveLibc(void) {
   RESOLVE(getenv); RESOLVE(lchown); RESOLVE(link); RESOLVE(lstat); RESOLVE(mkdir); RESOLVE(mkdtemp); RESOLVE(mkstemp);
   RESOLVE(open); RESOLVE(opendir); RESOLVE(pathconf); RESOLVE(readlink); RESOLVE(remove); RESOLVE(rename);
   RESOLVE(rmdir); RESOLVE(scandir); RESOLVE(stat); RESOLVE(statfs); RESOLVE(symlink); RESOLVE(unlink);
-  RESOLVE(utimensat); RESOLVE(utimes); RESOLVE(fopen);
+  RESOLVE(utimensat); RESOLVE(utimes); RESOLVE(fopen); RESOLVE(fchdir); RESOLVE(truncate); RESOLVE(mkfifo); RESOLVE(mknod);
+  RESOLVE(chflags); RESOLVE(lchflags); RESOLVE(lchmod); RESOLVE(faccessat); RESOLVE(fchmodat); RESOLVE(fchownat);
+  RESOLVE(fstatat); RESOLVE(mkdirat); RESOLVE(mkfifoat); RESOLVE(mknodat); RESOLVE(unlinkat); RESOLVE(readlinkat);
+  RESOLVE(renameat); RESOLVE(linkat); RESOLVE(pthread_create); RESOLVE(openat);
   *(void **)&real_fopenExtended = dlsym(system, "fopen$DARWIN_EXTSN");
   if (real_fopenExtended == NULL) real_fopenExtended = real_fopen;
   *(void **)&real_realpath = dlsym(system, "realpath$DARWIN_EXTSN");
@@ -174,7 +243,6 @@ __attribute__((constructor)) static void resolveLibc(void) {
   }
 
 ONE_PATH(int, -1, access, (const char *path, int mode), (mapped, mode))
-ONE_PATH(int, -1, chdir, (const char *path), (mapped))
 ONE_PATH(int, -1, chmod, (const char *path, mode_t mode), (mapped, mode))
 ONE_PATH(int, -1, chown, (const char *path, uid_t owner, gid_t group), (mapped, owner, group))
 ONE_PATH(int, -1, lchown, (const char *path, uid_t owner, gid_t group), (mapped, owner, group))
@@ -192,12 +260,58 @@ ONE_PATH(int, -1, scandir,
          (const char *path, struct dirent ***list, int (*select)(const struct dirent *),
           int (*compare)(const struct dirent **, const struct dirent **)),
          (mapped, list, select, compare))
+ONE_PATH(int, -1, truncate, (const char *path, off_t length), (mapped, length))
+ONE_PATH(int, -1, mkfifo, (const char *path, mode_t mode), (mapped, mode))
+ONE_PATH(int, -1, mknod, (const char *path, mode_t mode, dev_t device), (mapped, mode, device))
+ONE_PATH(int, -1, chflags, (const char *path, unsigned int flags), (mapped, flags))
+ONE_PATH(int, -1, lchflags, (const char *path, unsigned int flags), (mapped, flags))
+ONE_PATH(int, -1, lchmod, (const char *path, mode_t mode), (mapped, mode))
 
-int dsh_utimensat(int directory, const char *path, const struct timespec times[2], int flags) EXPORT("utimensat");
-int dsh_utimensat(int directory, const char *path, const struct timespec times[2], int flags) {
+// The *at family: a path relative to a real directory descriptor needs nothing.
+#define AT_PATH(type, failure, name, parameters, arguments)                  \
+  type dsh_##name parameters EXPORT(#name);                                  \
+  type dsh_##name parameters {                                               \
+    char buffer[PATH_MAX];                                                   \
+    const char *mapped = atToReal(directory, path, buffer);                  \
+    if (mapped == NULL) return failure;                                      \
+    return real_##name arguments;                                            \
+  }
+
+AT_PATH(int, -1, faccessat, (int directory, const char *path, int mode, int flags), (directory, mapped, mode, flags))
+AT_PATH(int, -1, fchmodat, (int directory, const char *path, mode_t mode, int flags), (directory, mapped, mode, flags))
+AT_PATH(int, -1, fchownat, (int directory, const char *path, uid_t owner, gid_t group, int flags),
+        (directory, mapped, owner, group, flags))
+AT_PATH(int, -1, fstatat, (int directory, const char *path, struct stat *result, int flags), (directory, mapped, result, flags))
+AT_PATH(int, -1, mkdirat, (int directory, const char *path, mode_t mode), (directory, mapped, mode))
+AT_PATH(int, -1, mkfifoat, (int directory, const char *path, mode_t mode), (directory, mapped, mode))
+AT_PATH(int, -1, mknodat, (int directory, const char *path, mode_t mode, dev_t device), (directory, mapped, mode, device))
+AT_PATH(int, -1, unlinkat, (int directory, const char *path, int flags), (directory, mapped, flags))
+AT_PATH(int, -1, utimensat, (int directory, const char *path, const struct timespec times[2], int flags),
+        (directory, mapped, times, flags))
+
+int dsh_openat(int directory, const char *path, int flags, ...) EXPORT("openat");
+int dsh_openat(int directory, const char *path, int flags, ...) {
+  va_list arguments;
+  va_start(arguments, flags);
+  int mode = flags & O_CREAT ? va_arg(arguments, int) : 0;
+  va_end(arguments);
   char buffer[PATH_MAX];
-  const char *mapped = toReal(path, buffer);
-  return mapped == NULL ? -1 : real_utimensat(directory, mapped, times, flags);
+  const char *mapped = atToReal(directory, path, buffer);
+  return mapped == NULL ? -1 : real_openat(directory, mapped, flags, mode);
+}
+
+int dsh_renameat(int fromDirectory, const char *from, int toDirectory, const char *to) EXPORT("renameat");
+int dsh_renameat(int fromDirectory, const char *from, int toDirectory, const char *to) {
+  char first[PATH_MAX], second[PATH_MAX];
+  const char *mappedFrom = atToReal(fromDirectory, from, first), *mappedTo = atToReal(toDirectory, to, second);
+  return mappedFrom == NULL || mappedTo == NULL ? -1 : real_renameat(fromDirectory, mappedFrom, toDirectory, mappedTo);
+}
+
+int dsh_linkat(int fromDirectory, const char *from, int toDirectory, const char *to, int flags) EXPORT("linkat");
+int dsh_linkat(int fromDirectory, const char *from, int toDirectory, const char *to, int flags) {
+  char first[PATH_MAX], second[PATH_MAX];
+  const char *mappedFrom = atToReal(fromDirectory, from, first), *mappedTo = atToReal(toDirectory, to, second);
+  return mappedFrom == NULL || mappedTo == NULL ? -1 : real_linkat(fromDirectory, mappedFrom, toDirectory, mappedTo, flags);
 }
 
 int dsh_open(const char *path, int flags, ...) EXPORT("open");
@@ -242,14 +356,64 @@ int dsh_rename(const char *from, const char *to) {
 char *dsh_getcwd(char *out, size_t size) EXPORT("getcwd");
 char *dsh_getcwd(char *out, size_t size) {
   char path[PATH_MAX];
-  if (real_getcwd(path, sizeof path) == NULL) return NULL;
-  toVirtual(path);
+  Directory *directory = currentDirectory;
+  if (directory != NULL) {
+    pthread_mutex_lock(&directory->lock);
+    strcpy(path, directory->path);
+    pthread_mutex_unlock(&directory->lock);
+  } else {
+    if (real_getcwd(path, sizeof path) == NULL) return NULL;
+    toVirtual(path);
+  }
   if (out == NULL) return strdup(path);
   if (strlen(path) + 1 > size) {
     errno = ERANGE;
     return NULL;
   }
   return strcpy(out, path);
+}
+
+/** Make the real directory `real` the thread's working directory, by its engine path. */
+static int enterReal(Directory *directory, const char *real) {
+  char resolved[PATH_MAX];
+  if (real_realpath(real, resolved) == NULL) return -1;
+  toVirtual(resolved);
+  pthread_mutex_lock(&directory->lock);
+  strcpy(directory->path, resolved);
+  pthread_mutex_unlock(&directory->lock);
+  return 0;
+}
+
+int dsh_chdir(const char *path) EXPORT("chdir");
+int dsh_chdir(const char *path) {
+  char buffer[PATH_MAX];
+  const char *mapped = toReal(path, buffer);
+  if (mapped == NULL) return -1;
+  Directory *directory = currentDirectory;
+  if (directory == NULL) return real_chdir(mapped);
+  struct stat status;
+  if (real_stat(mapped, &status) != 0) return -1;
+  if (!S_ISDIR(status.st_mode)) {
+    errno = ENOTDIR;
+    return -1;
+  }
+  if (real_access(mapped, X_OK) != 0) return -1;
+  return enterReal(directory, mapped);
+}
+
+int dsh_fchdir(int descriptor) EXPORT("fchdir");
+int dsh_fchdir(int descriptor) {
+  Directory *directory = currentDirectory;
+  if (directory == NULL) return real_fchdir(descriptor);
+  struct stat status;
+  char real[PATH_MAX];
+  if (fstat(descriptor, &status) != 0) return -1;
+  if (!S_ISDIR(status.st_mode)) {
+    errno = ENOTDIR;
+    return -1;
+  }
+  if (fcntl(descriptor, F_GETPATH, real) == -1) return -1;
+  return enterReal(directory, real);
 }
 
 char *dsh_realpath(const char *path, char *out) EXPORT("realpath$DARWIN_EXTSN");
@@ -276,6 +440,21 @@ ssize_t dsh_readlink(const char *path, char *out, size_t size) {
   return length;
 }
 
+ssize_t dsh_readlinkat(int directory, const char *path, char *out, size_t size) EXPORT("readlinkat");
+ssize_t dsh_readlinkat(int directory, const char *path, char *out, size_t size) {
+  char buffer[PATH_MAX], target[PATH_MAX];
+  const char *mapped = atToReal(directory, path, buffer);
+  if (mapped == NULL) return -1;
+  ssize_t length = real_readlinkat(directory, mapped, target, sizeof target - 1);
+  if (length < 0) return length;
+  target[length] = '\0';
+  toVirtual(target);
+  length = (ssize_t)strlen(target);
+  if ((size_t)length > size) length = (ssize_t)size;
+  memcpy(out, target, (size_t)length);
+  return length;
+}
+
 /**
  * The kernel resolves a link's target without us, so an engine path in it would
  * be wrong and a real path would pin the UUID. Targets in the tree are stored
@@ -287,7 +466,7 @@ int dsh_symlink(const char *target, const char *path) {
   char buffer[PATH_MAX], relative[PATH_MAX], directory[PATH_MAX], linkBuffer[PATH_MAX];
   const char *mappedLink = toReal(path, linkBuffer);
   if (mappedLink == NULL) return -1;
-  const char *mappedTarget = toReal(target, buffer);
+  const char *mappedTarget = target[0] == '/' ? toReal(target, buffer) : target;
   if (mappedTarget == NULL) return -1;
   if (installed && target[0] == '/' && mappedTarget != target) {
     if (after(target, BUNDLE_DIRECTORY, strlen(BUNDLE_DIRECTORY)) != NULL) {
@@ -312,6 +491,19 @@ int dsh_symlink(const char *target, const char *path) {
     target = relative;
   }
   return real_symlink(target, mappedLink);
+}
+
+int dsh_symlinkat(const char *target, int directory, const char *path) EXPORT("symlinkat");
+int dsh_symlinkat(const char *target, int directory, const char *path) {
+  if (directory == AT_FDCWD || path[0] == '/') return dsh_symlink(target, path);
+  char real[PATH_MAX], joined[PATH_MAX];
+  if (fcntl(directory, F_GETPATH, real) == -1) return -1;
+  toVirtual(real);
+  if (snprintf(joined, sizeof joined, "%s/%s", real, path) >= (int)sizeof joined) {
+    errno = ENAMETOOLONG;
+    return -1;
+  }
+  return dsh_symlink(target, joined);
 }
 
 /** A template the kernel filled in: copy the generated name back to the caller's. */
@@ -396,6 +588,61 @@ char *dsh_getenv(const char *name) {
   if (installed && strcmp(name, "HOME") == 0) return (char *)HOME_DIRECTORY;
   if (installed && strcmp(name, "TMPDIR") == 0) return (char *)TEMP_DIRECTORY;
   return real_getenv(name);
+}
+
+/** A new thread starts in its creator's working directory, if it has its own. */
+typedef struct {
+  void *(*start)(void *);
+  void *argument;
+  Directory *directory;
+} ThreadStart;
+
+static void *startThread(void *value) {
+  ThreadStart start = *(ThreadStart *)value;
+  free(value);
+  adoptDirectory(start.directory);
+  return start.start(start.argument);
+}
+
+int dsh_pthread_create(pthread_t *thread, const pthread_attr_t *attributes, void *(*start)(void *), void *argument)
+    EXPORT("pthread_create");
+int dsh_pthread_create(pthread_t *thread, const pthread_attr_t *attributes, void *(*start)(void *), void *argument) {
+  Directory *directory = currentDirectory;
+  if (directory == NULL) return real_pthread_create(thread, attributes, start, argument);
+  ThreadStart *value = malloc(sizeof *value);
+  if (value == NULL) return EAGAIN;
+  *value = (ThreadStart){start, argument, directory};
+  retainDirectory(directory);
+  int result = real_pthread_create(thread, attributes, startThread, value);
+  if (result != 0) {
+    releaseDirectory(directory);
+    free(value);
+  }
+  return result;
+}
+
+int dsh_root_enter(const char *path) {
+  if (path == NULL || path[0] != '/' || strlen(path) >= PATH_MAX) {
+    errno = EINVAL;
+    return -1;
+  }
+  Directory *directory = calloc(1, sizeof *directory);
+  if (directory == NULL) return -1;
+  pthread_mutex_init(&directory->lock, NULL);
+  directory->references = 1;
+  strcpy(directory->path, path);
+  Directory *previous = currentDirectory;
+  adoptDirectory(directory);
+  releaseDirectory(previous);
+  return 0;
+}
+
+void dsh_root_leave(void) {
+  Directory *previous = currentDirectory;
+  if (previous == NULL) return;
+  currentDirectory = NULL;
+  pthread_setspecific(directoryKey, NULL);
+  releaseDirectory(previous);
 }
 
 static int setPlace(Place *place, const char *path) {
