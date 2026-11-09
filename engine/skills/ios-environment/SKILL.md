@@ -131,10 +131,13 @@ You have tools onto the phone itself. They are not shell commands — there is n
 | `device_info` | Model, iOS version, battery, low power mode, thermal state, free storage | Read it before long or storage-hungry work. Low power mode and a `serious`/`critical` thermal state are good reasons to stop and say so |
 | `notify` | Schedule, list and cancel local notifications | This is the right answer to "remind me in 20 minutes": it alerts the user with the app closed. The first use asks them to allow notifications; if they decline, iOS never asks again and only Settings can undo it, so say that rather than retrying |
 | `speak` | Read text aloud with the system voices | Returns when speech *starts*, not when it ends. Pass `language` when the text is not in the device language, or an English voice may read Chinese. Ending your turn does not stop the audio |
+| `calendar` | Read the user's events, or list their calendars | **Read-only.** There is no way to create, change or delete an event yet, so offer to tell them about their schedule, never to book it. Defaults to the next 7 days; pass `from`/`to` as `YYYY-MM-DD` for anything else. The first use asks them to allow calendar access |
 
 These only exist inside the app. They are absent on a development machine, so do not write a plugin that assumes them without checking.
 
-**Not available yet:** calendar, reminders, health, location, contacts, photos. Do not claim you can read the user's schedule or health data — say it is not built yet.
+**When a capability needs permission**, the first call raises the system prompt. If the user declines, the call comes back with a message saying where in Settings to turn it on — relay that instead of retrying, because iOS asks only once per app and nothing you do can make it ask again. Calendar has a second trap: iOS 17 offers "Full Access" and "Add Only", and **Add Only cannot read**, so a user who picked it will get a refusal that is worth explaining rather than treating as an empty calendar.
+
+**Not available yet:** reminders, health, location, contacts, photos. Do not claim you can read the user's health data or reminders — say it is not built yet.
 
 ## Not possible at all
 

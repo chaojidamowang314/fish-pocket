@@ -2715,6 +2715,22 @@
         }
       }
     },
+    "仅可添加，读不了日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add-only, cannot read events"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo añadir, no puede leer eventos"
+          }
+        }
+      }
+    },
     "仅支持 PNG、JPG、WebP、GIF 格式的图片" : {
       "localizations" : {
         "en" : {
@@ -3373,6 +3389,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utiliza el proveedor predeterminado"
+          }
+        }
+      }
+    },
+    "使用记录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividad"
           }
         }
       }
@@ -6177,6 +6209,22 @@
         }
       }
     },
+    "取消提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar recordatorio"
+          }
+        }
+      }
+    },
     "取消置顶" : {
       "localizations" : {
         "en" : {
@@ -6765,6 +6813,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los comandos se terminan al agotar el tiempo de espera; la salida que excede el límite se guarda en un archivo temporal."
+          }
+        }
+      }
+    },
+    "哪些要授权的能力被用过、谁用的。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which capabilities that need permission have been used, and by whom."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué funciones que requieren permiso se han usado y quién las usó."
           }
         }
       }
@@ -13318,6 +13382,22 @@
         }
       }
     },
+    "日历" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendario"
+          }
+        }
+      }
+    },
     "日期" : {
       "localizations" : {
         "en" : {
@@ -13572,6 +13652,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar archivos ocultos"
+          }
+        }
+      }
+    },
+    "智能体" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agente"
           }
         }
       }
@@ -14488,6 +14584,22 @@
         }
       }
     },
+    "未知来源" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown source"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Origen desconocido"
+          }
+        }
+      }
+    },
     "未缓存输入" : {
       "localizations" : {
         "en" : {
@@ -14968,6 +15080,22 @@
         }
       }
     },
+    "查看你的日程，回答和安排有关的问题。只读，改不了也删不掉" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule to answer questions about it. Read-only: it cannot change or delete anything"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda para responder preguntas sobre ella. Solo lectura: no puede cambiar ni eliminar nada"
+          }
+        }
+      }
+    },
     "查看全文" : {
       "localizations" : {
         "en" : {
@@ -15156,6 +15284,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ver instalados"
+          }
+        }
+      }
+    },
+    "查看待发提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "List pending reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver recordatorios pendientes"
           }
         }
       }
@@ -17328,6 +17472,38 @@
         }
       }
     },
+    "清空之后就看不到之前谁用过这些能力了。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once cleared, you can no longer see who used these capabilities."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez borrado, ya no podrás ver quién usó estas funciones."
+          }
+        }
+      }
+    },
+    "清空使用记录？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear activity?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Borrar la actividad?"
+          }
+        }
+      }
+    },
     "清空搜索" : {
       "localizations" : {
         "en" : {
@@ -17340,6 +17516,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búsqueda"
+          }
+        }
+      }
+    },
+    "清空记录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear activity"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar actividad"
           }
         }
       }
@@ -19848,6 +20040,22 @@
         }
       }
     },
+    "设定提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programar recordatorio"
+          }
+        }
+      }
+    },
     "设置" : {
       "localizations" : {
         "en" : {
@@ -20872,6 +21080,22 @@
         }
       }
     },
+    "读取日历列表" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "List calendars"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver lista de calendarios"
+          }
+        }
+      }
+    },
     "读取终端" : {
       "localizations" : {
         "en" : {
@@ -20884,6 +21108,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leer terminal"
+          }
+        }
+      }
+    },
+    "调用方是自己报的名字，不能当证据：插件可以把自己报成引擎本体。只保留最近 %lld 条。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The caller is a self-reported name, not proof: a plugin can present itself as the agent. Only the %lld most recent entries are kept."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El autor de la llamada es un nombre autodeclarado, no una prueba: un complemento puede presentarse como el agente. Solo se conservan las %lld entradas más recientes."
           }
         }
       }
@@ -21588,6 +21828,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aún no hay modelos."
+          }
+        }
+      }
+    },
+    "还没有用过任何需要授权的本机能力。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No capability that needs permission has been used yet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no se ha usado ninguna función que requiera permisos."
           }
         }
       }

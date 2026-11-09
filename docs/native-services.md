@@ -259,11 +259,11 @@ contacts.read
 engine/plugins/ios-native/
   index.mjs        # ✅ cordis 插件：注册 ctx.iosNative 服务 + 工具
   binding.mjs      # ✅ 取 process._linkedBinding('dsh_ios_native')，照 runtime/git/binding.mjs
-  tools.mjs        # ✅ 各能力的 defineTool（零期三个，多了再拆成 tools/）
-  caller.mjs       # ⬜ 归因，只为审计打标签（不参与判定，见 §2.2）——二期随审计一起做
+  tools.mjs        # ✅ 各能力的 defineTool（多了再拆成 tools/）
+  caller.mjs       # ✅ 归因，只为审计打标签（不参与判定，见 §2.2）
 ```
 
-（✅ = 零期已落地，⬜ = 待建。）
+（✅ = 已落地，⬜ = 待建。）
 
 - 服务 `ctx.iosNative`：第三方插件 `ctx.inject(['iosNative'])` 后可用。
 - 工具：给引擎本体用的那套（`device_info`、`notify`、`speak`、`calendar_list` …）。
@@ -280,13 +280,15 @@ native/ios-native/
   caps_device.m             # ✅ UIDevice：型号、系统版本、电量、低电量、热状态、存储
   caps_notify.m             # ✅ UNUserNotificationCenter：本地通知
   caps_speak.m              # ✅ AVSpeechSynthesizer：朗读
-  caps_calendar.m           # ⬜ EventKit（一期）
-  NativeBridge.swift        # ⬜ @objc 单例：需要 UI 的操作在主线程做（授权、写确认）
+  caps_calendar.m           # ✅ EventKit 读：list / calendars
+  DshNativeAudit.h          # ✅ 审计的只读视图，给 Swift 用（同样不含 node_api.h）
+  audit.m                   # ✅ 环形缓冲，存 UserDefaults
+  NativeBridge.swift        # ⬜ @objc 单例：需要 UI 的操作在主线程做（写确认）
 
 app/DshIOS/
-  DshIOS-Bridging-Header.h      # ✅ 让 SwiftUI 读得到上面那张表
+  DshIOS-Bridging-Header.h            # ✅ 让 SwiftUI 读得到上面那两张表
   Views/NativeCapabilitiesView.swift  # ✅ 设置 →「本机能力」：清单 + 系统授权状态
-  Native/NativeAudit.swift      # ⬜ 每次调用记一条，用户可查
+  Views/NativeAuditView.swift         # ✅ 每次调用记一条，用户可查
 ```
 
 **能力清单只有一张表。** 设置页列的、N-API 分发用的、判定一次调用合不合法的，都是 `ios_native.m` 里那个 `CAPABILITIES` 数组：`DshNativeCapabilityList()` 是它的只读视图，经 bridging header 给 Swift。界面不许自己维护一份拷贝——两份清单迟早对不上，而对不上的那条缝就是绕过（§9.3）。页面的中文名和说明按能力 id 查，**查不到就显示 id**，所以原生加了能力而忘了加文案，页面会少个名字，但不会漏掉这项能力。
@@ -344,6 +346,15 @@ audit: { capability, op, callerClaim, at, summary? }   # callerClaim = 自报的
 `callerClaim` 这个名字是故意的——在代码里就能看出它不可信，别让后来的人拿它做判定。审计是环形缓冲（留最近若干条，不是日志系统），写操作连操作摘要一起留，这样用户事后能看出"那个会议是谁删的"。
 
 去掉能力开关之后，审计是用户**唯一**能看到"这个 App 碰了我哪些数据"的地方，所以它从"锦上添花"升级成了必要项。
+
+**落地时定下来的四条**（`audit.m` / `ios_native.m` / `NativeAuditView.swift`）：
+
+1. **记录点在分发器里，不在各个能力里。** 和权限判定同一个位置、同一个理由：那是唯一一条路，后加的能力没法绕过它。
+2. **只记 `systemPermission` 非空的能力，且只记成功的。** 这张表回答的是"什么碰到了我的数据"，把 `device.info` 和每次 `speak.say` 都记上，只会把用户真正要找的那条日历读取挤出环形缓冲。
+3. **摘要由能力自己给，走结果里的 `auditSummary` 键**，分发器取走它、记进审计，再把它从交给 JS 的结果里删掉——它是给用户的审计列表看的，不是给模型看的。
+4. **摘要必须语言中性。** 它会原样显示给用户，而 App 是三语的、原生这几个文件不是。所以摘要只放日期、数量、事件标题、用户自己写的文字，不放句子；"日历 · 读取事件"这类行文案由 Swift 按 `capability` + `op` 自己拼。
+
+`callerClaim` 在界面上也不装作可信：本体自报的 `dsh` / `root` 显示成「智能体」，插件显示它自报的包名，没报的显示「未知来源」，页脚直说"调用方是自己报的名字，不能当证据：插件可以把自己报成引擎本体"。
 
 ---
 
@@ -419,13 +430,20 @@ NSRemindersFullAccessUsageDescription
 | 期 | 内容 | 产出 |
 |---|---|---|
 | **零期** ✅ | 通道 + 不要权限的那批 | addon 骨架（N-API 入口、能力表、policy 判断点、ThreadSafeFunction 回复）、引擎插件与 `binding.mjs`、`device_info` / `notify` / `speak` 三个工具、设置 →「本机能力」页、`project.yml` 接入、SKILL.md 同步。**不碰任何授权机制**，用最低风险把整条链跑通 |
-| **一期** | 日历读 | `caps_calendar.m`（读）、系统权限请求与被拒引导 + deep link、Info.plist 文案、`calendar_list` 工具、绕过测试（§9.3）、四份文档同步 |
+| **一期** | 日历读 | `caps_calendar.m`（读）、系统权限请求与被拒引导、Info.plist 文案、`calendar` 工具、绕过测试（§9.3）、四份文档同步 |
 | **二期** | 写 + 审计 | 新建走 `EKEventEditViewController`、改删走一次性 grant、审计记录与查看页 |
-| **三期** | 提醒 + 本地通知 | `reminders.*`、`notifications.post`，与 todo / schedule 的职责划分写进 SKILL.md |
+| **三期** | 提醒 | `reminders.*`，与 todo / schedule 的职责划分写进 SKILL.md |
 | **四期** | 插件可用 | 导出 `ctx.iosNative`、`caller.mjs` 归因打标签、安装页警告按 §4.1.1 改 |
 | **五期**（待定） | 健康 / 运动 / 位置 | 先过 §6.1 的决定 |
 
+**零期实际越界做掉了后面两期的一部分**，这里据实记一笔，免得照表排期的人重复劳动：
+
+- 三期原本写的是「提醒 + 本地通知」，其中**本地通知（`notify`）零期就做了**，三期只剩 `reminders.*`，上表已改。
+- 四期三件事里，**导出 `ctx.iosNative` 和改安装页警告零期都做了**（警告文案 4 处，能力名取自同一张能力表，所以日历一加进来它自己就变）。四期只剩 `caller.mjs` 归因。
+
 去掉应用层授权后，一、四期都明显变轻：一期不用做 `CapabilityStore` 和授权 sheet；四期不再是"搭一套插件授权体系"，只是**把服务导出 + 改一句安装页文案**——插件和本体走的本来就是同一条路。
+
+**审计的位置要往前挪。** §5.4 说审计是"用户唯一能看到这个 App 碰了我哪些数据的地方"，而一期上线日历读之后，插件就能直连 addon 读日历（§5.3 的明确语义）。审计排在二期意味着中间这段时间用户没有任何事后可查的地方。审计本身很轻（一个环形缓冲 + 一个列表页），**和一期一起做**。
 
 一期做完就能验证最关键的假设：**Node 线程发起 → Swift 执行 → 系统弹窗 → 结果回到智能体**这条链在真机上通不通。模拟器能过不代表真机能过（`CONTRIBUTING.md` 的既有教训）。
 

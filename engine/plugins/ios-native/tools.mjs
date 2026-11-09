@@ -4,7 +4,12 @@
 // Each tool is thin on purpose: validate, call the addon, render. The addon owns
 // permission, the main thread and the framework call.
 import { defineTool } from '@deepseek-ai/dsh-tools';
-import { invoke } from './binding.mjs';
+import { invoke as invokeNative } from './binding.mjs';
+import { ENGINE_CLAIM } from './caller.mjs';
+
+// These are the engine's own tools, so every call from here claims the engine.
+// It is still only a claim — nothing downstream treats it as proof.
+const invoke = (capability, op, args) => invokeNative(capability, op, args, ENGINE_CLAIM);
 
 const text = (value) => [{ type: 'text', text: value }];
 
@@ -126,9 +131,106 @@ const speak = defineTool({
   },
 });
 
+/** A week is what "what's coming up" means to most people asking. */
+const DEFAULT_RANGE_DAYS = 7;
+
+/**
+ * Seconds since 1970 for a date the model wrote.
+ *
+ * A bare `YYYY-MM-DD` has to mean local midnight: `new Date('2026-11-09')` is
+ * parsed as UTC by the language, which would shift the whole day for anyone east
+ * or west of Greenwich and quietly return the wrong events.
+ *
+ * Exported so that behaviour can be pinned by a test; nothing else uses it.
+ */
+export function toEpochSeconds(value, fallback) {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value !== 'string') throw new Error(`calendar: '${value}' is not a date`);
+  const bare = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  const date = bare
+    ? new Date(Number(bare[1]), Number(bare[2]) - 1, Number(bare[3]))
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error(`calendar: could not read the date '${value}'`);
+  return Math.floor(date.getTime() / 1000);
+}
+
+// The addon formats times in the device's own timezone and includes the offset,
+// so reading the parts straight out of the string keeps this from re-interpreting
+// a moment that is already correct.
+const dayOf = (iso) => (typeof iso === 'string' ? iso.slice(0, 10) : '');
+const timeOf = (iso) => (typeof iso === 'string' ? iso.slice(11, 16) : '');
+
+function renderEvent(event) {
+  const day = dayOf(event.start);
+  const when = event.allDay
+    ? `${day} all day`
+    : dayOf(event.end) === day
+      ? `${day} ${timeOf(event.start)}–${timeOf(event.end)}`
+      : `${day} ${timeOf(event.start)} – ${dayOf(event.end)} ${timeOf(event.end)}`;
+  const parts = [when, event.title || '(no title)'];
+  if (event.calendar) parts.push(`[${event.calendar}]`);
+  if (event.location) parts.push(`@ ${event.location}`);
+  const line = parts.join('  ');
+  return event.notes ? `${line}\n    ${event.notes.replace(/\n+/g, ' ')}` : line;
+}
+
+const calendar = defineTool({
+  name: 'calendar',
+  description:
+    'Read the events in the user\'s calendar on this device, or list which calendars they have. '
+    + 'Use it to answer anything about their schedule, to check whether they are free, and before '
+    + 'suggesting a time. Defaults to the next week when no range is given. The first use asks the '
+    + 'user to allow calendar access; this tool only reads, it cannot change or delete anything.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['list', 'calendars'],
+      description: 'list the events in a date range, or list the calendars themselves',
+      required: true,
+    },
+    from: {
+      type: 'string',
+      description: `start of the range, YYYY-MM-DD or a full ISO timestamp; defaults to now`,
+    },
+    to: {
+      type: 'string',
+      description: `end of the range, YYYY-MM-DD or a full ISO timestamp; defaults to ${DEFAULT_RANGE_DAYS} days after 'from'`,
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'calendars') {
+        const list = value.calendars ?? [];
+        if (list.length === 0) return text('No calendars on this device.');
+        return text(
+          list
+            .map((item) => `${item.title}${item.default ? '  (default)' : ''}${item.writable ? '' : '  (read-only)'}`)
+            .join('\n'),
+        );
+      }
+      const events = value.events ?? [];
+      if (events.length === 0) return text('No events in that range.');
+      const lines = events.map(renderEvent);
+      if (value.truncated) {
+        lines.push(`… showing the first ${events.length} of ${value.total}; ask for a shorter range to see the rest.`);
+      }
+      return text(lines.join('\n'));
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'calendars') return invoke('calendar', 'calendars');
+    const from = toEpochSeconds(args.from, Math.floor(Date.now() / 1000));
+    const to = toEpochSeconds(args.to, from + DEFAULT_RANGE_DAYS * 86400);
+    if (to <= from) throw new Error("calendar: 'to' must be after 'from'");
+    return invoke('calendar', 'list', { from, to });
+  },
+});
+
 /** Tool definitions by the capability each one needs. */
 export const TOOLS = {
   device: device,
   notify: notify,
   speak: speak,
+  calendar: calendar,
 };

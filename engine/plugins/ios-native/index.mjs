@@ -10,6 +10,7 @@
 // model never sees a tool it cannot call.
 import { Service } from '@deepseek-ai/cordis';
 import { capabilities, invoke } from './binding.mjs';
+import { callerClaim } from './caller.mjs';
 import { TOOLS } from './tools.mjs';
 
 /**
@@ -37,7 +38,12 @@ class IosNativeService extends Service {
    * @returns the capability's result.
    */
   async invoke(capability, op, args = {}) {
-    return invoke(capability, op, args);
+    // cordis rewrites `this.ctx` to whoever called this method, which is the one
+    // moment the caller can be named at all. The name goes to the user's audit
+    // list and nowhere else — a plugin can produce any name it likes here
+    // (docs/native-services.md §2.2), so a check built on it would stop only the
+    // plugins that were not trying.
+    return invoke(capability, op, args, callerClaim(this.ctx));
   }
 }
 

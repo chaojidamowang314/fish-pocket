@@ -15,7 +15,13 @@
 // call settles through the same threadsafe-function path.
 #import "dsh_ios_native.h"
 #import "DshNativeCapabilities.h"
+#import "DshNativeAudit.h"
 #import <node_api.h>
+
+/// A capability may put a one-line account of what it did under this key. The
+/// dispatcher lifts it into the audit entry and removes it before the result
+/// crosses into JS: it is for the user's audit list, not for the model.
+static NSString *const kAuditSummaryKey = @"auditSummary";
 
 #pragma mark - Capability table
 
@@ -33,12 +39,16 @@ typedef struct {
   const char *systemPermission;
 } dsh_capability;
 
-// Phase 0: only `notify` needs anything from iOS, and that is the notification
-// prompt it raises on first use. None of these touch personal data.
+// `calendar` is the first entry that reaches personal data, and the only one so
+// far that iOS guards with a privacy prompt. It lists no write operation on
+// purpose: the user's system grant covers writing too (§4.0), so the operation
+// list is what actually keeps a plugin calling the addon directly from changing
+// anything (§5.3).
 static const dsh_capability CAPABILITIES[] = {
-  {"device", dsh_native_device, {"info", NULL}, NULL},
-  {"notify", dsh_native_notify, {"schedule", "cancel", "pending", NULL}, "notifications"},
-  {"speak",  dsh_native_speak,  {"say", "stop", NULL}, NULL},
+  {"device",   dsh_native_device,   {"info", NULL}, NULL},
+  {"notify",   dsh_native_notify,   {"schedule", "cancel", "pending", NULL}, "notifications"},
+  {"speak",    dsh_native_speak,    {"say", "stop", NULL}, NULL},
+  {"calendar", dsh_native_calendar, {"list", "calendars", NULL}, "calendar"},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -200,12 +210,12 @@ static napi_value reject_now(napi_env env, const char *message) {
   return promise;
 }
 
-/// invoke(capability, op, argsJson?) -> Promise<string>
+/// invoke(capability, op, argsJson?, callerClaim?) -> Promise<string>
 static napi_value invoke(napi_env env, napi_callback_info info) {
-  size_t argc = 3;
-  napi_value argv[3];
+  size_t argc = 4;
+  napi_value argv[4];
   if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok || argc < 2) {
-    return reject_now(env, "invoke(capability, op, argsJson?) needs a capability and an op");
+    return reject_now(env, "invoke(capability, op, argsJson?, callerClaim?) needs a capability and an op");
   }
 
   NSString *capabilityName = string_arg(env, argv[0]);
@@ -234,6 +244,10 @@ static napi_value invoke(napi_env env, napi_callback_info info) {
     }
   }
 
+  // What the caller says it is. Never checked, never used to decide anything —
+  // it only ever reaches the audit list, where it is labelled as a claim.
+  NSString *callerClaim = argc >= 4 ? string_arg(env, argv[3]) : nil;
+
   dsh_call *call = calloc(1, sizeof(dsh_call));
   if (call == NULL) return reject_now(env, "out of memory");
 
@@ -246,8 +260,27 @@ static napi_value invoke(napi_env env, napi_callback_info info) {
     return reject_now(env, "could not create the reply channel");
   }
 
+  // The audit is taken here rather than inside each capability, for the same
+  // reason the permission check is: this is the only path, so nothing can be
+  // added later that quietly skips it.
+  //
+  // Only the capabilities iOS itself guards are recorded, and only when they
+  // succeeded. That is what the list is for — "what reached my data" — and
+  // recording `device.info` or every `speak.say` would push the one calendar
+  // read the user is looking for out of the ring.
+  BOOL audited = cap->systemPermission != NULL;
+  NSString *auditedCapability = capabilityName;
   cap->handler(op, args, ^(NSDictionary *result, NSString *error) {
-    finish(call, result, error);
+    NSDictionary *payload = result;
+    if (result[kAuditSummaryKey] != nil) {
+      NSMutableDictionary *stripped = [result mutableCopy];
+      [stripped removeObjectForKey:kAuditSummaryKey];
+      payload = stripped;
+    }
+    if (audited && error == nil) {
+      DshNativeAuditRecord(auditedCapability, op, callerClaim, result[kAuditSummaryKey]);
+    }
+    finish(call, payload, error);
   });
   return promise;
 }

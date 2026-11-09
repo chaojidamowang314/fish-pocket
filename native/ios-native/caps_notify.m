@@ -64,7 +64,10 @@ static void schedule(NSDictionary *args, DshNativeReply reply) {
         reply(nil, addError.localizedDescription);
       } else {
         reply(@{@"id": identifier,
-                @"deliversAt": @([NSDate.date timeIntervalSince1970] + seconds.doubleValue)}, nil);
+                @"deliversAt": @([NSDate.date timeIntervalSince1970] + seconds.doubleValue),
+                // The user's own wording, which is the most useful thing their
+                // audit list can show and needs no translating.
+                @"auditSummary": body}, nil);
       }
     }];
   });

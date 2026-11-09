@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { binding, capabilities, invoke } from '../plugins/ios-native/binding.mjs';
-import { TOOLS } from '../plugins/ios-native/tools.mjs';
+import { TOOLS, toEpochSeconds } from '../plugins/ios-native/tools.mjs';
 
 test('without the addon the binding reports absent rather than throwing', () => {
   assert.equal(binding(), null);
@@ -36,7 +36,43 @@ test('tool names are unique and stable', () => {
   assert.deepEqual(names, [...new Set(names)]);
   // Pinned because they reach the model's prompt and a rename is a breaking
   // change for any skill or plugin that mentions them.
-  assert.deepEqual(names.sort(), ['device_info', 'notify', 'speak']);
+  assert.deepEqual(names.sort(), ['calendar', 'device_info', 'notify', 'speak']);
+});
+
+test('a bare date means local midnight, not UTC midnight', () => {
+  // The whole point of the conversion. `new Date('2026-11-09')` is UTC midnight,
+  // which lands on 8 November for anyone west of Greenwich and skips the first
+  // hours of the day for anyone east of it — the user would ask for "today" and
+  // be shown someone else's today.
+  const local = new Date(2026, 10, 9);
+  assert.equal(toEpochSeconds('2026-11-09'), Math.floor(local.getTime() / 1000));
+  assert.equal(new Date(toEpochSeconds('2026-11-09') * 1000).getDate(), 9);
+  assert.equal(new Date(toEpochSeconds('2026-11-09') * 1000).getHours(), 0);
+
+  // A full timestamp carries its own offset and must be taken at face value.
+  assert.equal(toEpochSeconds('2026-11-09T12:00:00Z'), Date.parse('2026-11-09T12:00:00Z') / 1000);
+});
+
+test('a missing range falls back rather than failing', () => {
+  assert.equal(toEpochSeconds(undefined, 1234), 1234);
+  assert.equal(toEpochSeconds('', 1234), 1234);
+  assert.equal(toEpochSeconds(null, 1234), 1234);
+});
+
+test('an unreadable date is refused with the value in the message', () => {
+  assert.throws(() => toEpochSeconds('next tuesday'), /could not read the date 'next tuesday'/);
+  assert.throws(() => toEpochSeconds(20261109), /is not a date/);
+});
+
+test('the calendar tool checks its range before reaching the addon', async () => {
+  await assert.rejects(
+    TOOLS.calendar.execute({ action: 'list', from: '2026-11-09', to: '2026-11-08' }, {}),
+    /'to' must be after 'from'/,
+  );
+  await assert.rejects(
+    TOOLS.calendar.execute({ action: 'list', from: 'whenever' }, {}),
+    /could not read the date/,
+  );
 });
 
 test('a tool rejects arguments its operation cannot use, before reaching the addon', async () => {
@@ -64,4 +100,50 @@ test('renderers are pure and survive the shapes the addon can return', () => {
 
   const empty = TOOLS.notify.output.render({ action: 'pending' }, { notifications: [] });
   assert.match(empty[0].text, /No notifications scheduled/);
+});
+
+test('the calendar renderer reads the addon times without reinterpreting them', () => {
+  const render = (value) => TOOLS.calendar.output.render({ action: 'list' }, value)[0].text;
+
+  // The addon already formatted these in the device's timezone and kept the
+  // offset. Parsing them back into a Date here would be a second conversion and
+  // a second chance to be wrong, so the renderer slices the string instead — the
+  // +08:00 below must not move the printed time.
+  const sameDay = render({
+    events: [{
+      title: '产品评审', start: '2026-11-09T14:00:00+08:00', end: '2026-11-09T15:00:00+08:00',
+      allDay: false, calendar: '工作', location: '会议室 A',
+    }],
+  });
+  assert.match(sameDay, /2026-11-09 14:00–15:00/);
+  assert.match(sameDay, /\[工作\]/);
+  assert.match(sameDay, /@ 会议室 A/);
+
+  assert.match(
+    render({ events: [{ title: '出差', start: '2026-11-10T00:00:00+08:00', end: '2026-11-11T00:00:00+08:00', allDay: true }] }),
+    /2026-11-10 all day {2}出差/,
+  );
+  // Spanning midnight has to show the end date too, or "22:00–01:00" reads as a
+  // three-hour meeting that ended before it started.
+  assert.match(
+    render({ events: [{ title: '红眼航班', start: '2026-11-10T22:00:00+08:00', end: '2026-11-11T01:00:00+08:00', allDay: false }] }),
+    /2026-11-10 22:00 – 2026-11-11 01:00/,
+  );
+
+  assert.match(render({ events: [] }), /No events in that range/);
+  assert.match(
+    render({ events: [{ title: 'x', start: '2026-11-09T09:00:00+08:00', end: '2026-11-09T10:00:00+08:00' }], total: 480, truncated: true }),
+    /showing the first 1 of 480/,
+  );
+  // A title the user never typed still has to render as a line, not as "undefined".
+  assert.match(render({ events: [{ start: '2026-11-09T09:00:00+08:00', end: '2026-11-09T10:00:00+08:00' }] }), /\(no title\)/);
+
+  const calendars = TOOLS.calendar.output.render({ action: 'calendars' }, {
+    calendars: [
+      { title: '工作', writable: true, default: true },
+      { title: '节假日', writable: false, default: false },
+    ],
+  })[0].text;
+  assert.match(calendars, /工作 {2}\(default\)/);
+  assert.match(calendars, /节假日 {2}\(read-only\)/);
 });

@@ -1,4 +1,5 @@
 import SwiftUI
+import EventKit
 import UserNotifications
 
 /// 设置 →「本机能力」：智能体能用到手机的哪些东西，各自要不要系统授权。
@@ -9,13 +10,17 @@ import UserNotifications
 /// 中文名时，页面会少个名字，但不会漏掉它。
 struct NativeCapabilitiesView: View {
     @State private var capabilities: [NativeCapability] = []
-    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+    /// 按 `systemPermission` 存，所以新增一项要授权的能力时这里不用再加分支。
+    @State private var permissions: [String: CapabilityPermission] = [:]
 
     var body: some View {
         List {
             Section {
                 ForEach(capabilities) { capability in
-                    CapabilityRow(capability: capability, notificationStatus: notificationStatus)
+                    CapabilityRow(
+                        capability: capability,
+                        permission: capability.systemPermission.flatMap { permissions[$0] } ?? .notNeeded
+                    )
                 }
             } footer: {
                 // 不含糊其辞：插件用的就是这些能力，而且 App 不区分谁在调用——
@@ -25,6 +30,16 @@ struct NativeCapabilitiesView: View {
             .groupedRow()
 
             if capabilities.contains(where: { $0.systemPermission != nil }) {
+                Section {
+                    NavigationLink { NativeAuditView() } label: {
+                        Text("使用记录")
+                    }
+                } footer: {
+                    // 没有应用层开关，这页就是用户事后唯一的查证途径（§5.4）。
+                    Text("哪些要授权的能力被用过、谁用的。")
+                }
+                .groupedRow()
+
                 Section {
                     Button("打开系统设置") {
                         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
@@ -42,24 +57,86 @@ struct NativeCapabilitiesView: View {
         .task { load() }
         // 从系统设置改完授权切回来时刷新，否则这页会一直显示旧状态。
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            refreshNotificationStatus()
+            refreshPermissions()
         }
     }
 
     private func load() {
         capabilities = NativeCapability.all
-        refreshNotificationStatus()
+        refreshPermissions()
     }
 
-    private func refreshNotificationStatus() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Task { @MainActor in notificationStatus = settings.authorizationStatus }
+    /// 只问清单里真的出现过的那些授权，别为一个这个构建没有的能力去碰框架。
+    private func refreshPermissions() {
+        let needed = Set(capabilities.compactMap(\.systemPermission))
+        if needed.contains(NativeCapability.calendarPermission) {
+            // EventKit 是同步查询，不用回调。
+            permissions[NativeCapability.calendarPermission] = .ofCalendar(
+                EKEventStore.authorizationStatus(for: .event)
+            )
+        }
+        if needed.contains(NativeCapability.notificationPermission) {
+            UNUserNotificationCenter.current().getNotificationSettings { settings in
+                Task { @MainActor in
+                    permissions[NativeCapability.notificationPermission] = .ofNotifications(settings.authorizationStatus)
+                }
+            }
+        }
+    }
+}
+
+/// 一项能力的系统授权状态。按档位而不是按能力分，所以加能力不用加状态。
+enum CapabilityPermission {
+    case notNeeded
+    case notDetermined
+    case allowed
+    case denied
+    /// 给了，但不够用。日历的「仅添加」就是这一档：写得进去，读不出来。
+    case insufficient(LocalizedStringResource)
+
+    static func ofNotifications(_ status: UNAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .authorized, .provisional, .ephemeral: return .allowed
+        case .denied: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofCalendar(_ status: EKAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .fullAccess: return .allowed
+        case .denied, .restricted: return .denied
+        // iOS 17 起日历权限分「完全」和「仅添加」两档，没有只读档。停在「仅添加」
+        // 的话读日程会一直失败，所以这里要说清楚是哪一档，而不是笼统说「已允许」。
+        case .writeOnly: return .insufficient("仅可添加，读不了日程")
+        default: return .notDetermined
+        }
+    }
+
+    var label: LocalizedStringResource {
+        switch self {
+        case .notNeeded: return "无需授权"
+        case .notDetermined: return "首次使用时询问"
+        case .allowed: return "已允许"
+        case .denied: return "已关闭"
+        case .insufficient(let detail): return detail
+        }
+    }
+
+    /// 只有用户动手才能解决的那两档才值得被强调出来。
+    var needsAttention: Bool {
+        switch self {
+        case .denied, .insufficient: return true
+        case .notNeeded, .notDetermined, .allowed: return false
         }
     }
 }
 
 /// 一项本机能力，连同它的中文说明。
 struct NativeCapability: Identifiable {
+    static let notificationPermission = "notifications"
+    static let calendarPermission = "calendar"
+
     let id: String
     let ops: [String]
     /// 需要的 iOS 授权；为空表示不需要任何授权。
@@ -77,7 +154,7 @@ struct NativeCapability: Identifiable {
 
     /// 装插件前要告诉用户的那句话里，列出的能力名。
     ///
-    /// 取自同一张能力表，所以一期把日历加进去之后，安装页的警告会自己跟着变——
+    /// 取自同一张能力表，所以日历加进来之后，安装页的警告会自己跟着变——
     /// 写死一份清单的话，迟早变成一句过期的承诺。
     static var installWarningSummary: String {
         all.map(\.title).joined(separator: "、")
@@ -89,6 +166,7 @@ struct NativeCapability: Identifiable {
         case "device": return String(localized: "设备状态")
         case "notify": return String(localized: "通知提醒")
         case "speak": return String(localized: "朗读")
+        case "calendar": return String(localized: "日历")
         default: return id
         }
     }
@@ -98,6 +176,7 @@ struct NativeCapability: Identifiable {
         case "device": return String(localized: "机型、系统版本、电量、存储空间")
         case "notify": return String(localized: "按你的要求定时提醒你，App 关着也会响")
         case "speak": return String(localized: "把文字念出来")
+        case "calendar": return String(localized: "查看你的日程，回答和安排有关的问题。只读，改不了也删不掉")
         default: return ops.joined(separator: " · ")
         }
     }
@@ -105,7 +184,7 @@ struct NativeCapability: Identifiable {
 
 private struct CapabilityRow: View {
     let capability: NativeCapability
-    let notificationStatus: UNAuthorizationStatus
+    let permission: CapabilityPermission
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -117,25 +196,12 @@ private struct CapabilityRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
-            Text(status.label)
+            Text(permission.label)
                 .font(.footnote)
-                .foregroundStyle(status.needsAttention ? Palette.ink : Palette.secondary)
+                .foregroundStyle(permission.needsAttention ? Palette.ink : Palette.secondary)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 2)
-    }
-
-    private var status: (label: String, needsAttention: Bool) {
-        guard capability.systemPermission != nil else {
-            return (String(localized: "无需授权"), false)
-        }
-        switch notificationStatus {
-        case .authorized, .provisional, .ephemeral:
-            return (String(localized: "已允许"), false)
-        case .denied:
-            // 这一档才值得用户动手：去系统设置打开。
-            return (String(localized: "已关闭"), true)
-        default:
-            return (String(localized: "首次使用时询问"), false)
-        }
     }
 }

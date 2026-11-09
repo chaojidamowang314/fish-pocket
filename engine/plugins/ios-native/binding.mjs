@@ -44,11 +44,15 @@ export function capabilities() {
  * @param capability - capability name, as `capabilities()` lists it.
  * @param op - operation within that capability.
  * @param args - JSON-serialisable arguments object.
+ * @param callerClaim - who the caller says it is, for the user's audit list
+ *   only. Left empty it is recorded as unknown, which is the honest answer when
+ *   nobody claimed anything — including when a plugin reaches the addon
+ *   directly and simply omits it. Never a basis for any decision (see caller.mjs).
  * @returns the capability's result, already parsed.
  * @throws when the addon is absent, or with the capability's own message.
  */
-export async function invoke(capability, op, args = {}) {
+export async function invoke(capability, op, args = {}, callerClaim = null) {
   const addon = binding();
   if (addon === null) throw new Error('native capabilities are only available in the iOS app');
-  return JSON.parse(await addon.invoke(capability, op, JSON.stringify(args)));
+  return JSON.parse(await addon.invoke(capability, op, JSON.stringify(args), callerClaim ?? ''));
 }
