@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var languageChoice = AppLanguage.chosen ?? "system"
     @State private var languageChanged = false
     @AppStorage(BackgroundKeeper.continuedKey) private var continuedProcessing = false
+    @AppStorage(WidgetSnapshotWriter.showTitlesKey) private var widgetTitles = true
 
     private var mirror: SettingsMirror { app.settings }
 
@@ -99,6 +100,17 @@ struct SettingsView: View {
                 } message: {
                     Text("离开 App 时\(turnsOffScreen)，之后引擎可能被系统暂停，自动化和开发服务器会中断。")
                 }
+
+                Section {
+                    Toggle("显示会话标题", isOn: $widgetTitles)
+                        .toggleStyle(.mono)
+                } header: {
+                    Text("小组件")
+                } footer: {
+                    Text("关掉后，主屏幕和锁屏小组件只显示数量和状态。设备锁定时，标题总会被打码。")
+                }
+                .groupedRow()
+                .onChange(of: widgetTitles) { WidgetSnapshotWriter.shared.refresh() }
 
                 Section {
                     NavigationLink("高级") { AdvancedSettingsPage() }

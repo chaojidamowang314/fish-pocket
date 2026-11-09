@@ -27,7 +27,7 @@ struct DshActivityAttributes: ActivityAttributes {
             var agentId: String
         }
 
-        var url: URL { URL(string: "dsh://session/\(sessionId)")! }
+        var url: URL { DshLink.session(sessionId).url }
     }
 }
 

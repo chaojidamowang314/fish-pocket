@@ -22,6 +22,12 @@ struct DshIOSApp: App {
     }
 }
 
+/// A `dsh://` link a window received; the token tells a repeat of the same link apart.
+struct LinkRequest: Equatable {
+    let link: DshLink
+    let token = UUID()
+}
+
 /// A window opened on a session. It moves on to other sessions from there, so the token keeps
 /// the system from taking a later request for the same session as one for this window.
 struct SessionWindow: Codable, Hashable {
@@ -56,10 +62,20 @@ struct RootView: View {
     let session: String?
     @EnvironmentObject private var engine: NodeEngine
     @AppStorage(ThemePreference.key) private var themePreference = ThemePreference.system
+    /// A `dsh://` link, held here because a widget can launch the app: the main view
+    /// is not up until the engine is, and follows it then.
+    @State private var link: LinkRequest?
     private let connection = EngineConnection.shared
 
     var body: some View {
-        content.background(WindowAppearance(style: ThemePreference.style(themePreference)))
+        content
+            .background(WindowAppearance(style: ThemePreference.style(themePreference)))
+            .onOpenURL { url in
+                if let parsed = DshLink(url: url) { link = LinkRequest(link: parsed) }
+            }
+            // A `dsh://` link goes to a window that is already open. Only that: `openWindow` asks
+            // through the same door, and a wider match would swallow every new window.
+            .handlesExternalEvents(preferring: ["dsh://"], allowing: ["dsh://"])
     }
 
     @ViewBuilder
@@ -75,7 +91,7 @@ struct RootView: View {
         case .running(let url, let current):
             Group {
                 if let app = connection.app {
-                    MainView(session: session)
+                    MainView(session: session, link: $link)
                         .environment(app)
                 } else {
                     StartupView(message: String(localized: "正在连接…"))

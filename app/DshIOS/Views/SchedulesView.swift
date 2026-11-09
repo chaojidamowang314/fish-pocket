@@ -40,7 +40,7 @@ final class ScheduleCatalog {
 ///
 /// `sessionId` narrows the list to one session (the session header's entry);
 /// `openSession` opens a session and leaves this page. Without it the page
-/// dismisses itself and opens `dsh://session/<id>`, which `MainView` handles.
+/// dismisses itself and opens `dsh://session/<id>`, which `RootView` hands to `MainView`.
 struct SchedulesView: View {
     var sessionId: String? = nil
     var openSession: ((String) -> Void)? = nil
@@ -189,7 +189,7 @@ struct SchedulesView: View {
     private func open(_ id: String) {
         if let openSession { openSession(id); return }
         dismiss()
-        if let url = URL(string: "dsh://session/\(id)") { UIApplication.shared.open(url) }
+        UIApplication.shared.open(DshLink.session(id).url)
     }
 
     /// Hard delete (with its delivery history); the outcome goes to the shell toast (S-104).

@@ -23,6 +23,8 @@ settings:
     # UI strings: SwiftUI literals and String(localized:) go to the String Catalog at build time.
     SWIFT_EMIT_LOC_STRINGS: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    # The container the app and the widget extension share (widget snapshot). Rename it with the bundle ID.
+    DSH_APP_GROUP: group.com.wsw.dsh-ios
 targets:
   DshIOS:
     type: application
@@ -91,10 +93,16 @@ targets:
         BGTaskSchedulerPermittedIdentifiers: ["$(PRODUCT_BUNDLE_IDENTIFIER).task.*"]
         # Agent status on the lock screen and in the Dynamic Island (LiveActivityController).
         NSSupportsLiveActivities: true
-        # dsh://session/<id>: the Live Activity opens its session.
+        # dsh://session/<id> and dsh://new: the Live Activity and the widgets (Shared/DshLink.swift).
         CFBundleURLTypes:
           - CFBundleURLName: com.wsw.dsh-ios
             CFBundleURLSchemes: [dsh]
+        # Shared/WidgetSnapshot.swift reads the group from here.
+        DshAppGroup: $(DSH_APP_GROUP)
+    entitlements:
+      path: DshIOS/DshIOS.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(DSH_APP_GROUP)"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wsw.dsh-ios
@@ -120,7 +128,8 @@ targets:
         DEFINES_MODULE: NO
         SKIP_INSTALL: YES
         OTHER_LDFLAGS: ["$(inherited)", "-Wl,-reexport-lSystem"]
-  # The Live Activity's views; the app starts and updates it.
+  # The widget extension: the Live Activity (the app starts and updates it) and the
+  # home and lock screen widgets (they draw the snapshot the app writes).
   DshLiveActivity:
     type: app-extension
     platform: iOS
@@ -136,6 +145,11 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        DshAppGroup: $(DSH_APP_GROUP)
+    entitlements:
+      path: LiveActivity/DshLiveActivity.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(DSH_APP_GROUP)"]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wsw.dsh-ios.LiveActivity

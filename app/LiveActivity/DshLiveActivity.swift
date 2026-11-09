@@ -5,7 +5,11 @@ import WidgetKit
 
 @main
 struct DshWidgets: WidgetBundle {
-    var body: some Widget { DshLiveActivity() }
+    var body: some Widget {
+        DshLiveActivity()
+        SessionsWidget()
+        NewConversationWidget()
+    }
 }
 
 /// Agent status on the lock screen and in the Dynamic Island: a status dot and
