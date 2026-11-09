@@ -8696,6 +8696,12 @@
             "state" : "translated",
             "value" : "Allowed"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido"
+          }
         }
       }
     },
@@ -10856,6 +10862,12 @@
             "state" : "translated",
             "value" : "Open System Settings"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes del sistema"
+          }
         }
       }
     },
@@ -10978,6 +10990,12 @@
             "state" : "translated",
             "value" : "Reads text aloud"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee el texto en voz alta"
+          }
         }
       }
     },
@@ -11067,6 +11085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reminds you at a time you set, even when the app is closed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te avisa a la hora que indiques, incluso con la app cerrada"
           }
         }
       }
@@ -11350,6 +11374,12 @@
             "state" : "translated",
             "value" : "Plugins run with your permissions and can use device capabilities (%@). Install only from sources you trust."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan con tus permisos y pueden usar las funciones del dispositivo (%@). Instala solo desde fuentes de confianza."
+          }
         }
       }
     },
@@ -11411,6 +11441,12 @@
             "state" : "translated",
             "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan en este dispositivo con tus permisos y pueden usar las funciones del dispositivo (%@). Asegúrate de confiar en su origen"
+          }
         }
       }
     },
@@ -11420,6 +11456,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan en este dispositivo con tus permisos y pueden usar las funciones del dispositivo (%@). Asegúrate de confiar en su origen."
           }
         }
       }
@@ -13267,6 +13309,12 @@
             "state" : "translated",
             "value" : "No permission needed"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No requiere permisos"
+          }
         }
       }
     },
@@ -13550,6 +13598,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The agent and any third-party plugin you install can use these capabilities; the app does not distinguish between callers. Check where a plugin comes from before installing it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El agente y cualquier complemento de terceros que instales pueden usar estas funciones; la app no distingue quién hace la llamada. Comprueba el origen de un complemento antes de instalarlo."
           }
         }
       }
@@ -14233,6 +14287,12 @@
             "state" : "translated",
             "value" : "Speech"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lectura en voz alta"
+          }
         }
       }
     },
@@ -14611,6 +14671,12 @@
             "state" : "translated",
             "value" : "Device capabilities"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciones del dispositivo"
+          }
         }
       }
     },
@@ -14684,6 +14750,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Model, iOS version, battery, free storage"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelo, versión de iOS, batería y espacio libre"
           }
         }
       }
@@ -18539,6 +18611,12 @@
             "state" : "translated",
             "value" : "System permissions can only be changed in Settings. iOS shows its prompt once per app, so after a refusal that is the only way back."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los permisos del sistema solo se cambian en Ajustes. iOS muestra su aviso una sola vez por app, así que tras un rechazo ese es el único camino de vuelta."
+          }
         }
       }
     },
@@ -19760,6 +19838,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Device status"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado del dispositivo"
           }
         }
       }
@@ -22460,6 +22544,12 @@
             "state" : "translated",
             "value" : "Notifications"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificaciones"
+          }
         }
       }
     },
@@ -23243,6 +23333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Asks on first use"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta la primera vez"
           }
         }
       }
