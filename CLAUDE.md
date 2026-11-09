@@ -55,4 +55,4 @@
 
 ## 微信交流群二维码
 
-群二维码 7 天过期，图片只有一份：`docs/assets/wechat-group.png`。README 直接引用它，App 设置页底部（仅中文界面）运行时从 GitHub `main` 分支加载它，连不上时改走 jsDelivr，所以换图不用发版，合进 `main` 就生效。官网 `fish-pocket-site` 的 `web/public/wechat-group.png` 是另一份，要一起换，再重新发布官网。
+群二维码 7 天过期。主仓库里图片只有一份：`docs/assets/wechat-group.png`。README 直接引用它，App 设置页底部（仅中文界面）运行时从 GitHub `main` 分支加载它，连不上时改走 jsDelivr，所以换图不用发版，合进 `main` 就生效。官网 `fish-pocket-site` 的 `web/public/wechat-group.png` 是另一份，要一起换，再重新发布官网。
