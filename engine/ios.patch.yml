@@ -51,3 +51,7 @@
     # only applies at startup.
     - id: ios-host
       name: ./plugins/ios-host/index.mjs
+    # Device state, local notifications and speech, through the dsh_ios_native
+    # addon. Registers nothing when that addon is absent (docs/native-services.md).
+    - id: ios-native
+      name: ./plugins/ios-native/index.mjs

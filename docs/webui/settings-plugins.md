@@ -543,7 +543,9 @@ Web 客户端行为：点击「登录」同步 `window.open("about:blank")` 预�
 | allCategories / showMore / noMatches / emptyIndex | 全部 / 显示更多 / 没有符合条件的插件 / 此索引没有插件 | All / Show more / No plugins match. / This index lists no plugins. |
 | install / statusInstalled / statusUpdate / statusProvided | 安装 / 已安装 / 有新版本 / 随 DSH 提供 | Install / Installed / Update available / Provided by DSH |
 | versionsTitle / versionDefault / versionInstalled / versionIncompatible / versionExempted / versionPrerelease | 版本 / 推荐 / 当前已安装 / 不兼容 / 已豁免 / 预发布 | Versions / Recommended / Installed / Incompatible / Exempted / Prerelease |
-| confirmTitle / installTrust | 安装「{name}」？/ 插件在本机以你的权限运行。请确认你信任它的来源 | Install "{name}"? / Plugins run on this machine with your permissions. Make sure you trust where this one comes from. |
+| confirmTitle / installTrust | 安装「{name}」？/ 插件在本机以你的权限运行，也能用本机能力（{能力名}）。请确认你信任它的来源 | Install "{name}"? / Plugins run on this device with your permissions and can use device capabilities ({names}). Make sure you trust the source. |
+
+> `installTrust` 在 iOS 上比官方多一句本机能力。原因是这个 App 把本机能力（日历、提醒…）对第三方插件开放，而且**不区分调用方**，所以装插件是用户唯一的事前决策点（`docs/native-services.md` §4.1.1）。括号里的能力名取自 addon 的能力表，加能力时会自己跟着变，不要写死。
 | readFailed / readInvalid / readChanged | 无法读取此索引 / 此索引的格式无效 / 此索引在加载过程中发生了变化 | Could not read this index. / This index is not in a valid format. / This index changed while loading. |
 
 ---

@@ -40,6 +40,8 @@ targets:
       - path: ../native/git
       # Images for the engine: ImageIO behind N-API, registered as the linked binding `dsh_image`.
       - path: ../native/image
+      # The iOS frameworks the agent may reach, behind N-API: linked binding `dsh_ios_native`.
+      - path: ../native/ios-native
       # The engine's filesystem view, for the Node entry points libc cannot reach: linked binding `dsh_root`.
       - path: ../native/root/binding.c
       # Python for the engine: embedded CPython, one subinterpreter per process: linked binding `dsh_python`.
@@ -60,6 +62,44 @@ targets:
       - sdk: Security.framework
       - sdk: ImageIO.framework
       - sdk: CoreGraphics.framework
+      # native/ios-native: local notifications, speech synthesis and the calendar.
+      - sdk: UserNotifications.framework
+      - sdk: AVFoundation.framework
+      - sdk: EventKit.framework
+      # 写日历走系统自带的事件编辑器（EKEventEditViewController）。
+      - sdk: EventKitUI.framework
+      # native/ios-native 的 nlp：认语言、人名地名、按语义排序，全在本机算。
+      - sdk: NaturalLanguage.framework
+      # native/ios-native 的 maps：搜地点、算路线和到达时间，不读用户位置。
+      - sdk: MapKit.framework
+      # native/ios-native 的 vision：OCR、条码、图像分类、人脸框，全在本机算。
+      - sdk: Vision.framework
+      # native/ios-native 的 location：取一次位置、地址与坐标互转。
+      - sdk: CoreLocation.framework
+      # native/ios-native 的 transcribe：把录音文件转成文字。只读文件，不录音。
+      - sdk: Speech.framework
+      # native/ios-native 的 health：读步数、睡眠、心率等。只读，不写。
+      - sdk: HealthKit.framework
+      # native/ios-native 的 homekit：看家里有什么、改一个配件的状态、跑一个场景。
+      - sdk: HomeKit.framework
+      # native/ios-native 的 photos：读相册元数据、导出一张给本机识别。不增不改不删。
+      - sdk: Photos.framework
+      # native/ios-native 的 alarm：真闹钟。weak link 不能省——部署目标是 17.0，
+      # AlarmKit 要 26.0，强链接会让 17–25 的机器在 dyld 阶段就起不来，而不是
+      # 用到这个能力才失败。
+      - sdk: AlarmKit.framework
+        weak: true
+      # native/ios-native 的 contacts：按名字、电话或邮箱查联系人。只读。
+      - sdk: Contacts.framework
+      # native/ios-native 的 compose：系统自带的邮件和短信撰写页，发不发由用户点。
+      - sdk: MessageUI.framework
+      # compose 给附件定 MIME 类型、files 给选取器定可选类型，都靠 UTType。
+      - sdk: UniformTypeIdentifiers.framework
+      # native/ios-native 的 music：查音乐资料库、控制系统播放器。
+      - sdk: MediaPlayer.framework
+      # native/ios-native 的 weather：某个坐标的天气和预报。要 App ID 开了 WeatherKit
+      # 才答得出来，见 docs/native-services.md。
+      - sdk: WeatherKit.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm
@@ -99,7 +139,36 @@ targets:
         CADisableMinimumFrameDurationOnPhone: true
         # 输入框的「拍照」(C-104).
         NSCameraUsageDescription: 拍照后作为附件发给智能体。
+        # 本机能力「日历」。这条弹窗是用户在点「允许」前唯一一次被告知的机会，
+        # 所以第二句写明数据会随对话发出去（docs/native-services.md §6.2.1）。
+        # iOS 17 起读日历必须要 full access，没有只读档。
+        NSCalendarsFullAccessUsageDescription: 让智能体按你的要求查看和安排日程。为回答你的问题，相关日程内容会随对话发送给你选择的模型服务商。
+        # 本机能力「提醒」。同样的理由：第二句是产品选择，不是硬性要求。
+        NSRemindersFullAccessUsageDescription: 让智能体按你的要求查看和创建提醒。为回答你的问题，相关提醒内容会随对话发送给你选择的模型服务商。
         NSPhotoLibraryAddUsageDescription: 把分享海报保存到相册。
+        # 本机能力「位置」。只要 when-in-use，不做任何后台或持续定位，所以第一句
+        # 就说清楚是「用到的时候问一次」，免得用户以为我们在跟着他。
+        NSLocationWhenInUseUsageDescription: 让智能体在你问「我在哪」「附近有什么」时读取一次当前位置。只在用到时读，不会持续记录。为回答你的问题，位置会随对话发送给你选择的模型服务商。
+        # 本机能力「健康」。iOS 查不到读权限的状态（Apple 故意不给，防推断），
+        # 所以这个框是用户唯一一次被完整告知的机会，必须把「会发给模型服务商」
+        # 说在前面（§6.1）。只读，所以没有对应的 Update 描述。
+        NSHealthShareUsageDescription: 让智能体在你问起时读取你的健康数据，比如步数、睡眠、心率。为回答你的问题，读到的数值会随对话发送给你选择的模型服务商。App 不会写入或修改任何健康数据。
+        # 本机能力「语音转写」。只转写已有的录音文件，不录音、不要麦克风权限。
+        # 第二句是重点：默认只在本机识别，走云端必须调用方显式指定。
+        NSSpeechRecognitionUsageDescription: 让智能体在你要求时读出录音文件里说了什么。默认只在本机识别，录音不离开手机；只有在明确指定云端识别时，录音才会发送给 Apple 的服务器。为回答你的问题，转写出的文字会随对话发送给你选择的模型服务商。App 不会录音，也不使用麦克风。
+        # 本机能力「智能家居」。写操作走用户自己设的写入方式，所以第一句把
+        # 「查看」和「控制」都说在前面。
+        NSHomeKitUsageDescription: 让智能体按你的要求查看家里的配件和它们的状态，并按你设的写入方式改状态或执行场景。为回答你的问题，配件名称和状态会随对话发送给你选择的模型服务商。
+        # 本机能力「照片」。和上面那条 Add 是两个不同的 access level：Add 是存
+        # 分享海报用的，这条是读。最后一句是实情，这个能力一个写接口都没有。
+        NSPhotoLibraryUsageDescription: 让智能体在你问起时查看相册里有哪些照片，并把你指定的一张导出成文件，用手机本机的识别能力读出里面的文字。为回答你的问题，相关信息会随对话发送给你选择的模型服务商。App 不会添加、修改或删除任何照片。
+        # 本机能力「闹钟」。把「穿透静音」写进去：这是用户在授权框上唯一一次
+        # 能知道自己批的是什么的机会，而它比通知强得多。
+        NSAlarmKitUsageDescription: 让智能体按你的要求设真正的闹钟。闹钟会穿透静音和专注模式，响到你关掉为止。
+        # 本机能力「通讯录」。只读，所以最后一句和照片那条一样是实情。
+        NSContactsUsageDescription: 让智能体在你要求时按名字、电话或邮箱查找联系人，比如替你写邮件前查对方的地址。为回答你的问题，查到的联系人信息会随对话发送给你选择的模型服务商。App 不会添加、修改或删除任何联系人。
+        # 本机能力「音乐」。键名里有 AppleMusic，管的其实是整个媒体资料库。
+        NSAppleMusicUsageDescription: 让智能体按你的要求在音乐资料库里找歌和歌单，并控制播放。为回答你的问题，歌曲和歌单的名称会随对话发送给你选择的模型服务商。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.
@@ -123,14 +192,22 @@ targets:
       path: DshIOS/DshIOS.entitlements
       properties:
         com.apple.security.application-groups: ["$(DSH_APP_GROUP)"]
+        # 本机能力「健康」。只读：写健康数据责任太大，而且「不得写入虚假数据」
+        # 是硬条款（docs/native-services.md §3、§6.1）。
+        com.apple.developer.healthkit: true
+        # 本机能力「智能家居」。没有它 HomeKit 返回零个家，而那个「零」和「用户
+        # 真的没配过家」长得一模一样——会把配置问题伪装成代码问题。
+        com.apple.developer.homekit: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wsw.dsh-ios
         # Design tokens (docs/design/README.md §3) live in Assets.xcassets; the accent is the ink colour.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-        HEADER_SEARCH_PATHS: ["$(SRCROOT)/../vendor/nodejs-mobile/ios/include/node", "$(SRCROOT)/../vendor/libgit2/ios-arm64/include"]
-        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DSH_GIT_LINKED=1", "DSH_IMAGE_LINKED=1"]
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/../vendor/nodejs-mobile/ios/include/node", "$(SRCROOT)/../vendor/libgit2/ios-arm64/include", "$(SRCROOT)/../native/ios-native", "$(SRCROOT)/../native/root"]
+        # Lets SwiftUI read the addon's capability table (DshNativeCapabilities.h).
+        SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/DshIOS/DshIOS-Bridging-Header.h"
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DSH_GIT_LINKED=1", "DSH_IMAGE_LINKED=1", "DSH_IOS_NATIVE_LINKED=1"]
         # __FILE__ in native/git must not carry the build machine's home directory into the binary.
         OTHER_CFLAGS: ["$(inherited)", "-fmacro-prefix-map=$(SRCROOT:dir:standardizepath)=."]
   # The engine's filesystem view (native/root): libc's path functions, and libSystem re-exported.
@@ -166,6 +243,11 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         DshAppGroup: $(DSH_APP_GROUP)
+    dependencies:
+      # 闹钟的锁屏呈现（AlarmActivity.swift）要它。和 App target 同理：部署目标
+      # 是 17.0，AlarmKit 要 26.0，必须 weak link。
+      - sdk: AlarmKit.framework
+        weak: true
     entitlements:
       path: LiveActivity/DshLiveActivity.entitlements
       properties:

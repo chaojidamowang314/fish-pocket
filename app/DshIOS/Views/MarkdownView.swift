@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Block-level Markdown for assistant replies: headings, paragraphs, lists,
-/// quotes, fenced code, tables and rules. Inline styling (bold, code, links)
-/// comes from Foundation's Markdown parser.
+/// quotes, fenced code, tables, rules and images of files. Inline styling
+/// (bold, code, links) comes from Foundation's Markdown parser.
 struct MarkdownView: View {
     let text: String
     /// Streaming text changes every frame; caching each version would only evict finished replies.
@@ -75,6 +75,8 @@ struct MarkdownView: View {
             }
         case .rule:
             Divider()
+        case .image(let alt, let destination):
+            ReplyImage(alt: alt, destination: destination)
         }
     }
 
@@ -321,6 +323,8 @@ enum MarkdownBlock {
     case code(String?, String)
     case table([[String]])
     case rule
+    /// `![alt](path)` naming a file, as the engine's prompt tells the model to show one.
+    case image(alt: String, destination: String)
 
     static func parse(_ source: String) -> [MarkdownBlock] {
         var blocks: [MarkdownBlock] = []
@@ -380,12 +384,44 @@ enum MarkdownBlock {
                     items.append(more.item)
                 }
                 blocks.append(.list(items, ordered: ordered))
+            } else if line.contains("!["), let pieces = splitImages(line) {
+                for piece in pieces {
+                    if case .paragraph(let text) = piece { paragraph.append(text) } else { flush(); blocks.append(piece) }
+                }
             } else {
                 paragraph.append(line)
             }
         }
         flush()
         return blocks
+    }
+
+    /// `![alt](path)`, `![alt](<path with spaces>)`, either with an optional "title".
+    private static let imagePattern = try! NSRegularExpression(pattern: #"!\[([^\]\n]*)\]\(\s*(?:<([^>\n]+)>|([^()\s]+))(?:\s+"[^"\n]*")?\s*\)"#)
+
+    /// A paragraph line cut at the file images in it: `.paragraph` for the text around
+    /// them, `.image` for each. Nil when it has none. An image at a web address is left
+    /// as text, so nothing is fetched just because a reply names a URL; so is one inside
+    /// a code span, where the syntax is being quoted rather than used.
+    private static func splitImages(_ line: String) -> [MarkdownBlock]? {
+        let source = line as NSString
+        var pieces: [MarkdownBlock] = []
+        var cursor = 0
+        for match in imagePattern.matches(in: line, range: NSRange(location: 0, length: source.length)) {
+            let bracketed = match.range(at: 2)
+            let destination = source.substring(with: bracketed.location != NSNotFound ? bracketed : match.range(at: 3))
+            let scheme = destination.range(of: #"^[A-Za-z][A-Za-z0-9+.-]*:"#, options: .regularExpression).map { destination[$0].lowercased() }
+            guard scheme == nil || scheme == "file:",
+                  source.substring(to: match.range.location).filter({ $0 == "`" }).count.isMultiple(of: 2) else { continue }
+            let before = source.substring(with: NSRange(location: cursor, length: match.range.location - cursor)).trimmingCharacters(in: .whitespaces)
+            if !before.isEmpty { pieces.append(.paragraph(before)) }
+            pieces.append(.image(alt: source.substring(with: match.range(at: 1)), destination: destination))
+            cursor = match.range.location + match.range.length
+        }
+        guard cursor > 0 else { return nil }
+        let rest = source.substring(from: cursor).trimmingCharacters(in: .whitespaces)
+        if !rest.isEmpty { pieces.append(.paragraph(rest)) }
+        return pieces
     }
 
     private static func cells(_ row: String) -> [String] {

@@ -670,7 +670,7 @@ struct ZoomableImage: View {
     }
 
     /// Downsampled: a camera photo decoded whole costs hundreds of megabytes on a phone.
-    private nonisolated static func decode(_ url: URL) -> UIImage? {
+    nonisolated static func decode(_ url: URL) -> UIImage? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,

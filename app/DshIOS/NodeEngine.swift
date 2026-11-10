@@ -42,6 +42,16 @@ final class NodeEngine: ObservableObject {
         guard !started else { return }
         started = true
         startedAt = Date()
+        // 本机能力的预热（目前是电量监测）。放在引擎起来之前：UIKit 刚打开电量监测时
+        // 还报不出电量，而智能体问电量通常只问一次。
+        DshNativePrepare()
+        // 写操作要弹的那些界面由 Swift 实现，addon 通过这个桥找过来。必须在引擎起来
+        // 之前登记：引擎一跑，第一次调用随时可能到。
+        NativeBridge.install()
+        // 闹钟和天气的原生实现在 Swift 侧（AlarmKit、WeatherKit 都没有 ObjC 接口），
+        // 同样要在引擎起来之前登记。
+        AlarmProvider.install()
+        WeatherProvider.install()
         guard EnginePaths.install() else {
             phase = .exited(-1)
             return

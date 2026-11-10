@@ -1,0 +1,93 @@
+// The iOS frameworks the agent is allowed to reach, as engine tools and as a
+// service third-party plugins can inject.
+//
+// This is phase 0 of docs/native-services.md: only capabilities that need no
+// system permission and no user decision (device state, local notifications,
+// speech). The permission machinery the later phases need lives in the addon,
+// not here — see native/ios-native/ios_native.m's `policy_allows`.
+//
+// Nothing is registered when the addon is absent (any non-iOS build), so the
+// model never sees a tool it cannot call.
+import { Service } from '@deepseek-ai/cordis';
+import { capabilities, invoke } from './binding.mjs';
+import { callerClaim } from './caller.mjs';
+import { TOOLS } from './tools.mjs';
+
+/**
+ * `ctx.iosNative` — the same path the engine's own tools take.
+ *
+ * **For the agent. Not an API, and not aimed at plugins** (§1.1): a plugin
+ * calling the device capabilities is out of scope for now — the security model
+ * is not worked out and the value case is not there. If that changes it means a
+ * versioned API protocol of its own, which is a different piece of work.
+ *
+ * A third-party plugin can reach it anyway, and reach the addon underneath it,
+ * and nothing here can stop that (§5.3.1 — measured: a plugin writes one
+ * `new Worker(code, {eval: true})` and has a fresh realm with its own
+ * `process`, both binding handles intact). Saying "plugins may not" would be a
+ * promise we cannot keep. What we can say is that nothing is promised to them:
+ * capability names, operation names and argument shapes change with the app and
+ * nothing here is versioned. The agent keeps up because it re-reads the skill
+ * file; a plugin that wrote these names down would break on an update.
+ *
+ * It stays exposed anyway, rather than being hidden to discourage use, because
+ * hiding it would not close anything — it would only push an honest plugin onto
+ * the unnamed path, where cordis cannot read its name and the activity list
+ * shows the caller as unknown. That makes the audit worse, not better.
+ *
+ * Deliberately NOT a per-caller gate: a plugin can reach the addon directly
+ * (`process._linkedBinding`), and could present itself as the engine itself by
+ * calling through `ctx.root`, so a check here would only stop the plugins that
+ * were not trying to get around it. The checks that hold are iOS's own
+ * permission prompts and, for writes, the confirmation the addon runs on the
+ * main thread (docs/native-services.md §2.2, §5.3).
+ */
+class IosNativeService extends Service {
+  constructor(ctx, available) {
+    super(ctx, 'iosNative');
+    this.available = available;
+  }
+
+  /**
+   * Call one native capability operation.
+   * @param capability - capability name, e.g. 'device'.
+   * @param op - operation within it, e.g. 'info'.
+   * @param args - JSON-serialisable arguments.
+   * @returns the capability's result.
+   */
+  async invoke(capability, op, args = {}) {
+    // cordis rewrites `this.ctx` to whoever called this method, which is the one
+    // moment the caller can be named at all. The name goes to the user's audit
+    // list and nowhere else — a plugin can produce any name it likes here
+    // (docs/native-services.md §2.2), so a check built on it would stop only the
+    // plugins that were not trying.
+    return invoke(capability, op, args, callerClaim(this.ctx));
+  }
+}
+
+export default function IosNative(ctx) {
+  const available = capabilities();
+  if (available === null) {
+    ctx.logger.debug('no dsh_ios_native addon; native capabilities are off');
+    return;
+  }
+
+  ctx.plugin(
+    class extends IosNativeService {
+      constructor(serviceCtx) {
+        super(serviceCtx, available);
+      }
+    },
+  );
+
+  // One tool per capability the addon actually implements. A tool whose
+  // capability is missing is never registered, so the addon's table stays the
+  // single source of truth for what exists.
+  ctx.inject(['tools'], (toolsCtx) => {
+    for (const [capability, tool] of Object.entries(TOOLS)) {
+      if (available[capability] === undefined) continue;
+      toolsCtx.effect(() => toolsCtx.tools.register(tool), `ios-native ${capability} tool`);
+    }
+    toolsCtx.logger.info('native capabilities: %s', Object.keys(available).join(', '));
+  });
+}

@@ -1821,6 +1821,38 @@
     "https://npm.example.com/" : {
       "shouldTranslate" : false
     },
+    "iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。去「健康」App 的「共享」里可以逐项查看和更改。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS does not tell apps which health data you allowed, so all this can say is that you were asked. You can see and change each one under Sharing in the Health app."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS no dice a las apps qué datos de salud permitiste, así que esto solo puede decir que te lo preguntó. Puedes ver y cambiar cada uno en Compartir, dentro de la app Salud."
+          }
+        }
+      }
+    },
+    "iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。要逐项查看和更改：打开「健康」App，点右上角的头像，在「隐私」下面进「App」，再选 Fish Pocket。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS does not tell an app which kinds of health data you allowed, so all this page can say is that you were asked. To see and change them one by one: open the Health app, tap your picture at the top right, go to Apps under Privacy, then choose Fish Pocket."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS no le dice a una app qué datos de salud permitiste, así que esta página solo puede decir que se te preguntó. Para verlos y cambiarlos uno por uno: abre la app Salud, toca tu foto arriba a la derecha, entra en Apps dentro de Privacidad y elige Fish Pocket."
+          }
+        }
+      }
+    },
     "iOS 只能运行插件的 Host 部分；带网页界面（Client）的版本请在网页端运行。" : {
       "localizations" : {
         "en" : {
@@ -2150,6 +2182,22 @@
         }
       }
     },
+    "上一首" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anterior"
+          }
+        }
+      }
+    },
     "上下文" : {
       "localizations" : {
         "en" : {
@@ -2444,6 +2492,22 @@
         }
       }
     },
+    "下一首" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
+          }
+        }
+      }
+    },
     "下次运行" : {
       "localizations" : {
         "en" : {
@@ -2520,6 +2584,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A continuación está el registro del motor. Cópialo o compártelo para ver en qué paso se atascó."
+          }
+        }
+      }
+    },
+    "不允许" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not allowed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No permitir"
           }
         }
       }
@@ -2892,6 +2972,22 @@
         }
       }
     },
+    "仅可添加，读不了日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add-only, cannot read events"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo añadir, no puede leer eventos"
+          }
+        }
+      }
+    },
     "仅支持 PNG、JPG、WebP、GIF 格式的图片" : {
       "localizations" : {
         "en" : {
@@ -2920,6 +3016,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Solo se muestran los primeros %lld; acota la búsqueda"
+          }
+        }
+      }
+    },
+    "仅限你分享的那几位" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the ones you shared"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo los que compartiste"
+          }
+        }
+      }
+    },
+    "仅限你分享的那几张" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the ones you shared"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo las que compartiste"
           }
         }
       }
@@ -3538,6 +3666,22 @@
         }
       }
     },
+    "位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        }
+      }
+    },
     "作者" : {
       "localizations" : {
         "en" : {
@@ -3582,6 +3726,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utiliza el proveedor predeterminado"
+          }
+        }
+      }
+    },
+    "使用记录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividad"
           }
         }
       }
@@ -3730,6 +3890,22 @@
         }
       }
     },
+    "修改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar"
+          }
+        }
+      }
+    },
     "修改了文件" : {
       "localizations" : {
         "en" : {
@@ -3758,6 +3934,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actualizar tarea programada"
+          }
+        }
+      }
+    },
+    "修改日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar evento"
+          }
+        }
+      }
+    },
+    "修改这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cambiar este evento?"
           }
         }
       }
@@ -3886,6 +4094,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No se pudo desactivar: %@"
+          }
+        }
+      }
+    },
+    "健康" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salud"
           }
         }
       }
@@ -4322,6 +4546,22 @@
         }
       }
     },
+    "关掉闹钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn off"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar"
+          }
+        }
+      }
+    },
     "关联会话" : {
       "localizations" : {
         "en" : {
@@ -4702,6 +4942,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escribir"
+          }
+        }
+      }
+    },
+    "写邮件和短信" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mail & Messages"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo y mensajes"
           }
         }
       }
@@ -5138,6 +5394,22 @@
         }
       }
     },
+    "切到下一首？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip to the next track?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Pasar a la siguiente canción?"
+          }
+        }
+      }
+    },
     "切换子智能体：%@" : {
       "localizations" : {
         "en" : {
@@ -5490,6 +5762,38 @@
         }
       }
     },
+    "删除待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar recordatorio"
+          }
+        }
+      }
+    },
+    "删除日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar evento"
+          }
+        }
+      }
+    },
     "删除档位" : {
       "localizations" : {
         "en" : {
@@ -5534,6 +5838,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Eliminar esta tarea?"
+          }
+        }
+      }
+    },
+    "删除这一条？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this one?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este elemento?"
+          }
+        }
+      }
+    },
+    "删除这个提醒？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this reminder?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este recordatorio?"
+          }
+        }
+      }
+    },
+    "删除这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este evento?"
           }
         }
       }
@@ -5598,6 +5950,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adelante"
+          }
+        }
+      }
+    },
+    "剪贴板" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clipboard"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portapapeles"
           }
         }
       }
@@ -6178,6 +6546,22 @@
         }
       }
     },
+    "去设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        }
+      }
+    },
     "参数" : {
       "localizations" : {
         "en" : {
@@ -6466,6 +6850,22 @@
         }
       }
     },
+    "取消提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar recordatorio"
+          }
+        }
+      }
+    },
     "取消置顶" : {
       "localizations" : {
         "en" : {
@@ -6494,6 +6894,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No se pudo desfijar. Inténtalo de nuevo más tarde."
+          }
+        }
+      }
+    },
+    "取消这个闹钟？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn this alarm off?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Desactivar esta alarma?"
           }
         }
       }
@@ -7090,6 +7506,22 @@
         }
       }
     },
+    "哪些要授权的能力被用过、谁用的。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which capabilities that need permission have been used, and by whom."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué funciones que requieren permiso se han usado y quién las usó."
+          }
+        }
+      }
+    },
     "喜欢 Fish Pocket 吗？" : {
       "localizations" : {
         "en" : {
@@ -7102,6 +7534,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Te gusta Fish Pocket?"
+          }
+        }
+      }
+    },
+    "回到上一首？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go back to the previous track?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Volver a la canción anterior?"
           }
         }
       }
@@ -7198,6 +7646,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revertir"
+          }
+        }
+      }
+    },
+    "图像识别" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image reading"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lectura de imágenes"
           }
         }
       }
@@ -7410,6 +7874,22 @@
         }
       }
     },
+    "在你的音乐资料库里找歌和歌单，并按你设的写入方式播放、暂停、切歌" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finds songs and playlists in your music library, and plays, pauses or skips the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca canciones y listas en tu biblioteca musical, y reproduce, pausa o cambia de canción según lo que configures abajo"
+          }
+        }
+      }
+    },
     "在侧边栏预览 %@" : {
       "localizations" : {
         "en" : {
@@ -7550,6 +8030,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configura y administra los complementos aquí. Los complementos con módulos nativos no se pueden cargar en iOS."
+          }
+        }
+      }
+    },
+    "地图" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mapas"
           }
         }
       }
@@ -7934,6 +8430,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tarea externa"
+          }
+        }
+      }
+    },
+    "天气" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiempo"
           }
         }
       }
@@ -9154,6 +9666,23 @@
         }
       }
     },
+    "已允许" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allowed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido"
+          }
+        }
+      }
+    },
     "已允许运行安装脚本：%@" : {
       "localizations" : {
         "en" : {
@@ -9976,6 +10505,22 @@
         }
       }
     },
+    "已询问" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asked"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya preguntado"
+          }
+        }
+      }
+    },
     "已读取图片" : {
       "localizations" : {
         "en" : {
@@ -10248,6 +10793,39 @@
         }
       }
     },
+    "开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once it is on, the agent and the third-party plugins you install can both use it, and the app does not tell callers apart. Make sure you trust where a plugin comes from before installing it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activada, tanto el agente como los plugins de terceros que instales pueden usarla, y la app no distingue quién la llama. Asegúrate de confiar en el origen de un plugin antes de instalarlo."
+          }
+        }
+      }
+    },
+    "开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。改、删这类写操作默认直接执行，不会每次问你——想让它每次停下来问，把那一项的「写入」改成「每次确认」。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once it is on, the agent and the third-party plugins you install can both use it, and the app does not tell callers apart. Make sure you trust where a plugin comes from before installing it. Changes and deletions go ahead without asking by default — set that capability’s Write to \"Ask every time\" if you would rather be stopped on each one."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activada, tanto el agente como los plugins de terceros que instales pueden usarla, y la app no distingue quién la llama. Asegúrate de confiar en el origen de un plugin antes de instalarlo. Los cambios y eliminaciones se hacen directamente por omisión: pon la escritura de esa función en «Preguntar siempre» si prefieres que te consulte cada vez."
+          }
+        }
+      }
+    },
     "开始使用" : {
       "localizations" : {
         "en" : {
@@ -10308,6 +10886,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Código abierto · En App Store y TestFlight"
+          }
+        }
+      }
+    },
+    "开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once granted, changing or taking back access happens in Settings. iOS shows its permission dialog only once per app for the life of the install, so after a refusal that is the only way back."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez concedido, cambiar o retirar el acceso se hace en Ajustes. iOS muestra su diálogo de permiso una sola vez por app mientras esté instalada, así que tras un rechazo ese es el único camino."
+          }
+        }
+      }
+    },
+    "开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。健康数据是例外，要在「健康」App 里改。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once something is on, changing it or taking it back happens in Settings. iOS shows each permission dialog only once per app, so after a refusal that is also the only place to turn it on. Health data is the exception: change it in the Health app."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activado algo, cambiarlo o retirarlo se hace en Ajustes. iOS muestra cada diálogo de permiso una sola vez por app, así que tras un rechazo ese es también el único lugar para activarlo. Los datos de salud son la excepción: se cambian en la app Salud."
           }
         }
       }
@@ -11336,6 +11946,22 @@
         }
       }
     },
+    "打开健康" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Health"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Salud"
+          }
+        }
+      }
+    },
     "打开文件" : {
       "localizations" : {
         "en" : {
@@ -11384,6 +12010,22 @@
         }
       }
     },
+    "打开系统设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open System Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes del sistema"
+          }
+        }
+      }
+    },
     "打开网页版" : {
       "localizations" : {
         "en" : {
@@ -11416,6 +12058,22 @@
         }
       }
     },
+    "打开链接" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open links"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir enlaces"
+          }
+        }
+      }
+    },
     "打开键盘" : {
       "localizations" : {
         "en" : {
@@ -11428,6 +12086,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar teclado"
+          }
+        }
+      }
+    },
+    "执行" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar"
           }
         }
       }
@@ -11460,6 +12134,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comandos ejecutados"
+          }
+        }
+      }
+    },
+    "执行这个场景？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run this scene?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ejecutar esta escena?"
           }
         }
       }
@@ -11508,6 +12198,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Envía tu último mensaje de nuevo."
+          }
+        }
+      }
+    },
+    "把录音文件里说的话转成文字。默认只在本机识别，录音不上传" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns what is said in a recording into text. On the device by default; the recording is not uploaded"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convierte en texto lo que se dice en una grabación. En el dispositivo por omisión; la grabación no se sube"
+          }
+        }
+      }
+    },
+    "把文字念出来" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads text aloud"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee el texto en voz alta"
+          }
+        }
+      }
+    },
+    "把这个提醒标记为完成？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark this reminder done?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Marcar este recordatorio como hecho?"
+          }
+        }
+      }
+    },
+    "把邮件或短信替你填好，弹出系统的发送页。发不发由你点，智能体自己发不出去" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fills in a mail or a message for you and brings up the system’s send sheet. Sending is your tap; the agent cannot send anything by itself"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rellena un correo o un mensaje por ti y abre la hoja de envío del sistema. Enviarlo depende de tu toque; el agente no puede enviar nada por sí solo"
           }
         }
       }
@@ -11592,6 +12346,38 @@
         }
       }
     },
+    "按你的要求定时提醒你，App 关着也会响" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminds you at a time you set, even when the app is closed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te avisa a la hora que indiques, incluso con la app cerrada"
+          }
+        }
+      }
+    },
+    "按名字、电话或邮箱查联系人。只读，不增不改不删" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks up contacts by name, phone number or email. Read-only: it never adds, changes or deletes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca contactos por nombre, teléfono o correo. Solo lectura: nunca añade, cambia ni elimina"
+          }
+        }
+      }
+    },
     "按工作区" : {
       "localizations" : {
         "en" : {
@@ -11620,6 +12406,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por fecha"
+          }
+        }
+      }
+    },
+    "授权" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permisos"
           }
         }
       }
@@ -11848,6 +12650,22 @@
         }
       }
     },
+    "提醒事项" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorios"
+          }
+        }
+      }
+    },
     "提问" : {
       "localizations" : {
         "en" : {
@@ -11880,7 +12698,24 @@
         }
       }
     },
+    "插件以你的权限运行，也能用本机能力（%@）。只安装信任的来源。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run with your permissions and can use device capabilities (%@). Install only from sources you trust."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan con tus permisos y pueden usar las funciones del dispositivo (%@). Instala solo desde fuentes de confianza."
+          }
+        }
+      }
+    },
     "插件以你的权限运行，只安装信任的来源。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11913,6 +12748,7 @@
       }
     },
     "插件在本机以你的权限运行。请确认你信任它的来源" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11929,6 +12765,7 @@
       }
     },
     "插件在本机以你的权限运行。请确认你信任它的来源。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11940,6 +12777,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los complementos se ejecutan en este dispositivo con tus permisos. Asegúrate de confiar en la fuente."
+          }
+        }
+      }
+    },
+    "插件在本机以你的权限运行，也能用本机能力（%@）。请确认你信任它的来源" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan en este dispositivo con tus permisos y pueden usar las funciones del dispositivo (%@). Asegúrate de confiar en su origen"
+          }
+        }
+      }
+    },
+    "插件在本机以你的权限运行，也能用本机能力（%@）。请确认你信任它的来源。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugins run on this device with your permissions and can use device capabilities (%@). Make sure you trust the source."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los complementos se ejecutan en este dispositivo con tus permisos y pueden usar las funciones del dispositivo (%@). Asegúrate de confiar en su origen."
           }
         }
       }
@@ -12248,6 +13117,22 @@
         }
       }
     },
+    "搜地点、算路线和到达时间。不读你的位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finds places and works out travel times. Does not read where you are"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encuentra lugares y calcula tiempos de viaje. No lee dónde estás"
+          }
+        }
+      }
+    },
     "搜索 %@ 个插件" : {
       "localizations" : {
         "en" : {
@@ -12452,6 +13337,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deshacer"
+          }
+        }
+      }
+    },
+    "播放" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        }
+      }
+    },
+    "播放这些音乐？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play this music?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Reproducir esta música?"
           }
         }
       }
@@ -12760,6 +13677,22 @@
         }
       }
     },
+    "改这个配件的状态？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change this accessory?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cambiar este accesorio?"
+          }
+        }
+      }
+    },
     "放弃" : {
       "localizations" : {
         "en" : {
@@ -13032,6 +13965,22 @@
         }
       }
     },
+    "文本分析" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text analysis"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Análisis de texto"
+          }
+        }
+      }
+    },
     "文档渲染中..." : {
       "localizations" : {
         "en" : {
@@ -13230,6 +14179,22 @@
         }
       }
     },
+    "新建待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir recordatorio"
+          }
+        }
+      }
+    },
     "新建文件夹" : {
       "localizations" : {
         "en" : {
@@ -13246,6 +14211,22 @@
         }
       }
     },
+    "新建日程" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add event"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir evento"
+          }
+        }
+      }
+    },
     "新建终端" : {
       "localizations" : {
         "en" : {
@@ -13258,6 +14239,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva terminal"
+          }
+        }
+      }
+    },
+    "新建这个提醒？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add this reminder?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Añadir este recordatorio?"
+          }
+        }
+      }
+    },
+    "新建这个日程？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add this event?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Añadir este evento?"
           }
         }
       }
@@ -13828,6 +14841,39 @@
         }
       }
     },
+    "无需授权" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No permission needed"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No requiere permisos"
+          }
+        }
+      }
+    },
+    "日历" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendario"
+          }
+        }
+      }
+    },
     "日期" : {
       "localizations" : {
         "en" : {
@@ -14102,6 +15148,22 @@
         }
       }
     },
+    "智能体" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agente"
+          }
+        }
+      }
+    },
     "智能体与工具" : {
       "localizations" : {
         "en" : {
@@ -14114,6 +15176,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agentes y herramientas"
+          }
+        }
+      }
+    },
+    "智能体和你装的第三方插件都能用这些能力，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The agent and any third-party plugin you install can use these capabilities; the app does not distinguish between callers. Check where a plugin comes from before installing it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El agente y cualquier complemento de terceros que instales pueden usar estas funciones; la app no distingue quién hace la llamada. Comprueba el origen de un complemento antes de instalarlo."
           }
         }
       }
@@ -14150,6 +15229,22 @@
         }
       }
     },
+    "智能家居" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Home"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Casa inteligente"
+          }
+        }
+      }
+    },
     "暂停" : {
       "localizations" : {
         "en" : {
@@ -14162,6 +15257,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar"
+          }
+        }
+      }
+    },
+    "暂停播放？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause playback?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Pausar la reproducción?"
           }
         }
       }
@@ -14614,6 +15725,22 @@
         }
       }
     },
+    "替换剪贴板的内容？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace the clipboard?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Reemplazar el portapapeles?"
+          }
+        }
+      }
+    },
     "最佳匹配" : {
       "localizations" : {
         "en" : {
@@ -14806,6 +15933,22 @@
         }
       }
     },
+    "朗读" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lectura en voz alta"
+          }
+        }
+      }
+    },
     "未分组" : {
       "localizations" : {
         "en" : {
@@ -14882,6 +16025,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No instalado"
+          }
+        }
+      }
+    },
+    "未开启" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enabled"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No habilitado"
           }
         }
       }
@@ -14994,6 +16153,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando desconocido o con formato incorrecto: /compact"
+          }
+        }
+      }
+    },
+    "未知来源" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown source"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Origen desconocido"
           }
         }
       }
@@ -15174,6 +16349,22 @@
         }
       }
     },
+    "本机能力" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device capabilities"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciones del dispositivo"
+          }
+        }
+      }
+    },
     "本轮已中断，未提交回答" : {
       "localizations" : {
         "en" : {
@@ -15234,6 +16425,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este turno falló"
+          }
+        }
+      }
+    },
+    "机型、系统版本、电量、存储空间" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model, iOS version, battery, free storage"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelo, versión de iOS, batería y espacio libre"
           }
         }
       }
@@ -15398,6 +16605,22 @@
         }
       }
     },
+    "查某个地点的实时天气和预报，数据来自 Apple 天气。不读你的位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks up current weather and the forecast for a place, with data from Apple Weather. It does not read your location"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta el tiempo actual y la previsión de un lugar, con datos de Apple Weather. No lee tu ubicación"
+          }
+        }
+      }
+    },
     "查看 %@" : {
       "localizations" : {
         "en" : {
@@ -15430,6 +16653,39 @@
         }
       }
     },
+    "查看「提醒事项」里的待办。新建、完成和删除都要你当场确认" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what is on your Reminders. Adding, completing and deleting each ask you first"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tus Recordatorios. Añadir, completar y eliminar te preguntan antes"
+          }
+        }
+      }
+    },
+    "查看「提醒事项」里的待办，并按你设的写入方式增删改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what is on your Reminders, and adds, completes or deletes them the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tus Recordatorios y los añade, completa o elimina según lo que configures abajo"
+          }
+        }
+      }
+    },
     "查看任务、目标和排队" : {
       "localizations" : {
         "en" : {
@@ -15442,6 +16698,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ver tareas, objetivos y cola"
+          }
+        }
+      }
+    },
+    "查看你的日程。新建、修改和删除都要你当场确认" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule. Adding, changing and deleting each ask you first"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda. Añadir, cambiar y eliminar te preguntan antes"
+          }
+        }
+      }
+    },
+    "查看你的日程，回答和安排有关的问题。只读，改不了也删不掉" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule to answer questions about it. Read-only: it cannot change or delete anything"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda para responder preguntas sobre ella. Solo lectura: no puede cambiar ni eliminar nada"
+          }
+        }
+      }
+    },
+    "查看你的日程，并按你设的写入方式增删改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your schedule, and adds, changes or deletes events the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta tu agenda y añade, cambia o elimina eventos según lo que configures abajo"
           }
         }
       }
@@ -15622,6 +16928,22 @@
         }
       }
     },
+    "查看家里有哪些配件和它们的状态，并按你设的写入方式改状态、跑场景" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sees the accessories in your home and their state, and changes them or runs scenes the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ve los accesorios de tu casa y su estado, y los cambia o ejecuta escenas según lo que configures abajo"
+          }
+        }
+      }
+    },
     "查看已安装" : {
       "localizations" : {
         "en" : {
@@ -15638,6 +16960,22 @@
         }
       }
     },
+    "查看待发提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "List pending reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver recordatorios pendientes"
+          }
+        }
+      }
+    },
     "查看目标" : {
       "localizations" : {
         "en" : {
@@ -15650,6 +16988,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ver objetivo"
+          }
+        }
+      }
+    },
+    "查看相册里有哪些照片，并把你指定的一张导出给本机识别。不增不改不删" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sees what is in your library and exports one picture for the phone to read. Never adds, changes or deletes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ve lo que hay en tu fototeca y exporta una foto para que el teléfono la lea. Nunca añade, cambia ni elimina"
           }
         }
       }
@@ -15746,6 +17100,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etiquetas · %lld"
+          }
+        }
+      }
+    },
+    "标记完成" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark done"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como hecho"
           }
         }
       }
@@ -17150,6 +18520,22 @@
         }
       }
     },
+    "每次确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask every time"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preguntar siempre"
+          }
+        }
+      }
+    },
     "毫秒" : {
       "localizations" : {
         "en" : {
@@ -17162,6 +18548,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ms"
+          }
+        }
+      }
+    },
+    "没开的能力，智能体和你装的插件都用不了，也没法替你打开。系统的授权框只会在你点「开启」时出现。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A capability you have not switched on cannot be used by the agent or by the plugins you install, and neither of them can switch it on for you. The system permission dialog appears only when you tap Turn On."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una función que no hayas activado no pueden usarla ni el agente ni los plugins que instales, y ninguno de ellos puede activarla por ti. El diálogo de permiso del sistema solo aparece cuando tocas Activar."
           }
         }
       }
@@ -17450,6 +18852,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nada en curso"
+          }
+        }
+      }
+    },
+    "没能打开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not turn it on"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo activar"
           }
         }
       }
@@ -17886,6 +19304,54 @@
         }
       }
     },
+    "清空之后就看不到之前谁用过这些能力了。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once cleared, you can no longer see who used these capabilities."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez borrado, ya no podrás ver quién usó estas funciones."
+          }
+        }
+      }
+    },
+    "清空使用记录？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear activity?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Borrar la actividad?"
+          }
+        }
+      }
+    },
+    "清空剪贴板？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empty the clipboard?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Vaciar el portapapeles?"
+          }
+        }
+      }
+    },
     "清空搜索" : {
       "localizations" : {
         "en" : {
@@ -17898,6 +19364,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búsqueda"
+          }
+        }
+      }
+    },
+    "清空记录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear activity"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar actividad"
           }
         }
       }
@@ -18090,6 +19572,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado desconocido"
+          }
+        }
+      }
+    },
+    "用对应的 App 打开地图、邮件草稿、电话号码或网页" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens a map, a draft email, a phone number or a web page in whichever app handles it"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre un mapa, un borrador de correo, un número de teléfono o una página web en la app que corresponda"
           }
         }
       }
@@ -18478,6 +19976,22 @@
         }
       }
     },
+    "直接执行" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go ahead"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacerlo directamente"
+          }
+        }
+      }
+    },
     "相关插件" : {
       "localizations" : {
         "en" : {
@@ -18570,6 +20084,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Habilitar la revisión automática (experimental)?"
+          }
+        }
+      }
+    },
+    "确认这个改动？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm this change?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Confirmar este cambio?"
           }
         }
       }
@@ -19190,6 +20720,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compartido por el sistema y todas las sesiones. La capa de ejecución de iOS (subprocess-ios, sandbox-ios, ios-host) siempre está habilitada."
+          }
+        }
+      }
+    },
+    "系统授权只能在「设置」里改。iOS 的授权弹窗每个 App 只出现一次，拒绝之后也要回那里打开。" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System permissions can only be changed in Settings. iOS shows its prompt once per app, so after a refusal that is the only way back."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los permisos del sistema solo se cambian en Ajustes. iOS muestra su aviso una sola vez por app, así que tras un rechazo ese es el único camino de vuelta."
           }
         }
       }
@@ -20390,6 +21937,55 @@
         }
       }
     },
+    "认出图里的文字、二维码和内容。全在本机算，图片不上传" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads the text, QR codes and contents of an image. On the device; the picture is never uploaded"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee el texto, los códigos QR y el contenido de una imagen. En el dispositivo; la foto nunca se sube"
+          }
+        }
+      }
+    },
+    "认语言、分词、情绪、认出人名地名。全在本机算，不出手机" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifies the language, splits text up, scores sentiment, finds names and places. All on the device"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifica el idioma, divide el texto, puntúa el sentimiento y encuentra nombres y lugares. Todo en el dispositivo"
+          }
+        }
+      }
+    },
+    "认语言、认出人名地名、按意思给一堆文字排序。全在本机算，不出手机" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifies languages, finds names and places, and sorts text by meaning. On the device; nothing leaves the phone"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifica idiomas, encuentra nombres y lugares y ordena textos por significado. En el dispositivo; nada sale del teléfono"
+          }
+        }
+      }
+    },
     "让 Agent 创建插件" : {
       "localizations" : {
         "en" : {
@@ -20422,6 +22018,22 @@
         }
       }
     },
+    "让智能体设真正的闹钟。和通知不同，闹钟会穿透静音和专注模式，响到你关掉为止" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lets the agent set a real alarm. Unlike a notification it rings through silent mode and Focus, and keeps ringing until you stop it"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite al agente poner una alarma real. A diferencia de una notificación, suena aunque el teléfono esté en silencio o en modo Concentración, y sigue sonando hasta que la apagues"
+          }
+        }
+      }
+    },
     "记录已更新" : {
       "localizations" : {
         "en" : {
@@ -20434,6 +22046,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registros actualizados."
+          }
+        }
+      }
+    },
+    "设备状态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device status"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado del dispositivo"
+          }
+        }
+      }
+    },
+    "设定提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programar recordatorio"
           }
         }
       }
@@ -20562,6 +22206,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Establecer o ver el objetivo de una tarea de larga duración"
+          }
+        }
+      }
+    },
+    "设这个闹钟？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set this alarm?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Poner esta alarma?"
           }
         }
       }
@@ -20742,6 +22402,22 @@
         }
       }
     },
+    "语音转写" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcripción"
+          }
+        }
+      }
+    },
     "说明" : {
       "localizations" : {
         "en" : {
@@ -20754,6 +22430,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instrucciones"
+          }
+        }
+      }
+    },
+    "请你从「文件」里挑文件交给智能体，或把它做好的文件存到你选的位置。它只拿得到你挑的那几个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asks you to pick files from Files to hand to the agent, or to save files it made wherever you choose. It only ever gets the ones you pick"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te pide elegir archivos de Archivos para dárselos al agente, o guardar los que haya creado donde tú elijas. Solo recibe los que tú eliges"
           }
         }
       }
@@ -21318,6 +23010,38 @@
         }
       }
     },
+    "读「健康」里的步数、睡眠、心率等。只读，绝不写入" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads steps, sleep, heart rate and more from Health. Read-only; it never writes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee pasos, sueño, frecuencia cardíaca y más de Salud. Solo lectura; nunca escribe"
+          }
+        }
+      }
+    },
+    "读你复制的内容。每次读取 iOS 都会提示你" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads what you copied. iOS tells you every time it is read"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee lo que has copiado. iOS te avisa cada vez que se lee"
+          }
+        }
+      }
+    },
     "读取" : {
       "localizations" : {
         "en" : {
@@ -21446,6 +23170,22 @@
         }
       }
     },
+    "读取待办" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read reminders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer recordatorios"
+          }
+        }
+      }
+    },
     "读取插件清单失败：%@" : {
       "localizations" : {
         "en" : {
@@ -21462,6 +23202,22 @@
         }
       }
     },
+    "读取日历列表" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "List calendars"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver lista de calendarios"
+          }
+        }
+      }
+    },
     "读取终端" : {
       "localizations" : {
         "en" : {
@@ -21474,6 +23230,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Leer terminal"
+          }
+        }
+      }
+    },
+    "调用方是自己报的名字，不能当证据：插件可以把自己报成引擎本体。只保留最近 %lld 条。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The caller is a self-reported name, not proof: a plugin can present itself as the agent. Only the %lld most recent entries are kept."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El autor de la llamada es un nombre autodeclarado, no una prueba: un complemento puede presentarse como el agente. Solo se conservan las %lld entradas más recientes."
           }
         }
       }
@@ -22194,6 +23966,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aún no hay modelos."
+          }
+        }
+      }
+    },
+    "还没有用过任何需要授权的本机能力。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No capability that needs permission has been used yet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no se ha usado ninguna función que requiera permisos."
           }
         }
       }
@@ -23143,6 +24931,38 @@
         }
       }
     },
+    "通知提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificaciones"
+          }
+        }
+      }
+    },
+    "通讯录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contacts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contactos"
+          }
+        }
+      }
+    },
     "部分模型提供商暂时无法加载；已保存的选择仍可移除。" : {
       "localizations" : {
         "en" : {
@@ -23671,6 +25491,22 @@
         }
       }
     },
+    "问到的时候读一次当前位置。不持续记录，也没有轨迹" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your position once when asked. No continuous tracking and no history"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lee tu posición una vez cuando se le pide. Sin seguimiento continuo ni historial"
+          }
+        }
+      }
+    },
     "问题反馈" : {
       "localizations" : {
         "en" : {
@@ -23683,6 +25519,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comentarios"
+          }
+        }
+      }
+    },
+    "闹钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alarms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alarmas"
           }
         }
       }
@@ -23735,6 +25587,22 @@
         }
       }
     },
+    "随时可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always available"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siempre disponible"
+          }
+        }
+      }
+    },
     "隐藏密钥" : {
       "localizations" : {
         "en" : {
@@ -23779,6 +25647,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Debe ser compatible con el protocolo Anthropic Messages."
+          }
+        }
+      }
+    },
+    "需要 iOS 26" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires iOS 26"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requiere iOS 26"
           }
         }
       }
@@ -23859,6 +25743,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Audio silencioso"
+          }
+        }
+      }
+    },
+    "音乐" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
           }
         }
       }
@@ -23961,6 +25861,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Frecuencia"
+          }
+        }
+      }
+    },
+    "首次使用时询问" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asks on first use"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta la primera vez"
           }
         }
       }

@@ -1,0 +1,22 @@
+{
+  "name": "dsh-plugin-native-boundary-check",
+  "version": "0.1.0",
+  "description": "Installs on a device to check that the native-capability boundary is what the design says it is. Not a template for building plugins.",
+  "type": "module",
+  "main": "index.mjs",
+  "exports": "./index.mjs",
+  "files": [
+    "index.mjs",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "fish-pocket",
+    "ios"
+  ],
+  "license": "Apache-2.0",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*"
+  }
+}

@@ -67,6 +67,7 @@ struct DrawerView: View {
                 topBar
                 newConversationButton
                 pluginsRow
+                capabilitiesRow
                 webRow
 
                 List {
@@ -159,6 +160,28 @@ struct DrawerView: View {
             .padding(.horizontal, 12)
             .frame(minHeight: 46)
             .background(pluginsSelected ? Palette.bubble : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.bottom, 2)
+    }
+
+    /// What the agent may reach on this phone, and the switch for each one.
+    ///
+    /// A row of its own rather than a line in settings: nothing asks for these
+    /// permissions on its own any more (docs/native-services.md §5.5), so if this
+    /// is hard to find, the capabilities are simply never turned on.
+    private var capabilitiesRow: some View {
+        Button { Haptics.tap(); app.nativeCapabilitiesRequest = UUID() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "iphone").font(.callout).foregroundStyle(Palette.ink).frame(width: 22)
+                Text("本机能力").font(.subheadline).foregroundStyle(Palette.ink)
+                Spacer()
+                Text("授权").font(.footnote).foregroundStyle(Palette.secondary)
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 46)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -1,0 +1,380 @@
+// calendar: read the user's calendar. The first capability here that touches
+// personal data, so it is also the first one iOS stands in front of.
+//
+// Reading needs FULL access, not a read-only tier — iOS 17 offers write-only or
+// full, and write-only cannot read back even the events it created
+// (docs/native-services.md §4.0). So a user who allows reading has also allowed
+// writing at the system level, and "the agent can see my schedule but will not
+// quietly change it" is ours to guarantee rather than the system's.
+//
+// The guarantee is not the operation list — writes are listed here like anything
+// else. It is that every one of them stops in front of the user before it
+// happens: `create` opens Apple's own event editor, `update` and `delete` wait
+// on a native confirmation. A plugin reaching the addon directly meets exactly
+// the same stop. There is no unchecked variant.
+#import "dsh_ios_native.h"
+#import "DshNativeBridge.h"
+#import "DshNativeCapabilities.h"
+#import "eventkit_shared.h"
+#import <EventKit/EventKit.h>
+
+/// A single query can span years; a model does not need ten thousand events and
+/// the reply has to cross into JS as one JSON string.
+static const NSUInteger kMaxEvents = 200;
+/// Notes can hold a whole meeting agenda. Enough to be useful, bounded enough
+/// not to flood the conversation.
+static const NSUInteger kMaxNotesLength = 500;
+
+// The agent reads this out to the user, so it says what happened and what the
+// user can do about it. iOS prompts once per app for the lifetime of the install:
+// after a refusal there is no second prompt, only Settings.
+static NSString *const kDeniedMessage =
+  @"calendar access is off for this app. The user can turn it on in "
+  @"Settings > Privacy & Security > Calendars. iOS only asks once, so it cannot be requested again from here";
+
+static void with_full_access(void (^next)(BOOL granted, NSString *error)) {
+  DshEventKitRequireAccess(EKEntityTypeEvent, NO, kDeniedMessage, next);
+}
+
+/// For create, which only ever adds. It used to skip the check entirely, on the
+/// belief that EKEventEditViewController needs no permission because it is
+/// Apple's own UI. It is Apple's own UI, and it is out of process — and without
+/// access that remote extension starts and invalidates itself at once, leaving
+/// the editor's delegate silent and the caller waiting forever. Checking first
+/// turns that hang into a sentence the agent can read out.
+static void with_add_access(void (^next)(BOOL granted, NSString *error)) {
+  DshEventKitRequireAccess(EKEntityTypeEvent, YES, kDeniedMessage, next);
+}
+
+static NSString *truncated(NSString *text, NSUInteger limit) {
+  if (text.length <= limit) return text;
+  return [[text substringToIndex:limit] stringByAppendingString:@"…"];
+}
+
+static NSDictionary *event_json(EKEvent *event) {
+  NSMutableDictionary *entry = [@{
+    // Needed by phase 2 to change or delete a specific event, and by the model to
+    // talk about "that one" across turns.
+    @"id": event.eventIdentifier ?: @"",
+    @"title": event.title ?: @"",
+    @"start": DshISO8601(event.startDate),
+    @"end": DshISO8601(event.endDate),
+    @"allDay": @(event.allDay),
+    @"calendar": event.calendar.title ?: @"",
+  } mutableCopy];
+  if (event.location.length > 0) entry[@"location"] = event.location;
+  if (event.notes.length > 0) entry[@"notes"] = truncated(event.notes, kMaxNotesLength);
+  return entry;
+}
+
+static void list_events(NSDictionary *args, DshNativeReply reply) {
+  NSNumber *from = args[@"from"], *to = args[@"to"];
+  if (![from isKindOfClass:NSNumber.class] || ![to isKindOfClass:NSNumber.class]) {
+    reply(nil, @"list needs 'from' and 'to' as seconds since 1970");
+    return;
+  }
+  if (to.doubleValue <= from.doubleValue) {
+    reply(nil, @"list needs 'to' to be after 'from'");
+    return;
+  }
+
+  with_full_access(^(BOOL granted, NSString *error) {
+    if (!granted) {
+      reply(nil, error);
+      return;
+    }
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
+      NSPredicate *predicate =
+        [store predicateForEventsWithStartDate:[NSDate dateWithTimeIntervalSince1970:from.doubleValue]
+                                       endDate:[NSDate dateWithTimeIntervalSince1970:to.doubleValue]
+                                     calendars:nil];
+      NSArray<EKEvent *> *found =
+        [[store eventsMatchingPredicate:predicate] sortedArrayUsingSelector:@selector(compareStartDateWithEvent:)];
+
+      NSMutableArray *events = [NSMutableArray arrayWithCapacity:MIN(found.count, kMaxEvents)];
+      for (EKEvent *event in found) {
+        if (events.count >= kMaxEvents) break;
+        [events addObject:event_json(event)];
+      }
+      // Said plainly rather than silently dropped: a model that asked for a year
+      // should know it is looking at the first slice of one.
+      //
+      // The audit line is dates and a count on purpose — it is shown to the user
+      // verbatim in an app that is translated, and this file is not.
+      reply(@{@"events": events,
+              @"total": @(found.count),
+              @"truncated": @((BOOL)(found.count > events.count)),
+              @"auditSummary": [NSString stringWithFormat:@"%@ → %@ · %lu",
+                                [DshISO8601([NSDate dateWithTimeIntervalSince1970:from.doubleValue]) substringToIndex:10],
+                                [DshISO8601([NSDate dateWithTimeIntervalSince1970:to.doubleValue]) substringToIndex:10],
+                                (unsigned long)found.count]}, nil);
+    });
+  });
+}
+
+static void list_calendars(DshNativeReply reply) {
+  with_full_access(^(BOOL granted, NSString *error) {
+    if (!granted) {
+      reply(nil, error);
+      return;
+    }
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
+      NSString *defaultId = store.defaultCalendarForNewEvents.calendarIdentifier;
+      NSMutableArray *calendars = [NSMutableArray array];
+      for (EKCalendar *calendar in [store calendarsForEntityType:EKEntityTypeEvent]) {
+        [calendars addObject:@{
+          @"id": calendar.calendarIdentifier ?: @"",
+          @"title": calendar.title ?: @"",
+          // Subscribed and holiday calendars refuse writes; phase 2 needs to know
+          // before offering to put something in one.
+          @"writable": @(calendar.allowsContentModifications),
+          // The (BOOL) casts are load-bearing: a C comparison has type int, so
+          // `@(a > b)` boxes an NSNumber of int and NSJSONSerialization writes 0/1,
+          // while `@(someBoolProperty)` writes true/false. This JSON is read by a
+          // model, and `"default": 0` beside `"writable": true` in one object is an
+          // invitation to read 0 as a rank rather than as false.
+          @"default": @((BOOL)(defaultId != nil && [calendar.calendarIdentifier isEqualToString:defaultId])),
+        }];
+      }
+      reply(@{@"calendars": calendars}, nil);
+    });
+  });
+}
+
+#pragma mark - Writing
+
+/// What a confirmation sheet and an audit line say about an event.
+///
+/// Title and dates only, and built from the event itself — the point of the
+/// sheet is that it shows what will actually happen, not what the caller said
+/// it would (§4.3.1). It also stays language-neutral, because the app shows it
+/// verbatim in three languages and this file is in none of them.
+/// 摘要必须把**会变的东西**都写进去，否则确认框会问一件看不出区别的事——
+/// 只改地点时，前后两行一模一样，用户除了闭眼点「修改」没有别的办法。地点和
+/// 备注是用户自己写的文字，和标题一样是语言中性的，可以直接放。
+static NSString *event_summary(EKEvent *event) {
+  NSString *title = event.title.length > 0 ? event.title : @"(untitled)";
+  NSMutableString *summary = [NSMutableString stringWithString:title];
+  if (event.allDay) {
+    [summary appendFormat:@"\n%@", [DshISO8601(event.startDate) substringToIndex:10]];
+  } else {
+    NSString *start = DshISO8601(event.startDate), *end = DshISO8601(event.endDate);
+    [summary appendFormat:@"\n%@ %@ – %@ %@",
+     [start substringToIndex:10], [start substringWithRange:NSMakeRange(11, 5)],
+     [end substringToIndex:10], [end substringWithRange:NSMakeRange(11, 5)]];
+  }
+  if (event.location.length > 0) [summary appendFormat:@"\n@ %@", truncated(event.location, 80)];
+  if (event.notes.length > 0) [summary appendFormat:@"\n%@", truncated(event.notes, 120)];
+  return summary;
+}
+
+static id<DshNativeBridging> require_bridge(DshNativeReply reply) {
+  id<DshNativeBridging> bridge = DshNativeCurrentBridge();
+  if (bridge == nil) {
+    // Never silently fall through to writing unattended: the confirmation is
+    // the only thing standing between a plugin and the user's calendar.
+    reply(nil, @"the app cannot show a confirmation right now, so nothing was changed");
+  }
+  return bridge;
+}
+
+/// Read an optional date argument. Returns nil when absent, and reports a bad one.
+static NSDate *date_arg(NSDictionary *args, NSString *key, NSString **error) {
+  NSNumber *value = args[key];
+  if (value == nil) return nil;
+  if (![value isKindOfClass:NSNumber.class]) {
+    *error = [NSString stringWithFormat:@"'%@' must be seconds since 1970", key];
+    return nil;
+  }
+  return [NSDate dateWithTimeIntervalSince1970:value.doubleValue];
+}
+
+/// Create an event. Which of the two ways depends on this capability's write
+/// policy, and they are genuinely different experiences, not one with a dialog
+/// bolted on:
+///
+/// - **Direct** (the default): save it. The user asked for an event, they get an
+///   event, and the audit list is what they look at afterwards. The whole reason
+///   the audit is not optional.
+/// - **Confirm**: hand the prefilled event to `EKEventEditViewController` —
+///   Apple's interface, Apple's Add button, and the strongest write path we
+///   have, because a plugin can neither suppress it nor press it. Also the one
+///   that lets the user fix the time before it lands.
+static void create_event(NSDictionary *args, DshNativeReply reply) {
+  NSString *title = args[@"title"];
+  if (![title isKindOfClass:NSString.class] || title.length == 0) {
+    reply(nil, @"create needs a non-empty 'title'");
+    return;
+  }
+  NSString *dateError = nil;
+  NSDate *start = date_arg(args, @"start", &dateError);
+  NSDate *end = date_arg(args, @"end", &dateError);
+  if (dateError != nil) { reply(nil, dateError); return; }
+  if (start == nil) { reply(nil, @"create needs 'start' as seconds since 1970"); return; }
+
+  with_add_access(^(BOOL granted, NSString *accessError) {
+    if (!granted) { reply(nil, accessError); return; }
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
+      EKEvent *event = [EKEvent eventWithEventStore:store];
+      event.title = title;
+      event.startDate = start;
+      // An event with no end is an hour long, which is what a person means by
+      // "put it at three" far more often than a zero-length marker.
+      event.endDate = end ?: [start dateByAddingTimeInterval:3600];
+      NSNumber *allDay = args[@"allDay"];
+      if ([allDay isKindOfClass:NSNumber.class]) event.allDay = allDay.boolValue;
+      NSString *location = args[@"location"];
+      if ([location isKindOfClass:NSString.class]) event.location = location;
+      NSString *notes = args[@"notes"];
+      if ([notes isKindOfClass:NSString.class]) event.notes = notes;
+      event.calendar = store.defaultCalendarForNewEvents;
+
+      DshWritePolicy policy = DshNativeWritePolicyFor(@"calendar");
+      if (policy == DshWritePolicyBlocked) {
+        reply(nil, @"the user has set 'calendar' to read-only under Device capabilities, which is in "
+                    "the app's sidebar. Nothing was added. Only they can change that setting.");
+        return;
+      }
+      if (policy == DshWritePolicyDirect) {
+        if (event.calendar == nil) {
+          reply(nil, @"this device has no calendar that can take new events");
+          return;
+        }
+        NSError *saveError = nil;
+        if (![store saveEvent:event span:EKSpanThisEvent commit:YES error:&saveError]) {
+          reply(nil, saveError.localizedDescription ?: @"the event could not be saved");
+          return;
+        }
+        reply(@{@"action": DshNativeActionSaved, @"saved": @YES,
+                @"id": event.eventIdentifier ?: @"",
+                @"auditSummary": event_summary(event)}, nil);
+        return;
+      }
+
+      id<DshNativeBridging> bridge = require_bridge(reply);
+      if (bridge == nil) return;
+      [bridge presentEventEditorForEvent:event inStore:store
+                              completion:^(NSString *action, NSString *identifier, NSString *error) {
+        if (error != nil) {
+          reply(nil, error);
+          return;
+        }
+        BOOL saved = [action isEqualToString:DshNativeActionSaved];
+        NSMutableDictionary *result = [@{@"action": action ?: DshNativeActionCancelled,
+                                         @"saved": @(saved)} mutableCopy];
+        if (identifier != nil) result[@"id"] = identifier;
+        // Only a save is worth an audit line; a cancelled editor changed nothing.
+        if (saved) result[@"auditSummary"] = event_summary(event);
+        reply(result, nil);
+      }];
+    });
+  });
+}
+
+/// Find the event an id names, on the calendar queue, then run `next` with it.
+static void with_event(NSString *identifier, DshNativeReply reply, void (^next)(EKEventStore *store, EKEvent *event)) {
+  if (![identifier isKindOfClass:NSString.class] || identifier.length == 0) {
+    reply(nil, @"this operation needs the event's 'id', as `list` returned it");
+    return;
+  }
+  with_full_access(^(BOOL granted, NSString *error) {
+    if (!granted) { reply(nil, error); return; }
+    dispatch_async(DshEventKitQueue(), ^{
+      EKEventStore *store = DshEventStore();
+      EKEvent *event = [store eventWithIdentifier:identifier];
+      if (event == nil) {
+        reply(nil, @"no event with that id; it may have been deleted or the id may be stale");
+        return;
+      }
+      next(store, event);
+    });
+  });
+}
+
+static void update_event(NSDictionary *args, DshNativeReply reply) {
+
+  with_event(args[@"id"], reply, ^(EKEventStore *store, EKEvent *event) {
+    NSString *before = event_summary(event);
+
+    NSString *dateError = nil;
+    NSDate *start = date_arg(args, @"start", &dateError);
+    NSDate *end = date_arg(args, @"end", &dateError);
+    if (dateError != nil) { reply(nil, dateError); return; }
+
+    NSString *title = args[@"title"];
+    if ([title isKindOfClass:NSString.class] && title.length > 0) event.title = title;
+    if (start != nil) event.startDate = start;
+    if (end != nil) event.endDate = end;
+    NSString *location = args[@"location"];
+    if ([location isKindOfClass:NSString.class]) event.location = location;
+    NSString *notes = args[@"notes"];
+    if ([notes isKindOfClass:NSString.class]) event.notes = notes;
+
+    if (!event.hasChanges) {
+      // Nothing to ask about. Asking anyway trains the user to tap through.
+      reply(@{@"action": DshNativeActionCancelled, @"saved": @NO, @"unchanged": @YES}, nil);
+      return;
+    }
+
+    NSString *summary = [NSString stringWithFormat:@"%@\n→\n%@", before, event_summary(event)];
+    DshNativeConfirmWrite(@"calendar", @"update", summary, NO, ^(BOOL confirmed, NSString *refusal) {
+      dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { [event reset]; reply(nil, refusal); return; }
+        if (!confirmed) {
+          // Put the store's copy back the way it was; these edits were never saved.
+          [event reset];
+          reply(@{@"action": DshNativeActionCancelled, @"saved": @NO}, nil);
+          return;
+        }
+        NSError *saveError = nil;
+        // This occurrence only. Changing a whole series from a one-line request
+        // is a much bigger action than the user agreed to in that sheet.
+        if (![store saveEvent:event span:EKSpanThisEvent commit:YES error:&saveError]) {
+          reply(nil, saveError.localizedDescription ?: @"the event could not be saved");
+          return;
+        }
+        reply(@{@"action": DshNativeActionSaved, @"saved": @YES, @"id": event.eventIdentifier ?: @"",
+                @"auditSummary": summary}, nil);
+      });
+    });
+  });
+}
+
+static void delete_event(NSDictionary *args, DshNativeReply reply) {
+
+  with_event(args[@"id"], reply, ^(EKEventStore *store, EKEvent *event) {
+    NSString *summary = event_summary(event);
+    DshNativeConfirmWrite(@"calendar", @"delete", summary, YES, ^(BOOL confirmed, NSString *refusal) {
+      dispatch_async(DshEventKitQueue(), ^{
+        if (refusal != nil) { reply(nil, refusal); return; }
+        if (!confirmed) {
+          reply(@{@"action": DshNativeActionCancelled, @"deleted": @NO}, nil);
+          return;
+        }
+        NSError *removeError = nil;
+        if (![store removeEvent:event span:EKSpanThisEvent commit:YES error:&removeError]) {
+          reply(nil, removeError.localizedDescription ?: @"the event could not be deleted");
+          return;
+        }
+        reply(@{@"action": DshNativeActionDeleted, @"deleted": @YES, @"auditSummary": summary}, nil);
+      });
+    });
+  });
+}
+
+void dsh_native_calendar(NSString *op, NSDictionary *args, DshNativeReply reply) {
+  if ([op isEqualToString:@"list"]) {
+    list_events(args, reply);
+  } else if ([op isEqualToString:@"calendars"]) {
+    list_calendars(reply);
+  } else if ([op isEqualToString:@"create"]) {
+    create_event(args, reply);
+  } else if ([op isEqualToString:@"update"]) {
+    update_event(args, reply);
+  } else {
+    delete_event(args, reply);
+  }
+}
