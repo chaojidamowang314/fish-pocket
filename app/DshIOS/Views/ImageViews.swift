@@ -25,10 +25,94 @@ struct ImageGroup: View {
     }
 
     static func singleSize(_ attachment: Attachment) -> CGSize {
+        guard let width = attachment.width, let height = attachment.height else { return singleSize(nil) }
+        return singleSize(CGSize(width: width, height: height))
+    }
+
+    /// The same box for an image whose pixel size is known some other way; nil while it is not.
+    static func singleSize(_ pixels: CGSize?) -> CGSize {
         let long: CGFloat = 240
-        guard let width = attachment.width, let height = attachment.height, width > 0, height > 0 else { return CGSize(width: long, height: long * 0.75) }
-        let ratio = min(4, max(0.25, CGFloat(width) / CGFloat(height)))
+        guard let pixels, pixels.width > 0, pixels.height > 0 else { return CGSize(width: long, height: long * 0.75) }
+        let ratio = min(4, max(0.25, pixels.width / pixels.height))
         return ratio >= 1 ? CGSize(width: long, height: long / ratio) : CGSize(width: long * ratio, height: long)
+    }
+}
+
+/// An image a reply shows with `![alt](path)`. The path is a file in the engine's
+/// filesystem, relative to the session's working directory or absolute, and that
+/// filesystem is on this device, so the bytes come straight from disk. It looks and
+/// opens like a single attachment. A path that is not a readable image shows its alt
+/// text instead, which is what the reply showed before images were drawn at all.
+struct ReplyImage: View {
+    let alt: String
+    let destination: String
+    @Environment(\.fileLinkScope) private var scope
+    @State private var image: UIImage?
+    @State private var failed = false
+    @State private var viewing = false
+
+    /// Decoded files by path and modification time: lazy rows are rebuilt whenever they
+    /// scroll back, and a streaming reply re-renders every frame.
+    private static let cache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.totalCostLimit = 96 << 20
+        return cache
+    }()
+
+    private var name: String { alt.isEmpty ? URL(fileURLWithPath: destination).lastPathComponent : alt }
+
+    var body: some View {
+        Group {
+            if let image {
+                let size = ImageGroup.singleSize(image.size)
+                Button { viewing = true } label: {
+                    Image(uiImage: image).resizable().scaledToFill()
+                        .frame(width: size.width, height: size.height)
+                        .clipped()
+                }
+                .buttonStyle(.plain)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .accessibilityLabel(Text(name))
+                .accessibilityHint("查看大图")
+            } else if failed {
+                Text(name).foregroundStyle(Palette.secondary)
+            } else {
+                let size = ImageGroup.singleSize(nil)
+                Palette.field.overlay(ProgressView()).frame(width: size.width, height: size.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        }
+        .task(id: destination) {
+            image = nil
+            failed = false
+            guard let url = Self.file(destination, root: scope?.root) else { failed = true; return }
+            let modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate?.timeIntervalSince1970 ?? 0
+            let key = "\(url.path)#\(modified)" as NSString
+            if let hit = Self.cache.object(forKey: key) { image = hit; return }
+            guard let decoded = await Task.detached(priority: .userInitiated, operation: { ZoomableImage.decode(url) }).value else { failed = true; return }
+            Self.cache.setObject(decoded, forKey: key, cost: (decoded.cgImage?.bytesPerRow ?? 0) * (decoded.cgImage?.height ?? 0))
+            image = decoded
+        }
+        .fullScreenCover(isPresented: $viewing) {
+            if let image { ImageViewer(image: image, name: name) }
+        }
+    }
+
+    /// Where `destination` is on disk, if it is there. The model writes paths as they are
+    /// or percent-encoded, so both readings are tried.
+    static func file(_ destination: String, root: String?) -> URL? {
+        var path = destination
+        if path.lowercased().hasPrefix("file://") { path = String(path.dropFirst(7)) }
+        for candidate in [path, path.removingPercentEncoding ?? path] {
+            let engine: String
+            if candidate.hasPrefix("/") { engine = candidate }
+            else if candidate == "~" || candidate.hasPrefix("~/") { engine = EnginePaths.home + candidate.dropFirst() }
+            else if let root { engine = (root as NSString).appendingPathComponent(candidate) }
+            else { continue }
+            let url = EnginePaths.real(engine).standardizedFileURL
+            if FileManager.default.fileExists(atPath: url.path) { return url }
+        }
+        return nil
     }
 }
 
