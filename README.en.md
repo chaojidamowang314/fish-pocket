@@ -12,7 +12,7 @@
 
 <p align="center">Want an agent in your pocket too? <a href="https://testflight.apple.com/join/2SCftb2M"><b>Join the TestFlight beta</b></a> (recommended, available worldwide) or <a href="https://apps.apple.com/app/id6830703602">get it on the App Store</a> (outside mainland China), and a ⭐ helps.</p>
 
-<p align="center"><a href="README.md">中文</a></p>
+<p align="center"><a href="https://fish.deepseek1024.com/en/">Website</a> · <a href="README.md">中文</a></p>
 
 https://github.com/user-attachments/assets/618e690f-3873-4f08-811d-3213b3b9a056
 
@@ -106,6 +106,38 @@ We took the 50 most-downloaded community DSH plugins as a sample and ran each on
 | Not working yet | 2 |
 
 "Work" means the engine loads the plugin. We did not try each plugin's features. See [#18](https://github.com/imsai-sh/fish-pocket/issues/18) for per-plugin results.
+
+## FAQ
+
+### What is Fish Pocket?
+
+Fish Pocket is an open-source iOS app that puts the whole DeepSeek Harness (DSH) agent engine on your iPhone and iPad and runs it on the device. There is no computer to connect and no server to rent, and the interface is rebuilt natively in SwiftUI.
+
+### Do I need to keep a computer running?
+
+No. Remote clients need a computer that stays on and online. Fish Pocket runs the engine inside the app, so your phone is enough. Only model calls need a network connection.
+
+### Is Fish Pocket free?
+
+Yes. The app is free and the code is open source under the MIT license. Model calls use your own DeepSeek account or API key, and the model provider bills you directly, not Fish Pocket.
+
+### Where is it available?
+
+The TestFlight beta is available worldwide, including mainland China. The App Store version is available outside mainland China.
+
+### Are my conversations and code uploaded?
+
+Not to us: we run no servers. Sessions and workspaces stay on your device, and model requests go straight to the provider you choose. See the [privacy policy](PRIVACY.md).
+
+### Does it only work with DeepSeek models?
+
+It uses DeepSeek by default, with either a DeepSeek account or an API key, and you can configure other model providers.
+
+### Is Fish Pocket made by DeepSeek?
+
+No. It is an independent open-source community project, not affiliated with, authorized by or endorsed by DeepSeek.
+
+More answers on the [website](https://fish.deepseek1024.com/en/#faq).
 
 ## Roadmap
 
