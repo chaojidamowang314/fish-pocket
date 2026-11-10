@@ -52,3 +52,10 @@
 改完跑 `cd engine && node --test test/ios-environment.test.mjs`：它检查 frontmatter、description 不超过 500 字，以及「Commands that exist」里列的每个命令都真实存在。在没有 git 原生插件的机器上（比如 Linux），`git` 会被报成不存在，这一项可以忽略；macOS 上先跑 `scripts/build-git-addon.sh`。
 
 写法上保持现在的风格：英文、短句、先说能不能用再说替代办法；「Commands that exist」之外的命令都会被当成不存在，所以新增命令一定要列进去。
+
+## 微信交流群二维码
+
+群二维码只放在 README 和官网，App 里不放，设置页底部只有一个「官网」链接。二维码 7 天过期，有两份，换图时一起换：
+
+- 主仓库的 `docs/assets/wechat-group.png`：README 的「交流群」一节引用它。
+- 官网 `fish-pocket-site` 的 `web/public/wechat-group.png`：中文页页脚显示它，合进官网的 `main` 就自动部署。

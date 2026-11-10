@@ -8914,6 +8914,22 @@
         }
       }
     },
+    "官网" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Website"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sitio web"
+          }
+        }
+      }
+    },
     "实时输出流中断：%@" : {
       "localizations" : {
         "en" : {

@@ -12,7 +12,7 @@
 
 <p align="center">如果你也想把大肥鱼装进口袋，<a href="https://testflight.apple.com/join/2SCftb2M"><b>加入 TestFlight 公测</b></a>（推荐，全球可用）或<a href="https://apps.apple.com/app/id6830703602">从 App Store 下载</a>（非中国大陆），再点个 ⭐ 支持一下吧。</p>
 
-<p align="center"><a href="README.en.md">English</a></p>
+<p align="center"><a href="https://fish.deepseek1024.com">官网</a> · <a href="README.en.md">English</a></p>
 
 https://github.com/user-attachments/assets/d149b48d-ef15-4ba7-9fc3-2c627ea66ec0
 
@@ -107,6 +107,38 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 
 这里的“可用”指插件能被引擎加载，功能没有逐个试用。逐个插件的结果见 [#18](https://github.com/imsai-sh/fish-pocket/issues/18)。
 
+## 常见问题
+
+### Fish Pocket 是什么？
+
+Fish Pocket 是一款开源的 iOS App，把 DeepSeek Harness（简称 DSH）的整个 Agent 引擎装进 iPhone 和 iPad，在本机运行。不用连电脑，也不用连服务器，界面用 SwiftUI 原生重写。
+
+### 用 Fish Pocket 要开着电脑吗？
+
+不用。远程客户端需要一台一直开着联网的电脑，Fish Pocket 的引擎就在 App 里，有手机就能用。只有调用模型时需要联网。
+
+### Fish Pocket 收费吗？
+
+App 免费，代码以 MIT 协议开源。模型调用用你自己的 DeepSeek 账号或 API Key，费用由模型服务商收取，不经过 Fish Pocket。
+
+### 中国大陆能用吗？
+
+能。用 TestFlight 公测安装，全球可用，包括中国大陆。App Store 版目前只在中国大陆以外的地区上架。
+
+### 我的对话和代码会被上传吗？
+
+不会传给我们：我们不运营任何服务器。会话和工作区留在你的设备上，模型请求直接发给你选择的服务商，详见[隐私政策](PRIVACY.md)。
+
+### 只能用 DeepSeek 的模型吗？
+
+默认使用 DeepSeek，用账号登录或者填 API Key 都可以，也可以配置其他模型服务商。
+
+### Fish Pocket 是 DeepSeek 官方出的吗？
+
+不是。这是独立的开源社区项目，与深度求索（DeepSeek）不存在隶属、合作、授权或背书关系。
+
+更多问答见[官网](https://fish.deepseek1024.com/#faq)。
+
 ## 路线图
 
 - [x] 抽样测试社区热门插件的兼容性
@@ -116,6 +148,14 @@ iOS 不允许 App 创建子进程，也不允许运行下载的二进制。所�
 - [x] 预置第三方插件商店（[#5](https://github.com/imsai-sh/fish-pocket/issues/5)）
 - [ ] bash 解释器移出引擎线程
 - [ ] Bot 模式：在聊天里给口袋里的 Agent 派任务
+
+## 交流群
+
+<p align="center">
+  <img src="docs/assets/wechat-group.png" width="260" alt="Fish Pocket 微信交流群二维码">
+</p>
+
+<p align="center">微信扫码加入 Fish Pocket 交流群。二维码过期了的话，欢迎<a href="https://github.com/imsai-sh/fish-pocket/issues">提 issue</a> 提醒我们更新。</p>
 
 ## 参与贡献
 
