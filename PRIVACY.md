@@ -1,6 +1,6 @@
 # 隐私政策 / Privacy Policy
 
-生效日期 / Effective: 2026-11-09
+生效日期 / Effective: 2026-11-05
 
 [中文](#中文) · [English](#english)
 
@@ -25,7 +25,6 @@ Fish Pocket 是独立的开源社区项目，与深度求索（DeepSeek）不存
 - **插件：** 打开插件市场时，App 会访问索引源里列出的地址，默认是 `api.dshfind.com`，并从索引指定的地址加载插件图标，目前是 GitHub。查看插件说明时会访问 npm 文件 CDN 或插件的代码仓库，安装插件时会访问 npm 仓库。这些请求不含你的对话或文件，但对方能看到你的 IP 地址。已安装的插件和智能体运行的命令可以按你的操作访问网络。
 - **内置浏览器：** 你访问的网站会收到常规的网络请求。
 - **更新检查：** App 会向 Apple 和 GitHub 查询最新版本，请求里不含你的个人信息。
-- **交流群二维码：** 界面是中文时，设置页底部会从官网（托管在 VibeVibi，`vibevibi.com`）加载微信交流群的二维码图片，加载不到时改从 GitHub 加载，请求里不含你的个人信息。
 
 ### 儿童
 
@@ -56,7 +55,6 @@ These connections happen only when you use the related feature, and the data goe
 - **Plugins:** Opening the plugin market contacts the addresses in your index sources, `api.dshfind.com` by default, and loads plugin icons from the addresses the index gives, currently GitHub. Viewing a plugin's documentation contacts npm file CDNs or the plugin's repository, and installing a plugin contacts the npm registry. These requests do not contain your conversations or files, but those services can see your IP address. Installed plugins and commands run by the agent can access the network as you direct them.
 - **Built-in browser:** Websites you visit receive ordinary network requests.
 - **Update check:** The app asks Apple and GitHub for the latest version. These requests contain no personal information.
-- **Community group QR code:** When the app is in Chinese, the bottom of Settings loads the WeChat group's QR code image from the website (hosted on VibeVibi, `vibevibi.com`), or from GitHub when that fails. These requests contain no personal information.
 
 ### Children
 

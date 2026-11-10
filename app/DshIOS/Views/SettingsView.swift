@@ -3,8 +3,7 @@ import SwiftUI
 
 /// Settings: only what people come here for (账号, 模型, 访问模式, 外观, 插件, 自动化,
 /// 后台运行: 静音音频, 任务续跑). Developer pages sit behind 高级, versions and engine status behind 关于.
-/// 分享 Fish Pocket opens the list; the star, rating, source, feedback and author links follow the
-/// settings, and the WeChat group's QR code closes the list for the Chinese UI.
+/// 分享 Fish Pocket opens the list; the star, rating, website, source, feedback and author links close it.
 /// The engine card shows here only while the engine is not running. Every page reads the shared
 /// settings mirror, so a write anywhere shows everywhere.
 struct SettingsView: View {
@@ -131,6 +130,7 @@ struct SettingsView: View {
                     if AppDistribution.channel == .appStore {
                         linkRow("给个评分", "App Store", AppLinks.writeReview)
                     }
+                    linkRow("官网", AppLinks.site.host() ?? "", AppLinks.site)
                     linkRow("开源仓库", UpdateChecker.repository, Self.repositoryURL)
                     linkRow("问题反馈", "GitHub Issues", Self.issuesURL)
                     linkRow("作者", "sai · imsai.cc", Self.authorURL)
@@ -138,9 +138,6 @@ struct SettingsView: View {
                     Text("觉得好用的话，去 GitHub 仓库页点一下 Star ⭐️，这是对项目最大的支持。")
                 }
                 .groupedRow()
-
-                // A Chinese-speaking group, so only for the Chinese UI.
-                if AppLanguage.isChinese { WeChatGroupSection() }
             }
             .groupedList()
             .tint(Palette.ink)

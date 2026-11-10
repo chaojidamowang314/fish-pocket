@@ -99,7 +99,7 @@ targets:
         CADisableMinimumFrameDurationOnPhone: true
         # 输入框的「拍照」(C-104).
         NSCameraUsageDescription: 拍照后作为附件发给智能体。
-        NSPhotoLibraryAddUsageDescription: 把分享海报和交流群二维码保存到相册。
+        NSPhotoLibraryAddUsageDescription: 把分享海报保存到相册。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.

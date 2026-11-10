@@ -1642,22 +1642,6 @@
         }
       }
     },
-    "Fish Pocket 微信交流群的二维码" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "QR code of the Fish Pocket WeChat group"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Código QR del grupo de WeChat de Fish Pocket"
-          }
-        }
-      }
-    },
     "Fish Pocket：在 iPhone 和 iPad 上本机运行 DeepSeek Harness，不连电脑，不连服务器。\n下载：%@\nGitHub：%@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2812,22 +2796,6 @@
         }
       }
     },
-    "二维码没有加载出来，请检查网络。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The QR code didn't load. Check your connection."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo cargar el código QR. Revisa tu conexión."
-          }
-        }
-      }
-    },
     "二维码海报" : {
       "localizations" : {
         "en" : {
@@ -3650,22 +3618,6 @@
         }
       }
     },
-    "保存二维码到相册" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save QR Code to Photos"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guardar código QR en Fotos"
-          }
-        }
-      }
-    },
     "保存到相册" : {
       "localizations" : {
         "en" : {
@@ -3678,22 +3630,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar en Fotos"
-          }
-        }
-      }
-    },
-    "保存到相册后，打开微信「扫一扫」，从相册里选这张图片就能加入。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save it to Photos, then open Scan in WeChat and pick this image from your album to join."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guárdalo en Fotos, abre Escanear en WeChat y elige esta imagen del álbum para unirte."
           }
         }
       }
@@ -7394,22 +7330,6 @@
         }
       }
     },
-    "在 GitHub 仓库首页查看" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View on the GitHub Repository Page"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ver en la página del repositorio en GitHub"
-          }
-        }
-      }
-    },
     "在 GitHub 点 Star" : {
       "localizations" : {
         "en" : {
@@ -8478,6 +8398,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nombre completo"
+          }
+        }
+      }
+    },
+    "官网" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Website"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sitio web"
           }
         }
       }
@@ -11060,22 +10996,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listo"
-          }
-        }
-      }
-    },
-    "微信交流群" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "WeChat group"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grupo de WeChat"
           }
         }
       }

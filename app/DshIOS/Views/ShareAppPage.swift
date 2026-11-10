@@ -158,33 +158,25 @@ struct ShareAppPage: View {
         posters[style] = renderer.uiImage
     }
 
+    /// Only adds to the album, so it asks for nothing more than that.
     private func save(_ poster: UIImage) {
         saving = true
         Task {
-            await PhotoAlbum.save(poster, app: app)
-            saving = false
-        }
-    }
-}
-
-/// Saving a picture the app drew or fetched: the share posters, the WeChat group's QR code.
-enum PhotoAlbum {
-    /// Only adds to the album, so it asks for nothing more than that.
-    @MainActor
-    static func save(_ image: UIImage, app: AppModel) async {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else {
-            app.showToast(String(localized: "没有相册权限，可以在系统设置里允许 Fish Pocket 添加照片"))
-            Haptics.error()
-            return
-        }
-        do {
-            try await PHPhotoLibrary.shared().performChanges { PHAssetChangeRequest.creationRequestForAsset(from: image) }
-            app.showToast(String(localized: "已保存到相册"))
-            Haptics.success()
-        } catch {
-            app.showToast(String(localized: "保存失败：\(error.localizedDescription)"))
-            Haptics.error()
+            defer { saving = false }
+            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            guard status == .authorized || status == .limited else {
+                app.showToast(String(localized: "没有相册权限，可以在系统设置里允许 Fish Pocket 添加照片"))
+                Haptics.error()
+                return
+            }
+            do {
+                try await PHPhotoLibrary.shared().performChanges { PHAssetChangeRequest.creationRequestForAsset(from: poster) }
+                app.showToast(String(localized: "已保存到相册"))
+                Haptics.success()
+            } catch {
+                app.showToast(String(localized: "保存失败：\(error.localizedDescription)"))
+                Haptics.error()
+            }
         }
     }
 }

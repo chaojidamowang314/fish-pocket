@@ -55,7 +55,7 @@
 
 ## 微信交流群二维码
 
-群二维码 7 天过期，有两份，换图时一起换：
+群二维码只放在 README 和官网，App 里不放，设置页底部只有一个「官网」链接。二维码 7 天过期，有两份，换图时一起换：
 
-- 官网 `fish-pocket-site` 的 `web/public/wechat-group.png`：App 设置页底部（仅中文界面）先从这里加载。官网托管在 VibeVibi，App 先查 `https://vibevibi.com/api/works/fish-pocket` 拿到当前版本的目录，再取同目录下的 `wechat-group.png`，所以文件名和位置不要改。换图后重新发布官网，App 就能看到，不用发版。
-- 主仓库的 `docs/assets/wechat-group.png`：README 引用它；官网加载失败时（比如还没发布），App 改从 GitHub `main` 分支取它。
+- 主仓库的 `docs/assets/wechat-group.png`：README 的「交流群」一节引用它。
+- 官网 `fish-pocket-site` 的 `web/public/wechat-group.png`：中文页页脚显示它，合进官网的 `main` 就自动部署。
