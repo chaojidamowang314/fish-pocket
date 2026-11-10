@@ -217,6 +217,54 @@
         }
       }
     },
+    "NSContactsUsageDescription" : {
+      "comment" : "Privacy - Contacts Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lets the agent look up a contact by name, phone number or email when you ask, for example to find someone's address before drafting an email. To answer you, the contact details it finds are sent with the conversation to the model provider you chose. The app never adds, changes or deletes a contact."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让智能体在你要求时按名字、电话或邮箱查找联系人，比如替你写邮件前查对方的地址。为回答你的问题，查到的联系人信息会随对话发送给你选择的模型服务商。App 不会添加、修改或删除任何联系人。"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite que el agente busque un contacto por nombre, teléfono o correo cuando se lo pides, por ejemplo para encontrar la dirección de alguien antes de redactar un correo. Para responderte, los datos del contacto que encuentre se envían con la conversación al proveedor de modelos que hayas elegido. La app nunca añade, modifica ni elimina contactos."
+          }
+        }
+      }
+    },
+    "NSAppleMusicUsageDescription" : {
+      "comment" : "Privacy - Media Library Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lets the agent find songs and playlists in your music library and control playback when you ask. To answer you, the names of songs and playlists are sent with the conversation to the model provider you chose."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让智能体按你的要求在音乐资料库里找歌和歌单，并控制播放。为回答你的问题，歌曲和歌单的名称会随对话发送给你选择的模型服务商。"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite que el agente busque canciones y listas en tu biblioteca de música y controle la reproducción cuando se lo pides. Para responderte, los nombres de las canciones y las listas se envían con la conversación al proveedor de modelos que hayas elegido."
+          }
+        }
+      }
+    },
     "NSPhotoLibraryAddUsageDescription" : {
       "comment" : "Privacy - Photo Library Additions Usage Description",
       "extractionState" : "extracted_with_value",

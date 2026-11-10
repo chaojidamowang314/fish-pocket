@@ -94,6 +94,10 @@ private extension NativeBridge {
         case ("clipboard", "clear"): return String(localized: "清空剪贴板？")
         case ("homekit", "set"): return String(localized: "改这个配件的状态？")
         case ("homekit", "trigger"): return String(localized: "执行这个场景？")
+        case ("music", "play"): return String(localized: "播放这些音乐？")
+        case ("music", "pause"): return String(localized: "暂停播放？")
+        case ("music", "next"): return String(localized: "切到下一首？")
+        case ("music", "previous"): return String(localized: "回到上一首？")
         // 新能力忘了加文案时，问句仍然成立，只是不够具体——总好过问错对象。
         default: return destructive ? String(localized: "删除这一条？") : String(localized: "确认这个改动？")
         }
@@ -111,6 +115,10 @@ private extension NativeBridge {
         case "cancel": return String(localized: "关掉闹钟")
         case "trigger": return String(localized: "执行")
         case "clear": return String(localized: "清空")
+        case "play": return String(localized: "播放")
+        case "pause": return String(localized: "暂停")
+        case "next": return String(localized: "下一首")
+        case "previous": return String(localized: "上一首")
         case "delete": return String(localized: "删除")
         default: return destructive ? String(localized: "删除") : String(localized: "修改")
         }
@@ -198,6 +206,50 @@ extension NativeBridge: DshNativeBridging {
             presenter.present(alert, animated: true) { [weak self, weak alert] in
                 guard let self, let alert else { return }
                 watchdog = self.watchForSilentDismissal(of: alert) { answer(false) }
+            }
+        }
+    }
+}
+
+extension NativeBridge {
+    /// 邮件、短信的撰写页和文件选取器都从这里上屏。控制器和它的代理归能力自己
+    /// 管，这里只管两件能力做不了的事：找到窗口，以及盯住它什么时候不在了。
+    ///
+    /// `failure` 和 `gone` 只会走一个、只走一次。`gone` 不区分「用户答完了」和
+    /// 「界面被收走了」——两种情况下界面都不在了，能力那边自己知道代理有没有
+    /// 答复过，由它决定回什么（§4.3.2）。
+    @objc(presentSystemController:failure:gone:)
+    func presentSystemController(
+        _ controller: UIViewController,
+        failure: @escaping (String) -> Void,
+        gone: @escaping () -> Void
+    ) {
+        DispatchQueue.main.async {
+            guard let presenter = Self.topViewController() else {
+                failure("the app has no window to present this in")
+                return
+            }
+            var settled = false
+            var watchdog: DispatchSourceTimer?
+            let settle: (String?) -> Void = { error in
+                guard !settled else { return }
+                settled = true
+                watchdog?.cancel()
+                watchdog = nil
+                if let error { failure(error) } else { gone() }
+            }
+            var presented = false
+            presenter.present(controller, animated: true) { [weak self] in
+                presented = true
+                guard let self, !settled else { return }
+                watchdog = self.watchForSilentDismissal(of: controller) { settle(nil) }
+            }
+            // UIKit 在「正在转场」之类的情况下会直接不弹，也不调上面的回调，只在
+            // 控制台留一行警告。不兜这一下，调用方就永远等不到结果。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                if !presented && controller.presentingViewController == nil {
+                    settle("the system sheet could not be shown right now; try again")
+                }
             }
         }
     }

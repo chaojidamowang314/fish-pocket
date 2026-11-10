@@ -17,6 +17,8 @@
 #import <Foundation/Foundation.h>
 #import <EventKit/EventKit.h>
 
+@class UIViewController;
+
 NS_ASSUME_NONNULL_BEGIN
 
 /// Outcomes a bridge call reports back. Strings rather than an enum so they can
@@ -60,6 +62,28 @@ extern NSString *const DshNativeActionDeleted;
                    op:(NSString *)op
           destructive:(BOOL)destructive
            completion:(void (^)(BOOL confirmed))completion;
+
+/// Put a controller the system provides — the mail composer, the message
+/// composer, the document picker — on top of whatever the app is showing.
+///
+/// These are the same kind of write path as the event editor: the sheet is
+/// Apple's, the Send button is Apple's, and an agent cannot press it. The
+/// capability owns the controller and its delegate; the bridge only owns the
+/// window, which is the one thing a caps_*.m file cannot find for itself.
+///
+/// Exactly one of the two blocks runs, once, on the main thread:
+///
+/// - `failure` when the controller never reached the screen (no window, or the
+///   presentation did not happen). Nothing was shown.
+/// - `gone` when it did reach the screen and is no longer there — **for any
+///   reason**. A delegate that answered and dismissed it ends up here; so does a
+///   remote view that was torn down without ever calling its delegate, which is
+///   the case this exists for (§4.3.2). The caller settles its reply here if its
+///   delegate has not already, and releases whatever was keeping the delegate
+///   alive.
+- (void)presentSystemController:(UIViewController *)controller
+                        failure:(void (^)(NSString *error))failure
+                           gone:(void (^)(void))gone;
 
 @end
 

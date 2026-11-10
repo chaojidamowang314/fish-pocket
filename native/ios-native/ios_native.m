@@ -17,10 +17,11 @@
 #import "DshNativeCapabilities.h"
 #import "DshNativeAudit.h"
 #import "eventkit_shared.h"
-// alarm is the one capability ObjC cannot implement (AlarmKit has no ObjC
-// surface at all), so its declarations live with its bridge, not in the shared
-// header the other capabilities use.
+// alarm and weather are the capabilities ObjC cannot implement (AlarmKit and
+// WeatherKit have no ObjC surface at all), so their declarations live with
+// their bridges, not in the shared header the other capabilities use.
 #import "DshAlarmBridge.h"
+#import "DshWeatherBridge.h"
 #import <node_api.h>
 
 /// A capability may put a one-line account of what it did under this key. The
@@ -111,6 +112,26 @@ static const dsh_capability CAPABILITIES[] = {
   // than an option on it.
   {"alarm",    dsh_native_alarm,    {"list", "create", "cancel", NULL}, "alarm",
    {"create", "cancel", NULL}, false},
+  // Read only: nothing here creates, edits or deletes a contact. The caller
+  // names the field it is searching (name, phone or email) and gets every
+  // match back — which "Zhang" was meant is for the model to ask (§4.5).
+  {"contacts", dsh_native_contacts, {"search", "get", NULL}, "contacts", {NULL}, false},
+  // Prefills Apple's own mail or message sheet; the user's tap on Send is the
+  // only thing that sends. So there is no permission, no write policy and
+  // nothing to audit: nothing leaves the phone on the caller's word alone.
+  {"compose",  dsh_native_compose,  {"mail", "message", NULL}, NULL, {NULL}, false},
+  // The system picker is the consent: the engine sees only what the user picks,
+  // as a copy, and `export` only reaches where the user points it.
+  {"files",    dsh_native_files,    {"pick", "export", NULL}, NULL, {NULL}, false},
+  // The user's own library and the system player. Searching Apple Music's
+  // catalogue is MusicKit, a different service, and is not here. Starting or
+  // stopping playback is audible to the whole room, so it obeys the write policy.
+  {"music",    dsh_native_music,    {"search", "playlists", "play", "pause", "next", "previous", "now", NULL},
+   "music", {"play", "pause", "next", "previous", NULL}, false},
+  // Apple's forecast for a coordinate the caller already has. It never reads
+  // the user's position — "weather here" is `location` first, then this — so
+  // there is no permission to grant. Swift behind DshWeatherBridge.h.
+  {"weather",  dsh_native_weather,  {"current", "hourly", "daily", NULL}, NULL, {NULL}, false},
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
 
@@ -239,6 +260,10 @@ void DshNativeRequestPermission(NSString *permission, void (^done)(BOOL granted,
     DshPhotosGrantAccess(reply);
   } else if ([permission isEqualToString:@"alarm"]) {
     DshAlarmGrantAccess(reply);
+  } else if ([permission isEqualToString:@"contacts"]) {
+    DshContactsGrantAccess(reply);
+  } else if ([permission isEqualToString:@"music"]) {
+    DshMusicGrantAccess(reply);
   } else {
     // In the table, but nothing here knows how to ask for it: a capability was
     // added with a new `systemPermission` and this function was not extended.

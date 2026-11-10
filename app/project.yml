@@ -89,6 +89,17 @@ targets:
       # 用到这个能力才失败。
       - sdk: AlarmKit.framework
         weak: true
+      # native/ios-native 的 contacts：按名字、电话或邮箱查联系人。只读。
+      - sdk: Contacts.framework
+      # native/ios-native 的 compose：系统自带的邮件和短信撰写页，发不发由用户点。
+      - sdk: MessageUI.framework
+      # compose 给附件定 MIME 类型、files 给选取器定可选类型，都靠 UTType。
+      - sdk: UniformTypeIdentifiers.framework
+      # native/ios-native 的 music：查音乐资料库、控制系统播放器。
+      - sdk: MediaPlayer.framework
+      # native/ios-native 的 weather：某个坐标的天气和预报。要 App ID 开了 WeatherKit
+      # 才答得出来，见 docs/native-services.md。
+      - sdk: WeatherKit.framework
       - sdk: libz.tbd
       - sdk: libiconv.tbd
       - package: SwiftTerm
@@ -154,6 +165,10 @@ targets:
         # 本机能力「闹钟」。把「穿透静音」写进去：这是用户在授权框上唯一一次
         # 能知道自己批的是什么的机会，而它比通知强得多。
         NSAlarmKitUsageDescription: 让智能体按你的要求设真正的闹钟。闹钟会穿透静音和专注模式，响到你关掉为止。
+        # 本机能力「通讯录」。只读，所以最后一句和照片那条一样是实情。
+        NSContactsUsageDescription: 让智能体在你要求时按名字、电话或邮箱查找联系人，比如替你写邮件前查对方的地址。为回答你的问题，查到的联系人信息会随对话发送给你选择的模型服务商。App 不会添加、修改或删除任何联系人。
+        # 本机能力「音乐」。键名里有 AppleMusic，管的其实是整个媒体资料库。
+        NSAppleMusicUsageDescription: 让智能体按你的要求在音乐资料库里找歌和歌单，并控制播放。为回答你的问题，歌曲和歌单的名称会随对话发送给你选择的模型服务商。
         # Only standard TLS/HTTPS through Security.framework and Node's OpenSSL; no proprietary crypto.
         ITSAppUsesNonExemptEncryption: false
         # The engine serves plain HTTP on 127.0.0.1 only.

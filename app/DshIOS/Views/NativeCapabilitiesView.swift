@@ -1,7 +1,9 @@
 import SwiftUI
+import Contacts
 import CoreLocation
 import EventKit
 import HealthKit
+import MediaPlayer
 import Speech
 import Photos
 import UserNotifications
@@ -53,7 +55,8 @@ struct NativeCapabilitiesView: View {
                         },
                         enable: { enable(capability) },
                         setPolicy: { policies[capability.id] = $0; DshNativeSetWritePolicy(capability.id, $0) },
-                        openSettings: openSystemSettings
+                        openSettings: openSystemSettings,
+                        openHealth: openHealthApp
                     )
                 }
             } header: {
@@ -84,7 +87,7 @@ struct NativeCapabilitiesView: View {
                 Section {
                     Button("打开系统设置", action: openSystemSettings)
                 } footer: {
-                    Text("开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。")
+                    Text("开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。健康数据是例外，要在「健康」App 里改。")
                 }
                 .groupedRow()
             }
@@ -143,6 +146,15 @@ struct NativeCapabilitiesView: View {
         UIApplication.shared.open(url)
     }
 
+    /// 健康数据的授权不在本 App 的系统设置页里，只在「健康」App 里能逐项改。
+    /// 「健康」打不开的机器（比如 iPad 上没装）才退回系统设置，总比按了没反应强。
+    private func openHealthApp() {
+        guard let url = URL(string: "x-apple-health://") else { return }
+        UIApplication.shared.open(url) { opened in
+            if !opened { openSystemSettings() }
+        }
+    }
+
     /// 只问清单里真的出现过的那些授权，别为一个这个构建没有的能力去碰框架。
     private func refreshPermissions() {
         let needed = Set(capabilities.compactMap(\.systemPermission))
@@ -164,6 +176,22 @@ struct NativeCapabilitiesView: View {
         if needed.contains(NativeCapability.photosPermission) {
             permissions[NativeCapability.photosPermission] =
                 .ofPhotos(PHPhotoLibrary.authorizationStatus(for: .readWrite))
+        }
+        if needed.contains(NativeCapability.contactsPermission) {
+            permissions[NativeCapability.contactsPermission] =
+                .ofContacts(CNContactStore.authorizationStatus(for: .contacts))
+        }
+        if needed.contains(NativeCapability.musicPermission) {
+            permissions[NativeCapability.musicPermission] = .ofMusic(MPMediaLibrary.authorizationStatus())
+        }
+        if needed.contains(NativeCapability.alarmPermission), let alarms = DshAlarmCurrentProvider() {
+            // 闹钟的状态在 Swift 提供方手里（AlarmKit 没有 ObjC 接口）。这个查询只读
+            // 不弹框。漏了它的话这一行会落到「随时可用」，连「开启」按钮都没有。
+            alarms.alarmAuthorizationState { state in
+                Task { @MainActor in
+                    permissions[NativeCapability.alarmPermission] = .ofAlarm(state)
+                }
+            }
         }
         if needed.contains(NativeCapability.homeKitPermission) {
             // HomeKit has no free status query — creating the manager IS the
@@ -237,6 +265,34 @@ enum CapabilityPermission {
         }
     }
 
+    static func ofContacts(_ status: CNAuthorizationStatus) -> CapabilityPermission {
+        // iOS 18 起可以只分享几位联系人。和照片的「仅选择」是一回事：查不到某个人
+        // 不等于通讯录里没有他，这一行不能写成「已开启」。
+        if #available(iOS 18.0, *), status == .limited { return .insufficient("仅限你分享的那几位") }
+        switch status {
+        case .authorized: return .allowed
+        case .denied, .restricted: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofMusic(_ status: MPMediaLibraryAuthorizationStatus) -> CapabilityPermission {
+        switch status {
+        case .authorized: return .allowed
+        case .denied, .restricted: return .denied
+        default: return .notDetermined
+        }
+    }
+
+    static func ofAlarm(_ state: String) -> CapabilityPermission {
+        switch state {
+        case DshAlarmAuthorizationAuthorized: return .allowed
+        case DshAlarmAuthorizationDenied: return .denied
+        case DshAlarmAuthorizationUnsupported: return .unsupported("需要 iOS 26")
+        default: return .notDetermined
+        }
+    }
+
     static func ofLocation(_ status: CLAuthorizationStatus) -> CapabilityPermission {
         switch status {
         case .authorizedAlways, .authorizedWhenInUse: return .allowed
@@ -275,9 +331,10 @@ enum CapabilityPermission {
         case .notNeeded, .allowed: return .none
         case .notDetermined: return .enable
         case .denied, .insufficient: return .settings
-        // 再点一次「开启」不会再弹框（iOS 一生只问一次），但去系统设置能逐项
-        // 查看和改——那里是唯一能看到真实状态的地方。
-        case .asked: return .settings
+        // 再点一次「开启」不会再弹框（iOS 一生只问一次）。能逐项查看和改的地方
+        // 在「健康」App 里，不在本 App 的系统设置页——那一页根本没有健康这一项，
+        // 把人送过去等于让他白找一趟。
+        case .asked: return .health
         // 系统设置里也没有这一项可开，给「去设置」同样是空指望。
         case .unsupported: return .none
         }
@@ -289,7 +346,7 @@ enum CapabilityPermission {
     var showsWriteSetting: Bool { isAllowed }
 }
 
-enum CapabilityAction { case none, enable, settings }
+enum CapabilityAction { case none, enable, settings, health }
 
 /// 一项本机能力，连同它的中文说明。
 struct NativeCapability: Identifiable {
@@ -301,6 +358,9 @@ struct NativeCapability: Identifiable {
     static let photosPermission = "photos"
     static let calendarPermission = "calendar"
     static let remindersPermission = "reminders"
+    static let contactsPermission = "contacts"
+    static let alarmPermission = "alarm"
+    static let musicPermission = "music"
 
     let id: String
     let ops: [String]
@@ -350,6 +410,11 @@ struct NativeCapability: Identifiable {
         case "homekit": return String(localized: "智能家居")
         case "photos": return String(localized: "照片")
         case "alarm": return String(localized: "闹钟")
+        case "contacts": return String(localized: "通讯录")
+        case "compose": return String(localized: "写邮件和短信")
+        case "files": return String(localized: "文件")
+        case "music": return String(localized: "音乐")
+        case "weather": return String(localized: "天气")
         case "calendar": return String(localized: "日历")
         case "reminders": return String(localized: "提醒事项")
         default: return id
@@ -372,6 +437,11 @@ struct NativeCapability: Identifiable {
         case "homekit": return String(localized: "查看家里有哪些配件和它们的状态，并按你设的写入方式改状态、跑场景")
         case "photos": return String(localized: "查看相册里有哪些照片，并把你指定的一张导出给本机识别。不增不改不删")
         case "alarm": return String(localized: "让智能体设真正的闹钟。和通知不同，闹钟会穿透静音和专注模式，响到你关掉为止")
+        case "contacts": return String(localized: "按名字、电话或邮箱查联系人。只读，不增不改不删")
+        case "compose": return String(localized: "把邮件或短信替你填好，弹出系统的发送页。发不发由你点，智能体自己发不出去")
+        case "files": return String(localized: "请你从「文件」里挑文件交给智能体，或把它做好的文件存到你选的位置。它只拿得到你挑的那几个")
+        case "music": return String(localized: "在你的音乐资料库里找歌和歌单，并按你设的写入方式播放、暂停、切歌")
+        case "weather": return String(localized: "查某个地点的实时天气和预报，数据来自 Apple 天气。不读你的位置")
         case "calendar": return String(localized: "查看你的日程，并按你设的写入方式增删改")
         case "reminders": return String(localized: "查看「提醒事项」里的待办，并按你设的写入方式增删改")
         default: return ops.joined(separator: " · ")
@@ -395,6 +465,11 @@ struct NativeCapability: Identifiable {
         case "homekit": return "house"
         case "photos": return "photo"
         case "alarm": return "alarm.waves.left.and.right"
+        case "contacts": return "person.crop.circle"
+        case "compose": return "envelope"
+        case "files": return "folder"
+        case "music": return "music.note"
+        case "weather": return "cloud.sun"
         case "calendar": return "calendar"
         case "reminders": return "checklist"
         default: return "square.grid.2x2"
@@ -425,6 +500,7 @@ private struct CapabilityRow: View {
     let enable: () -> Void
     let setPolicy: (DshWritePolicy) -> Void
     let openSettings: () -> Void
+    let openHealth: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -445,14 +521,14 @@ private struct CapabilityRow: View {
                     .font(.footnote)
                     .foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                if permission.action == .settings {
+                if permission.action == .settings || permission.action == .health {
                     Text(permission.label)
                         .font(.footnote)
                         .foregroundStyle(Palette.ink)
                 }
                 // 「已询问」三个字单独摆着没人看得懂，必须跟一句为什么只能这么说。
                 if case .asked = permission {
-                    Text("iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。去「健康」App 的「共享」里可以逐项查看和更改。")
+                    Text("iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。要逐项查看和更改：打开「健康」App，点右上角的头像，在「隐私」下面进「App」，再选 Fish Pocket。")
                         .font(.footnote)
                         .foregroundStyle(Palette.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -518,6 +594,9 @@ private struct CapabilityRow: View {
             .disabled(busy)
         case .settings:
             Button("去设置", action: openSettings)
+                .buttonStyle(CapabilityActionStyle(filled: false))
+        case .health:
+            Button("打开健康", action: openHealth)
                 .buttonStyle(CapabilityActionStyle(filled: false))
         }
     }

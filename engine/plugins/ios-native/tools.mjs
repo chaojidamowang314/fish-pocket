@@ -172,6 +172,8 @@ function renderEvent(event) {
   const parts = [when, event.title || '(no title)'];
   if (event.calendar) parts.push(`[${event.calendar}]`);
   if (event.location) parts.push(`@ ${event.location}`);
+  // update and delete take this id and nothing else finds an event, so every line carries it.
+  if (event.id) parts.push(`id ${event.id}`);
   const line = parts.join('  ');
   return event.notes ? `${line}\n    ${event.notes.replace(/\n+/g, ' ')}` : line;
 }
@@ -326,7 +328,9 @@ const reminders = defineTool({
     schema: { type: 'json' },
     render: (args, value) => {
       if (args.action === 'create') {
-        return text(value.saved ? 'They confirmed; the reminder is in their list.' : 'They declined. Nothing was added.');
+        return text(value.saved
+          ? `They confirmed; the reminder is in their list${value.id ? ` (id ${value.id})` : ''}.`
+          : 'They declined. Nothing was added.');
       }
       if (args.action === 'complete') {
         if (value.unchanged) return text('That one is already done.');
@@ -341,6 +345,8 @@ const reminders = defineTool({
         const when = item.due ? `${dayOf(item.due)} ${timeOf(item.due)}` : 'no due date';
         const parts = [`${item.completed ? '[done] ' : ''}${when}`, item.title || '(no title)'];
         if (item.list) parts.push(`[${item.list}]`);
+        // complete and delete take this id; a title is not one.
+        if (item.id) parts.push(`id ${item.id}`);
         const line = parts.join('  ');
         return item.notes ? `${line}\n    ${item.notes.replace(/\n+/g, ' ')}` : line;
       });
@@ -1098,7 +1104,7 @@ const alarm = defineTool({
       if (args.action === 'cancel') {
         return text(value.cancelled ? 'Alarm turned off.' : 'They declined; the alarm is still set.');
       }
-      return text(value.saved ? `Alarm set (id ${value.id}).` : 'They declined; no alarm was set.');
+      return text(value.created ? `Alarm set (id ${value.id}).` : 'They declined; no alarm was set.');
     },
   },
   execute: async (args) => {
@@ -1122,6 +1128,570 @@ const alarm = defineTool({
 });
 
 /** Tool definitions by the capability each one needs. */
+const contacts = defineTool({
+  name: 'contacts',
+  description:
+    'Look someone up in the user\'s address book, for when another step needs their number or '
+    + 'address ("text Zhang San", "email my landlord"). Read-only: nothing here adds, edits or '
+    + 'deletes a contact, and nothing here sends anything.\n'
+    + '`search` takes exactly ONE of name, phone or email — you say which field you are searching; '
+    + 'it is not guessed from how the query looks. Each match already carries its phones and '
+    + 'emails, which is usually all you need. Use `get` with an id from `search` only for the rest '
+    + 'of a card: postal addresses, birthday, job title, nickname, URLs. Notes and pictures are '
+    + 'never returned.\n'
+    + 'Matches come in the address book\'s own order, NOT best first. When several people match, '
+    + 'show them and ask which one was meant — never choose one yourself, least of all before '
+    + 'sending something to them. The same goes for one person with several numbers.\n'
+    + 'If the reply says access is "limited", the user shared only some contacts with this app: '
+    + 'relay that, and never tell them someone is not in their contacts — only that they are not '
+    + 'among the ones shared.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['search', 'get'],
+      description: 'find contacts by one field, or read one contact\'s whole card',
+      required: true,
+    },
+    name: {
+      type: 'string',
+      description:
+        'search: a name to look for. Matches the start of any word in the name or the company, '
+        + 'so "bell" finds Kate Bell and "ate" does not',
+    },
+    phone: {
+      type: 'string',
+      description:
+        'search: a whole phone number. Spaces, dashes and brackets do not matter, but part of a '
+        + 'number matches nothing, and a country code the card does not have can miss',
+    },
+    email: {
+      type: 'string',
+      description: 'search: a whole email address, any case. Part of one matches nothing',
+    },
+    limit: { type: 'number', description: 'search: how many to return; defaults to 25, at most 100' },
+    id: { type: 'string', description: 'get: which contact, by the id `search` returned' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      // The limited-access note goes first, every time: "no match" among a few
+      // shared contacts reads exactly like "not in your contacts".
+      const limited = value.access === 'limited';
+      const note = limited && value.note ? `${value.note}\n\n` : '';
+      const labeled = (item) => `${item.label ? `${item.label}: ` : ''}${item.value ?? ''}`;
+      const heading = (c) => c.name || c.organization || '(no name)';
+
+      if (args.action === 'get') {
+        const c = value.contact ?? {};
+        const lines = [heading(c)];
+        const parts = [
+          ['given name', c.givenName], ['middle name', c.middleName], ['family name', c.familyName],
+          ['nickname', c.nickname], ['organization', c.organization], ['department', c.department],
+          ['job title', c.jobTitle],
+        ];
+        for (const [label, part] of parts) if (part) lines.push(`${label}: ${part}`);
+        for (const p of c.phones ?? []) lines.push(`phone  ${labeled(p)}`);
+        for (const e of c.emails ?? []) lines.push(`email  ${labeled(e)}`);
+        for (const a of c.addresses ?? []) {
+          // The formatter answers in lines; one line each keeps the card readable.
+          const oneLine = String(a.formatted ?? '').split('\n').filter(Boolean).join(', ');
+          lines.push(`address  ${a.label ? `${a.label}: ` : ''}${oneLine}`);
+        }
+        if (c.birthday) {
+          const pad = (n) => String(n).padStart(2, '0');
+          // A missing year stays missing. Most cards have none, and a made-up
+          // one turns into a wrong age the moment someone does arithmetic on it.
+          lines.push(`birthday: ${c.birthday.year === undefined ? '' : `${c.birthday.year}-`}`
+            + `${pad(c.birthday.month)}-${pad(c.birthday.day)}`
+            + `${c.birthday.year === undefined ? ' (no year on the card)' : ''}`);
+        }
+        for (const u of c.urls ?? []) lines.push(`url  ${labeled(u)}`);
+        if (c.id) lines.push(`id: ${c.id}`);
+        return text(note + lines.join('\n'));
+      }
+
+      const list = value.contacts ?? [];
+      if (list.length === 0) {
+        return text(limited
+          ? `${note}No match among the contacts the user shared with this app.`
+          : 'No contact matches that.');
+      }
+      const lines = [];
+      if (list.length > 1) {
+        lines.push(`${value.total ?? list.length} contacts match — show them and ask which one was meant.`);
+      }
+      list.forEach((c, index) => {
+        const company = c.name && c.organization ? ` (${c.organization})` : '';
+        lines.push(`${index + 1}. ${heading(c)}${company}  id ${c.id}`);
+        for (const p of c.phones ?? []) lines.push(`   phone  ${labeled(p)}`);
+        for (const e of c.emails ?? []) lines.push(`   email  ${labeled(e)}`);
+        if (!(c.phones ?? []).length && !(c.emails ?? []).length) {
+          lines.push('   no phone or email on this card');
+        }
+      });
+      if (value.truncated) {
+        lines.push(`… ${value.total} match in all and ${list.length} are shown; narrow the search or raise limit.`);
+      }
+      return text(note + lines.join('\n'));
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'get') {
+      if (!args.id) throw new Error('contacts: `get` needs `id`');
+      return invoke('contacts', 'get', { id: args.id });
+    }
+    // An empty string is a field the model filled in out of habit, not a query.
+    const given = ['name', 'phone', 'email'].filter((key) => typeof args[key] === 'string' && args[key] !== '');
+    if (given.length === 0) {
+      throw new Error('contacts: `search` needs one of `name`, `phone` or `email`');
+    }
+    if (given.length > 1) {
+      // Not "search all of them and merge": which field the query belongs to is
+      // the one thing the caller has to decide, so two answers is no answer.
+      throw new Error(`contacts: \`search\` takes exactly one of \`name\`, \`phone\`, \`email\` — got ${given.join(' and ')}. `
+        + 'Search one field at a time');
+    }
+    return invoke('contacts', 'search', {
+      [given[0]]: args[given[0]],
+      ...(args.limit === undefined ? {} : { limit: args.limit }),
+    });
+  },
+});
+
+const compose = defineTool({
+  name: 'compose',
+  description:
+    'Put a prefilled email or text message in front of the user, in Apple\'s own compose sheet. '
+    + 'You do not send anything: the Send button is Apple\'s, only the user can tap it, and they '
+    + 'can change every field first. So tell them you have opened a draft for them to send, and '
+    + 'never say it was sent unless the result says `sent`.\n'
+    + 'The call returns only once they have dealt with the sheet. `cancelled` and, for mail, '
+    + '`saved` (they kept it as a draft) are ordinary answers, not errors — say what they chose '
+    + 'and do not open the sheet again unless they ask. `sent` means handed to Mail\'s outbox or '
+    + 'to Messages, not delivered.\n'
+    + 'Never guess an address or a phone number: look it up with `contacts` first, or ask. '
+    + '`mail` needs an account in Apple\'s Mail app and is refused without one — people who use '
+    + 'another mail app often have none; give them the text to paste instead. `message` is '
+    + 'refused on a device that cannot text. One sheet at a time.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['mail', 'message'],
+      description: 'open an email draft, or a text message (iMessage/SMS) draft',
+      required: true,
+    },
+    to: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'recipients — mail: email addresses; message: phone numbers or Apple IDs',
+    },
+    cc: { type: 'array', items: { type: 'string' }, description: 'mail: addresses to copy' },
+    bcc: { type: 'array', items: { type: 'string' }, description: 'mail: addresses to copy blind' },
+    subject: { type: 'string', description: 'mail: the subject line' },
+    body: { type: 'string', description: 'the text of the email or message' },
+    html: { type: 'boolean', description: 'mail: `body` is HTML rather than plain text; defaults to false' },
+    attachments: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'paths of files to attach. Files only, not folders',
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      const mail = args.action === 'mail';
+      const what = mail ? 'email' : 'message';
+      if (value?.result === 'sent') {
+        return text(mail
+          ? 'They tapped Send. The email is in Mail\'s outbox — handed over, not confirmed delivered.'
+          : 'They tapped Send. The message was handed to Messages — not confirmed delivered.');
+      }
+      if (value?.result === 'saved') {
+        return text('They kept it as a draft in Mail instead of sending it. Nothing was sent.');
+      }
+      if (value?.result === 'cancelled') {
+        return text(`They closed the sheet without sending. No ${what} was sent.`);
+      }
+      // An answer this tool has no words for must not read as success: the one
+      // mistake that matters here is telling them something went out.
+      return text(`The compose sheet did not say what happened. Do not assume the ${what} was sent.`);
+    },
+  },
+  execute: async (args) => {
+    const mail = args.action === 'mail';
+    const lists = mail ? ['to', 'cc', 'bcc', 'attachments'] : ['to', 'attachments'];
+    const strings = mail ? ['subject', 'body'] : ['body'];
+    if (!mail) {
+      // Dropping these quietly would show the user a draft missing something
+      // the caller believes is in it.
+      const extra = ['cc', 'bcc', 'subject', 'html'].filter((key) => args[key] !== undefined);
+      if (extra.length > 0) {
+        throw new Error(`compose: \`message\` has no ${extra.map((key) => `\`${key}\``).join(', ')}; `
+          + 'a text message is only `to`, `body` and `attachments`');
+      }
+    }
+    const fields = {};
+    for (const key of lists) {
+      const value = args[key];
+      if (value === undefined) continue;
+      if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || item === '')) {
+        throw new Error(`compose: \`${key}\` must be an array of non-empty strings`);
+      }
+      if (value.length > 0) fields[key] = value;
+    }
+    for (const key of strings) {
+      const value = args[key];
+      if (value === undefined) continue;
+      if (typeof value !== 'string') throw new Error(`compose: \`${key}\` must be a string`);
+      if (value !== '') fields[key] = value;
+    }
+    if (Object.keys(fields).length === 0) {
+      // An empty sheet is a caller that lost its arguments, not a request.
+      const names = (mail ? ['to', 'cc', 'bcc', 'subject', 'body', 'attachments'] : ['to', 'body', 'attachments'])
+        .map((key) => `\`${key}\``).join(', ');
+      throw new Error(`compose: \`${args.action}\` needs at least one of ${names}`);
+    }
+    return invoke('compose', args.action, {
+      ...fields,
+      ...(mail && args.html !== undefined ? { html: args.html === true } : {}),
+    });
+  },
+});
+
+const music = defineTool({
+  name: 'music',
+  description:
+    'Search the user\'s own music library and control playback in the Music app: find songs, '
+    + 'albums, artists or playlists, start one playing, pause, skip, and say what is playing.\n'
+    + 'LIBRARY ONLY. This sees what the user has bought, synced or added to their library — NOT '
+    + 'the Apple Music catalogue. A song they never added cannot be found or played from here, so '
+    + 'never promise "play any song": search first, and when nothing matches say it is not in '
+    + 'their library.\n'
+    + '`play` takes ids, not names: `search` (or `playlists`) first, then pass the id back exactly '
+    + 'as it came — ids are long numbers kept as strings, and they break if turned into numbers. '
+    + '`search` matches one field per kind (a song by its title, an album by its title, an artist '
+    + 'or playlist by its name) and returns every match in library order, not best first. When '
+    + 'several match, say which one you picked or ask; do not play the first silently.\n'
+    + '`play` replaces whatever was queued in Music and keeps playing after this app is closed. '
+    + '`play` with no target resumes what was paused. A song marked `cloud` is not downloaded and '
+    + 'needs a connection. After `next` or `previous`, call `now` to see what is playing. Playing, '
+    + 'pausing and skipping may stop for the user to confirm, depending on their setting.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['search', 'playlists', 'play', 'pause', 'next', 'previous', 'now'],
+      description: 'search the library, list every playlist, start or resume playback, pause, skip '
+        + 'forward, go back one, or report what is playing',
+      required: true,
+    },
+    query: { type: 'string', description: 'search: text the title or name must contain' },
+    kind: {
+      type: 'string',
+      enum: ['song', 'album', 'artist', 'playlist'],
+      description: 'search: what to look for, default song',
+    },
+    limit: { type: 'number', description: 'search: how many to return, default 25, at most 100' },
+    songs: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'play: song ids from `search`, played in this order (at most 200)',
+    },
+    album: { type: 'string', description: 'play: an album id from `search`' },
+    artist: { type: 'string', description: 'play: an artist id from `search`; plays everything by them in the library' },
+    playlist: { type: 'string', description: 'play: a playlist id from `search` or `playlists`' },
+    shuffle: { type: 'boolean', description: 'play: turn shuffle on or off; leave out to keep the user\'s own setting' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      const clock = (seconds) => {
+        if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return '';
+        const whole = Math.max(0, Math.round(seconds));
+        return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+      };
+      const songs = (n) => `${n ?? 0} ${n === 1 ? 'song' : 'songs'}`;
+      const song = (item) => [
+        item.title || '(untitled)',
+        [item.artist, item.album].filter(Boolean).join(' · '),
+      ].filter(Boolean).join(' — ');
+      const more = (what) => (value.truncated ? [`… ${value.total} ${what} in all; only the first ones are shown`] : []);
+
+      if (args.action === 'search') {
+        const results = value.results ?? [];
+        const kind = value.kind ?? args.kind ?? 'song';
+        if (results.length === 0) {
+          return text(`No ${kind} in their library matches "${args.query ?? ''}". `
+            + 'This searches the library only, not the Apple Music catalogue.');
+        }
+        const lines = results.map((item) => (kind === 'song'
+          ? `${song(item)}  ${clock(item.duration)}${item.cloud ? '  cloud' : ''}  ${item.id}`
+          : `${item.title ?? item.name ?? '(unnamed)'}${item.artist ? ` — ${item.artist}` : ''}  ${songs(item.count)}  ${item.id}`));
+        return text([...lines, ...more(`${kind}s match`)].join('\n'));
+      }
+      if (args.action === 'playlists') {
+        const playlists = value.playlists ?? [];
+        if (playlists.length === 0) return text('Their library has no playlists.');
+        const lines = playlists.map((item) => `${item.name || '(unnamed)'}  ${songs(item.count)}  ${item.id}`);
+        return text([...lines, ...more('playlists')].join('\n'));
+      }
+      if (args.action === 'play') {
+        if (!value.played) return text('They declined; nothing was played.');
+        if (value.kind === 'resume') {
+          return text(value.item
+            ? `Resumed: ${song(value.item)}.`
+            : 'Told Music to play, but nothing was queued that this app can see. Check with `now`.');
+        }
+        const what = value.name ? `${value.kind} "${value.name}"` : 'the songs asked for';
+        const first = value.shuffle
+          ? ' Shuffled, so `now` says which song came first.'
+          : (value.first ? ` First: ${value.first}.` : '');
+        return text(`Playing ${what} (${songs(value.count)}).${first}`);
+      }
+      if (args.action === 'pause') {
+        if (!value.paused) return text('They declined; playback was left as it was.');
+        return text(value.item ? `Paused: ${song(value.item)}.` : 'Paused. Nothing was queued that this app can see.');
+      }
+      if (args.action === 'next' || args.action === 'previous') {
+        if (!value.skipped) return text('They declined; playback was left as it was.');
+        const from = value.from ? ` from ${song(value.from)}` : '';
+        return text(`${args.action === 'next' ? 'Skipped forward' : 'Went back one'}${from}. `
+          + 'Call `now` to see what is playing.');
+      }
+      if (!value.item) return text(`Nothing is queued in Music (${value.state ?? 'stopped'}).`);
+      const at = clock(value.item.position);
+      const of = clock(value.item.duration);
+      return text(`${value.state ?? 'unknown'}: ${song(value.item)}`
+        + `${at || of ? `  ${[at, of].filter(Boolean).join(' / ')}` : ''}`
+        + `${value.item.cloud ? '  cloud' : ''}  ${value.item.id}`);
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'search') {
+      if (!args.query) throw new Error('music: `search` needs `query`');
+      return invoke('music', 'search', {
+        query: args.query,
+        ...(args.kind === undefined ? {} : { kind: args.kind }),
+        ...(args.limit === undefined ? {} : { limit: args.limit }),
+      });
+    }
+    if (args.action === 'play') {
+      const given = ['songs', 'album', 'artist', 'playlist'].filter((key) => args[key] !== undefined);
+      // Refused rather than resolved in some order: which of the two was meant
+      // is the model's to say, and it is cheaper to say so here than after a
+      // round trip to the addon.
+      if (given.length > 1) {
+        throw new Error(`music: \`play\` takes one of \`songs\`, \`album\`, \`artist\` or \`playlist\`, not ${given.map((key) => `\`${key}\``).join(' and ')}`);
+      }
+      return invoke('music', 'play', {
+        ...(given.length === 0 ? {} : { [given[0]]: args[given[0]] }),
+        ...(args.shuffle === undefined ? {} : { shuffle: args.shuffle }),
+      });
+    }
+    return invoke('music', args.action);
+  },
+});
+
+const files = defineTool({
+  name: 'files',
+  description:
+    'Ask the user for a file from their Files app — iCloud Drive, On My iPhone, or any other '
+    + 'provider there — or hand them a file you made. You cannot browse their files: `pick` opens '
+    + 'the system picker, they choose, and you get only what they chose. Use it when they mention a '
+    + 'file that is not in the workspace ("the PDF in my iCloud", "that spreadsheet I downloaded"). '
+    + 'The call waits for them and returns when they are done.\n'
+    + 'What comes back is a COPY inside the workspace, at the path returned. Editing it does not '
+    + 'change their original — when they want the result back in Files, `export` it, which opens '
+    + 'the picker again for them to choose where it goes. Your own file stays where it was.\n'
+    + 'Closing the picker without choosing is a normal answer, not an error: say so and move on. '
+    + 'Do not open it again on your own.\n'
+    + '`types` narrows what they can tap, as uniform type identifiers (`public.image`, '
+    + '`com.adobe.pdf`, `public.plain-text`) or filename extensions (`pdf`, `csv`). A string iOS '
+    + 'does not recognise is refused rather than guessed at; leave `types` out and any file can be '
+    + 'picked, which is the right default when you are not sure.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['pick', 'export'],
+      description: 'ask the user for a file, or hand files to the user to save somewhere',
+      required: true,
+    },
+    types: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'pick: type identifiers or filename extensions they may choose from; omit for any file',
+    },
+    multiple: { type: 'boolean', description: 'pick: let them choose several files; defaults to false' },
+    paths: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'export: the files or directories to hand over',
+    },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      if (args.action === 'export') {
+        if (!value.saved) return text('They closed the picker without saving. Nothing left the workspace.');
+        return text(`Saved ${value.count ?? 0} item${value.count === 1 ? '' : 's'} to the place they chose.`);
+      }
+      if (value.cancelled) return text('They closed the picker without choosing a file.');
+      const size = (bytes) => (typeof bytes !== 'number' ? ''
+        : bytes < 1024 ? `${bytes} B`
+        : bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB`
+        : `${(bytes / 1024 / 1024).toFixed(1)} MB`);
+      const lines = [];
+      // What did not arrive goes first: a list of paths that all look fine reads
+      // as "everything they chose is here" unless something says otherwise.
+      for (const failure of value.failed ?? []) {
+        lines.push(`NOT copied: ${failure.name} — ${failure.error}`);
+      }
+      for (const file of value.files ?? []) {
+        lines.push([file.path, file.directory ? 'directory' : size(file.bytes), file.type]
+          .filter(Boolean).join('\t'));
+      }
+      return text(lines.length > 0 ? lines.join('\n') : 'They chose nothing.');
+    },
+  },
+  execute: async (args) => {
+    if (args.action === 'export') {
+      if (!args.paths?.length) {
+        throw new Error('files: `export` needs `paths`');
+      }
+      return invoke('files', 'export', { paths: args.paths });
+    }
+    return invoke('files', args.action, {
+      ...(args.types === undefined ? {} : { types: args.types }),
+      ...(args.multiple === undefined ? {} : { multiple: args.multiple }),
+    });
+  },
+});
+
+const weather = defineTool({
+  name: 'weather',
+  description:
+    'Current conditions and forecasts for a point on the map, from Apple Weather. It needs no '
+    + 'permission because it never reads where the user is: every call takes COORDINATES. For "the '
+    + 'weather here" get them from `location` `current` first (that one does need the user\'s '
+    + 'permission); for a named place use `location` `geocode` or `maps` `search` and choose the '
+    + 'result you meant. A place name is not accepted here.\n'
+    + '`current` is now, `hourly` the next hours (24 unless you say, up to 240), `daily` the next '
+    + 'days starting today (7 unless you say, up to 10). There are no weather alerts, no '
+    + 'minute-by-minute rain and no past weather.\n'
+    + 'Units are fixed whatever the phone is set to: °C, km/h, hPa, km, mm. Humidity, cloud cover '
+    + 'and chance of precipitation are fractions from 0 to 1. Wind direction is the bearing the '
+    + 'wind comes FROM. Every time is UTC, not the local time at that place — convert before '
+    + 'telling the user an hour. A day in `daily` is stamped with the UTC instant its local '
+    + 'midnight falls on, so for places east of Greenwich the date reads one day early.\n'
+    + 'The result ends with a "Weather data:" line naming the source and its legal page. Apple\'s '
+    + 'licence requires that credit wherever the data is shown, so keep that line whenever you '
+    + 'relay a forecast.',
+  parameters: {
+    action: {
+      type: 'string',
+      enum: ['current', 'hourly', 'daily'],
+      description: 'conditions now, an hour-by-hour forecast, or a day-by-day one',
+      required: true,
+    },
+    // Needed by every action, but not marked `required`: the schema check would
+    // then answer a call that has only a place name with "missing required
+    // property", and the refusal in `execute` — which says where coordinates
+    // come from — would never be seen.
+    latitude: { type: 'number', description: 'always needed: the point, -90 to 90' },
+    longitude: { type: 'number', description: 'always needed: the point, -180 to 180' },
+    hours: { type: 'number', description: 'hourly: how many hours ahead, 1 to 240; defaults to 24' },
+    days: { type: 'number', description: 'daily: how many days starting today, 1 to 10; defaults to 7' },
+  },
+  output: {
+    schema: { type: 'json' },
+    render: (args, value) => {
+      const number = (n, digits = 0) => (typeof n === 'number' ? n.toFixed(digits) : '?');
+      const percent = (fraction) => (typeof fraction === 'number' ? `${Math.round(fraction * 100)}%` : '?');
+      const stamp = (iso) => (typeof iso === 'string' ? `${iso.slice(0, 10)} ${iso.slice(11, 16)}` : '?');
+      const sky = (entry) => entry.conditionDescription ?? entry.condition ?? 'unknown conditions';
+      const zone = value.timeZone ?? 'UTC';
+      // The credit is the last line of every shape, including the empty ones: the
+      // licence attaches it to the data's source, not to how much data came back.
+      const credit = value.attribution
+        ? [`Weather data: ${value.attribution.service} — ${value.attribution.legalURL}`]
+        : [];
+
+      if (args.action === 'current') {
+        const now = value.current;
+        if (!now) return text(['No current conditions came back for that point.', ...credit].join('\n'));
+        const wind = now.wind ?? {};
+        const gust = typeof wind.gust === 'number' ? `, gusts ${number(wind.gust)} km/h` : '';
+        return text([
+          `${stamp(now.date)} ${zone}: ${sky(now)}, ${number(now.temperature, 1)}°C`
+            + ` (feels like ${number(now.apparentTemperature, 1)}°C)`,
+          `wind ${number(wind.speed)} km/h from ${number(wind.direction)}°${gust}`,
+          `humidity ${percent(now.humidity)}, cloud cover ${percent(now.cloudCover)},`
+            + ` dew point ${number(now.dewPoint, 1)}°C`,
+          `pressure ${number(now.pressure)} hPa, visibility ${number(now.visibility, 1)} km,`
+            + ` UV index ${number(now.uvIndex)}, ${now.isDaylight ? 'daylight' : 'dark'}`,
+          ...credit,
+        ].join('\n'));
+      }
+
+      const hourly = args.action === 'hourly';
+      const entries = (hourly ? value.hours : value.days) ?? [];
+      if (entries.length === 0) {
+        return text([`No ${hourly ? 'hourly' : 'daily'} forecast came back for that point.`, ...credit].join('\n'));
+      }
+      const lines = hourly
+        ? entries.map((hour) => `${stamp(hour.date)}  ${number(hour.temperature, 1)}°C`
+            + ` (feels ${number(hour.apparentTemperature, 1)}°C)  ${sky(hour)}`
+            + `  precipitation ${percent(hour.precipitationChance)} ${number(hour.precipitationAmount, 1)} mm`
+            + `  wind ${number(hour.windSpeed)} km/h  humidity ${percent(hour.humidity)}`
+            + `  UV ${number(hour.uvIndex)}`)
+        : entries.map((day) => {
+            // Absent at the poles in their season, so they are left off rather
+            // than printed as unknown.
+            const sun = [
+              ...(day.sunrise ? [`sunrise ${stamp(day.sunrise).slice(11)}`] : []),
+              ...(day.sunset ? [`sunset ${stamp(day.sunset).slice(11)}`] : []),
+            ].join(' ');
+            return `${stamp(day.date)}  ${number(day.low, 1)} to ${number(day.high, 1)}°C  ${sky(day)}`
+              + `  precipitation ${percent(day.precipitationChance)} ${number(day.precipitationAmount, 1)} mm`
+              + `  wind ${number(day.windSpeed)} km/h  UV ${number(day.uvIndex)}${sun ? `  ${sun}` : ''}`;
+          });
+      lines.unshift(hourly
+        ? `Hour by hour, times in ${zone}:`
+        : `Day by day. Each line starts with the ${zone} instant that day begins at that place`
+          + ' (its local midnight), so the date can read a day early:');
+      if (value.truncated) {
+        lines.push(`… the first ${entries.length} of the ${value.total} ${hourly ? 'hours' : 'days'} Apple Weather returned`);
+      }
+      return text([...lines, ...credit].join('\n'));
+    },
+  },
+  execute: async (args) => {
+    const { action, latitude, longitude } = args;
+    // `Number.isFinite` and not a truthiness test: 0, 0 is a real point.
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      throw new Error(`weather: \`${action}\` needs \`latitude\` and \`longitude\` as numbers.`
+        + ' It does not take place names and never reads where the user is — get the coordinates'
+        + ' from `location` (`current` or `geocode`) or a `maps` search first.');
+    }
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      throw new Error('weather: `latitude` must be between -90 and 90 and `longitude` between -180 and 180');
+    }
+    const point = { latitude, longitude };
+    if (action === 'hourly' && args.hours !== undefined) {
+      if (!Number.isInteger(args.hours) || args.hours < 1 || args.hours > 240) {
+        throw new Error('weather: `hours` must be a whole number from 1 to 240');
+      }
+      return invoke('weather', 'hourly', { ...point, hours: args.hours });
+    }
+    if (action === 'daily' && args.days !== undefined) {
+      if (!Number.isInteger(args.days) || args.days < 1 || args.days > 10) {
+        throw new Error('weather: `days` must be a whole number from 1 to 10');
+      }
+      return invoke('weather', 'daily', { ...point, days: args.days });
+    }
+    return invoke('weather', action, point);
+  },
+});
+
 export const TOOLS = {
   device: device,
   notify: notify,
@@ -1139,4 +1709,9 @@ export const TOOLS = {
   photos: photos,
   homekit: homekit,
   alarm: alarm,
+  contacts: contacts,
+  compose: compose,
+  music: music,
+  files: files,
+  weather: weather,
 };

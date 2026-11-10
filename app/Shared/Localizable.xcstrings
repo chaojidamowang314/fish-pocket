@@ -1837,6 +1837,22 @@
         }
       }
     },
+    "iOS 不告诉 App 你允许了哪几项健康数据，所以这里只能说问过了。要逐项查看和更改：打开「健康」App，点右上角的头像，在「隐私」下面进「App」，再选 Fish Pocket。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS does not tell an app which kinds of health data you allowed, so all this page can say is that you were asked. To see and change them one by one: open the Health app, tap your picture at the top right, go to Apps under Privacy, then choose Fish Pocket."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS no le dice a una app qué datos de salud permitiste, así que esta página solo puede decir que se te preguntó. Para verlos y cambiarlos uno por uno: abre la app Salud, toca tu foto arriba a la derecha, entra en Apps dentro de Privacidad y elige Fish Pocket."
+          }
+        }
+      }
+    },
     "iOS 只能运行插件的 Host 部分；带网页界面（Client）的版本请在网页端运行。" : {
       "localizations" : {
         "en" : {
@@ -2166,6 +2182,22 @@
         }
       }
     },
+    "上一首" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anterior"
+          }
+        }
+      }
+    },
     "上下文" : {
       "localizations" : {
         "en" : {
@@ -2445,6 +2477,22 @@
       }
     },
     "下一题" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
+          }
+        }
+      }
+    },
+    "下一首" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2968,6 +3016,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Solo se muestran los primeros %lld; acota la búsqueda"
+          }
+        }
+      }
+    },
+    "仅限你分享的那几位" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the ones you shared"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo los que compartiste"
           }
         }
       }
@@ -4882,6 +4946,22 @@
         }
       }
     },
+    "写邮件和短信" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mail & Messages"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo y mensajes"
+          }
+        }
+      }
+    },
     "准备交付" : {
       "localizations" : {
         "en" : {
@@ -5310,6 +5390,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "minutos"
+          }
+        }
+      }
+    },
+    "切到下一首？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip to the next track?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Pasar a la siguiente canción?"
           }
         }
       }
@@ -7442,6 +7538,22 @@
         }
       }
     },
+    "回到上一首？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go back to the previous track?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Volver a la canción anterior?"
+          }
+        }
+      }
+    },
     "回到底部" : {
       "localizations" : {
         "en" : {
@@ -7758,6 +7870,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En estas fechas"
+          }
+        }
+      }
+    },
+    "在你的音乐资料库里找歌和歌单，并按你设的写入方式播放、暂停、切歌" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finds songs and playlists in your music library, and plays, pauses or skips the way you set below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca canciones y listas en tu biblioteca musical, y reproduce, pausa o cambia de canción según lo que configures abajo"
           }
         }
       }
@@ -8302,6 +8430,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tarea externa"
+          }
+        }
+      }
+    },
+    "天气" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiempo"
           }
         }
       }
@@ -10634,6 +10778,7 @@
       }
     },
     "开启之后，智能体和你装的第三方插件都能用，App 不区分谁在调用。装插件前请确认来源可信。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10741,6 +10886,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una vez concedido, cambiar o retirar el acceso se hace en Ajustes. iOS muestra su diálogo de permiso una sola vez por app mientras esté instalada, así que tras un rechazo ese es el único camino."
+          }
+        }
+      }
+    },
+    "开过之后要改或者收回，都在「设置」里。iOS 的授权框每个 App 一生只出现一次，拒绝之后也只能回那里打开。健康数据是例外，要在「健康」App 里改。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once something is on, changing it or taking it back happens in Settings. iOS shows each permission dialog only once per app, so after a refusal that is also the only place to turn it on. Health data is the exception: change it in the Health app."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez activado algo, cambiarlo o retirarlo se hace en Ajustes. iOS muestra cada diálogo de permiso una sola vez por app, así que tras un rechazo ese es también el único lugar para activarlo. Los datos de salud son la excepción: se cambian en la app Salud."
           }
         }
       }
@@ -11769,6 +11930,22 @@
         }
       }
     },
+    "打开健康" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Health"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Salud"
+          }
+        }
+      }
+    },
     "打开文件" : {
       "localizations" : {
         "en" : {
@@ -12057,6 +12234,22 @@
         }
       }
     },
+    "把邮件或短信替你填好，弹出系统的发送页。发不发由你点，智能体自己发不出去" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fills in a mail or a message for you and brings up the system’s send sheet. Sending is your tap; the agent cannot send anything by itself"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rellena un correo o un mensaje por ti y abre la hoja de envío del sistema. Enviarlo depende de tu toque; el agente no puede enviar nada por sí solo"
+          }
+        }
+      }
+    },
     "拒绝" : {
       "localizations" : {
         "en" : {
@@ -12149,6 +12342,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Te avisa a la hora que indiques, incluso con la app cerrada"
+          }
+        }
+      }
+    },
+    "按名字、电话或邮箱查联系人。只读，不增不改不删" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks up contacts by name, phone number or email. Read-only: it never adds, changes or deletes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca contactos por nombre, teléfono o correo. Solo lectura: nunca añade, cambia ni elimina"
           }
         }
       }
@@ -13112,6 +13321,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deshacer"
+          }
+        }
+      }
+    },
+    "播放" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        }
+      }
+    },
+    "播放这些音乐？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play this music?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Reproducir esta música?"
           }
         }
       }
@@ -15004,6 +15245,22 @@
         }
       }
     },
+    "暂停播放？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause playback?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Pausar la reproducción?"
+          }
+        }
+      }
+    },
     "暂停目标" : {
       "localizations" : {
         "en" : {
@@ -16332,6 +16589,22 @@
         }
       }
     },
+    "查某个地点的实时天气和预报，数据来自 Apple 天气。不读你的位置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looks up current weather and the forecast for a place, with data from Apple Weather. It does not read your location"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consulta el tiempo actual y la previsión de un lugar, con datos de Apple Weather. No lee tu ubicación"
+          }
+        }
+      }
+    },
     "查看 %@" : {
       "localizations" : {
         "en" : {
@@ -16365,6 +16638,7 @@
       }
     },
     "查看「提醒事项」里的待办。新建、完成和删除都要你当场确认" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -16413,6 +16687,7 @@
       }
     },
     "查看你的日程。新建、修改和删除都要你当场确认" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -22143,6 +22418,22 @@
         }
       }
     },
+    "请你从「文件」里挑文件交给智能体，或把它做好的文件存到你选的位置。它只拿得到你挑的那几个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asks you to pick files from Files to hand to the agent, or to save files it made wherever you choose. It only ever gets the ones you pick"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te pide elegir archivos de Archivos para dárselos al agente, o guardar los que haya creado donde tú elijas. Solo recibe los que tú eliges"
+          }
+        }
+      }
+    },
     "请使用 http 或 https 地址，且不要包含用户名、密码或 # 片段" : {
       "localizations" : {
         "en" : {
@@ -24640,6 +24931,22 @@
         }
       }
     },
+    "通讯录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contacts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contactos"
+          }
+        }
+      }
+    },
     "部分模型提供商暂时无法加载；已保存的选择仍可移除。" : {
       "localizations" : {
         "en" : {
@@ -25328,6 +25635,22 @@
         }
       }
     },
+    "需要 iOS 26" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires iOS 26"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requiere iOS 26"
+          }
+        }
+      }
+    },
     "需要允许安装脚本" : {
       "localizations" : {
         "en" : {
@@ -25404,6 +25727,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Audio silencioso"
+          }
+        }
+      }
+    },
+    "音乐" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
           }
         }
       }

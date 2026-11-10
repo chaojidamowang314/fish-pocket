@@ -101,7 +101,7 @@ iOS 这些都是系统框架，和「控制其他 App」（做不到）不是一
 | **运动 / 步数** | CoreMotion | `NSMotionUsageDescription` | `CMPedometer` 只给最近 7 天，再往前要 HealthKit | 第二期 |
 | **健康读** | HealthKit | HealthKit capability（entitlement）+ `NSHealthShareUsageDescription` | **合规最重，见 §6.1**。读权限状态查不到（Apple 故意不给，防推断），只能"读到空"当没授权。逐类型授权 | 第二期，**要先决定做不做** |
 | **位置** | CoreLocation | `NSLocationWhenInUseUsageDescription` | 粗/精粒度两档。后台定位别碰 | 第二期 |
-| **通讯录读** | Contacts | `NSContactsUsageDescription` | 隐私敏感度高于日历（牵涉第三人），而且会被发给模型 | 第三期，谨慎 |
+| **通讯录读** | Contacts | `NSContactsUsageDescription` | 隐私敏感度高于日历（牵涉第三人），而且会被发给模型 | **已做，只读**（§3.2） |
 | **照片库** | PhotoKit | `NSPhotoLibraryUsageDescription` | 相机附件已有；照片库用系统 picker 比给智能体读权限更合适 | 用 picker，不要权限 |
 | **健康写** | HealthKit | `NSHealthUpdateUsageDescription` | 写健康数据责任太大，且"不得写入虚假数据"是硬条款 | **不做** |
 | **屏幕使用时间** | DeviceActivity | 需特批 entitlement | 家长控制专用，申请门槛高 | 不做 |
@@ -113,7 +113,7 @@ iOS 这些都是系统框架，和「控制其他 App」（做不到）不是一
 | 能力 | 框架 | 权限成本 |
 |---|---|---|
 | 本地通知 / 闹钟 | UserNotifications / AlarmKit | 通知要运行期请求一次；AlarmKit 在 iOS 26 起要 `NSAlarmKitUsageDescription` |
-| 天气 | WeatherKit | 无用户权限（需 Apple Developer 的 WeatherKit 配额） |
+| 天气 | WeatherKit | 无用户权限。但 App ID 要开通 WeatherKit（能力和 App Service 两处），包里要有 `com.apple.developer.weatherkit`。**代码已接好，开通还没做**（§3.2） |
 | 地图 / 打开 URL | MapKit / `UIApplication.open` | 无 |
 | 朗读 / 语音合成 | AVSpeechSynthesizer | 无 |
 | 设备信息（电量、型号、存储） | UIDevice 等 | 无 |
@@ -125,6 +125,146 @@ iOS 这些都是系统框架，和「控制其他 App」（做不到）不是一
 
 - **App Intents / 快捷指令**：把 dsh 暴露给 Siri 和快捷指令，是反方向（别人调我们）。价值很高，独立做。
 - **HealthKit 后台投递**（`HKObserverQuery` + `enableBackgroundDelivery`）：数据变化时唤起智能体。等健康读稳定后再谈。
+
+
+### 3.2 第三批：通讯录、撰写页、文件、音乐、天气
+
+这五项是一起做的。它们的共同点是都直接对着「帮我办件事」：找到一个人、把话递出去、把文件拿进来或交出去、放首歌、看看要不要带伞。五项里只有通讯录和音乐带系统权限；另外三项没有权限也没有开关，原因各不相同，分别写在各自那一节里。
+
+能力表里的五行（`native/ios-native/ios_native.m`）：
+
+| 能力 | 操作 | 系统权限 | 写操作 |
+|---|---|---|---|
+| `contacts` | `search` `get` | 通讯录 | 无 |
+| `compose` | `mail` `message` | 无 | 无（发送键是用户按的） |
+| `files` | `pick` `export` | 无 | 无（保存位置是用户选的） |
+| `music` | `search` `playlists` `now` `play` `pause` `next` `previous` | 媒体与 Apple Music | `play` `pause` `next` `previous` |
+| `weather` | `current` `hourly` `daily` | 无 | 无 |
+
+#### contacts：只读地查通讯录
+
+**做什么。** 只读地查用户的通讯录，两个操作：
+
+- `search`：按 `name`、`phone`、`email` 三者**之一**查，返回每个命中的 `id`、全名、公司、电话、邮箱。默认 25 条，上限 100 条，带 `total` 和 `truncated`。「给张三发短信」到这一步就够了，不需要第二次调用。
+- `get`：拿 `id` 取整张名片，多出姓/名/中间名、昵称、职位、部门、邮寄地址（分字段 + `CNPostalAddressFormatter` 排好的一串）、生日、网址。
+
+**故意不做的。**
+
+- **不写。** iOS 的通讯录权限只有一档，读写一起给，所以「智能体不会动我的通讯录」不是系统保证的，是我们自己保证的。做法和照片一样：`caps_contacts.m` 里没有 `CNSaveRequest`，表里的 `writeOps` 是空的，没有东西需要把门。
+- **不猜查的是哪个字段。** 「138」可能是号码的一段也可能是公司名。原生侧去看查询长什么样再决定，就是替调用方回答了一个它没问的问题（§4.5）。所以由调用方说明字段，三个字段各自对应 Apple 写好的谓词，匹配规则是 Apple 的，上面不再叠东西。
+- **不排序、不挑。** 命中按 store 给的顺序原样返回。两个「张三」哪个才对，只有用户知道；工具说明里要求智能体列出来问，而不是自己选一个，尤其是在给对方发东西之前。
+- **不取备注和头像。** 备注（`CNContactNoteKey`）需要向 Apple 单独申请 entitlement，没有它时**整个 fetch 都会失败**，不只是少一个字段。头像对「要个电话号码」的调用方没用。
+- **电话号码不规范化。** 用户怎么存的就怎么给。前面有没有 `+86` 正是调用方可能要看的。
+
+**维护时要知道的坑。**
+
+- **iOS 18 的「仅分享部分联系人」。** 这一档下 store 只从用户挑的那几位里作答，而且不说。「没查到」和「通讯录里没这个人」在这时是两回事，所以每个结果都带 `access`（`full` / `limited`），limited 时再带一句 `note`，渲染时放最前面；JS 侧空结果的那句话也跟着换成「分享的联系人里没有」。`CNAuthorizationStatusLimited` 只在 18 以上存在，部署目标是 17，所以放在 `@available` 里单独比较，不进 `switch`。授权页那一行同理显示「仅限你分享的那几位」，不写「已开启」。
+- **授权结果读状态，不信回调的 `granted`。** `DshContactsGrantAccess` 在回调里重新读一次授权状态，full 和 limited 都报已授权。这样授权页和 handler 用的是同一个判断，不会各说各的。
+- **`CNContactFormatter` 要的 key 必须在 `keysToFetch` 里。** 少了它不是返回空名字，是直接抛异常；而它要哪些 key 取决于用户的姓名顺序设置，所以用 `descriptorForRequiredKeysForStyle:`，不要手写。
+- **没有年份的生日。** 大多数名片的生日不带年份，Contacts 用 `NSDateComponentUndefined`（即 `NSIntegerMax`）表示，不是 nil。不处理的话 JSON 里会出现一个十九位数的年份。现在是没有年份就不给 `year`，绝不补一个。
+- **匹配有多宽是 Apple 的谓词定的，比直觉窄。** 实测（§7.5）：电话和邮箱都只认**整个**值，号码的一段、邮箱的一段都查不到；名字是按词的前缀匹配，公司名也算（`bell`、`Kate Bell`、`Creative` 能中，`ohn` 不中）。同一个号码前面多写一个国家码也可能查不到。工具说明和内置 skill 里把这几条都告诉了智能体：拿一段号码查出来的空结果，不等于没有这个人。
+- **`id` 不是长期稳定的。** 它是统一联系人（unified contact）的标识，用户合并或拆开名片后会变。只适合 `search` 之后紧接着 `get`，不要让智能体存起来隔天再用。查不到时的报错会让它重新 `search`。`get` 用的是 `predicateForContactsWithIdentifiers:` 而不是 `unifiedContactWithIdentifier:`，这样「没有这个 id」是空数组，不用靠错误码去分辨。
+- **审计摘要里只有名字。** 按名字查记「查询词 · 命中数」，查询词是调用方自己的话；按电话或邮箱查只记字段名和命中数，不记号码和地址本身。`get` 记这张名片的名字。审计列表是给用户看「谁碰过我的数据」的，不该变成通讯录的第二份拷贝。
+
+#### compose：邮件和短信的撰写页
+
+智能体把收件人、标题、正文、附件填好，弹出系统自带的撰写页（`MFMailComposeViewController` / `MFMessageComposeViewController`），**由用户自己点「发送」**。这个能力本身不发任何东西，也没有办法发：发送按钮是 Apple 的，画在另一个进程里，调用方点不到。道理和新建日程走系统事件编辑器是同一个（§4.3）。
+
+两个操作：`mail`（`to` / `cc` / `bcc` / `subject` / `body` / `html` / `attachments`）和 `message`（`to` / `body` / `attachments`）。结果只有一个字段 `result`：`sent`、`cancelled`，邮件多一个 `saved`（存成了草稿）。系统报「失败」时走错误，不走结果。
+
+**故意不做的事**
+
+- **没有系统权限，也没有写入策略，不走 `DshNativeConfirmWrite`。** 用户点 Apple 的「发送」就是确认；在它前面再弹一个我们自己的确认框，只是把同一件事问两遍。因此表里 `writeOps` 是空的，设置里也没有它的三档开关。
+- **不记使用记录。** 按现有规则，只有带系统权限的能力才写 `auditSummary`。代价是：经智能体发出去的邮件在「使用记录」里查不到，只在「邮件」的已发送里有。
+- **邮件没有账户时不退回 `mailto:`。** `canSendMail` 为假就直接拒绝，并说明是「邮件」App 没有配置账户。`mailto:` 会离开 App，之后发没发我们不知道，结果就只能靠猜——猜错的后果是告诉用户「已发送」。它也带不了附件。调用方真想这么做，`open` 能力本来就能开 `mailto:`。
+- **不替调用方改参数。** `to` 传成字符串不会被包成数组，文件夹不会被自动打包，`message` 里出现 `subject` 在 JS 层直接拒绝——悄悄丢掉的话，用户看到的草稿就和调用方以为的不一样。
+- **附件大小不设上限。** 系统没有给现成的数字，自己定一个就是编的。「邮件」对过大的附件自己会提示。
+
+**维护时要知道的坑**
+
+- **「已发送」不等于送达。** `sent` 只表示交给了「邮件」的发件箱或「信息」。工具的描述和渲染结果都这么写，改文案时别写成「已送达」。
+- **两个撰写页都是远端视图**，可以不走代理回调就消失（§4.3.2）。所以上屏走 `presentSystemController:failure:gone:`，`gone` 到来时代理还没答复，就回「撰写页在用户答复前关闭了，没有发出任何东西」，不回 `cancelled`——不是用户取消的。
+- **撰写页不会自己关。** 代理里必须 `dismiss`，否则用户被一个按钮全都失效的页面挡住。
+- **结果在页面收起之后才回**，不是在代理回调里立刻回。立刻回的话，「一次只开一个」的占位要等桥那边轮询到 `gone`（最多晚半秒多）才释放，同一轮里紧接着的第二封会被误拒成「已经开着一个」。收起回调没来时由 `gone` 兜底，回的仍是代理记下的结果。
+- **附件路径必须在调用线程上解析**，不能挪到主线程：`dsh_root_real` 对相对路径用的是线程本地的当前目录，主线程没有。所有附件在弹出任何界面之前就检查完（存在、不是目录、可读），坏路径是一次调用方能改的拒绝，而不是一份少了附件的草稿。
+- **代理是 weak 的**，会话对象靠文件里的静态变量活着；它同时就是「一次只开一个」的占位。释放时要比对是不是自己，因为 `gone` 可能在下一个会话已经占位之后才到。
+- **模拟器里发不了。** `canSendMail` 和 `canSendText` 在模拟器上通常都是假，能验的只有参数检查、附件检查和两条拒绝；上屏、三种结果、附件是否带上，都只能在装了邮件账户、开了 iMessage 的真机上验。
+
+#### files：从「文件」App 取文件、把文件交还给用户
+
+**做什么。** 两个操作，都靠系统文件选择器（`UIDocumentPickerViewController`）完成：
+
+- `pick`：弹出选择器，用户选中的文件被放进引擎文件系统的 `/home/dsh/.ios/files/<yyyyMMdd-HHmmss>/<原文件名>`，返回 `{files: [{path, name, bytes, type}], cancelled: false}`。`types` 可以写 UTI 或扩展名，不传就是任意文件；`multiple` 允许多选。用户关掉选择器返回 `{files: [], cancelled: true}`，这是正常结果，不是错误。
+- `export`：把引擎里的文件或目录（`paths`）交给选择器，由用户选保存位置。返回 `{saved: true, count}`，取消时 `{saved: false}`。
+
+**为什么没有系统权限、没有开关、也不走写入策略。** 选择器跑在系统进程里，App 在用户点选之前看不到任何文件，点选之后也只看到被选中的那几个。每次调用都必然停在系统界面上等用户操作，智能体按不了里面的按钮，所以选择器本身就是授权。再加一层开关或确认框，等于同一件事问两遍。`export` 也只会写到用户当场选的位置，因此不算 `writeOps`，也不带 `auditSummary`。
+
+**故意不做的。**
+
+- **不授予「活的文件夹」。** 这一版只有「拷进来」和「拷出去」。让引擎直接读写 iCloud 云盘里的某个目录，需要 security-scoped bookmark，还需要 `native/root` 支持把容器外的目录挂进引擎的文件系统视图，现在没有这个接口。后果是：改了选进来的文件，原件不会变，要再 `export` 一次才回到用户手里。
+- **不改名、不去重。** 每次 `pick` 用一个按秒命名的新目录，文件保持原名。同一次多选里出现同名文件时，后一个会失败并报出来，不会覆盖前一个。
+- **不猜类型。** `types` 里的字符串先当 UTI 查，再当扩展名查，只接受系统已声明的类型。系统不认识的扩展名（如 `jsonl`）会被拒绝，而不是生成动态类型。原因是 `image`、`spreadsheet` 这类误写也会得到一个动态类型，选择器打开后所有文件都是灰的，用户看不出为什么。被拒后调用方去掉 `types` 重试即可。
+- **不清理。** `/home/dsh/.ios/files` 下的文件留到有人删为止，和 `photos` 的导出目录一样。
+
+**维护时要知道的坑。**
+
+- 两个操作都用 `asCopy:YES`，不能改。`pick` 不带它拿到的是容器外的原件，路径不在引擎视图里，访问权也只属于本进程；`export` 不带它是**移动**，用户一保存，引擎工作区里的原件就没了。
+- 因为是 `asCopy:YES`，回调里的 URL 已经是 App 临时目录里的副本，所以不需要 `startAccessingSecurityScopedResource`，放进引擎目录用的是移动而不是再拷一份（大视频不必占两份空间）。
+- 选择器是跨进程视图，可能不调用代理就消失。应答只结算一次：代理方法、桥的 `failure`、桥的 `gone` 三者之一。`answered` 在**进入代理方法时**就置位，因为 `gone` 触发时文件可能还在搬；`gone` 只在代理没应答时才报错，报的是「选择器在用户选择之前关闭了」，不说成用户取消（§4.3.2）。
+- 同一时刻只允许一个选择器，第二次调用直接拒绝。占位在 `present` 之前设置，在 `gone` 里释放。
+- 部分文件失败时，成功的照常返回，失败的列在 `failed: [{name, error}]` 里；全部失败才是错误。渲染时失败项排在最前面。
+- 包文档（`.pages`、`.rtfd`）是目录，返回 `directory: true`，不给 `bytes`。`type` 是系统给的标识符，原样转发，可能是 `dyn.` 开头。
+- `export` 在弹出选择器之前检查每个路径是否存在，否则用户选完位置才发现失败。`count` 是选择器回报的 URL 数量，不是请求的数量。
+
+#### music：音乐资料库与系统播放器
+
+`music` 让智能体在用户自己的音乐资料库里找歌、专辑、艺人、歌单，并控制「音乐」App 的播放。框架是 MediaPlayer，系统权限是「媒体与 Apple Music」（`NSAppleMusicUsageDescription`），权限名 `music`。
+
+| 操作 | 读/写 | 做什么 |
+|---|---|---|
+| `search` | 读 | 按 `kind`（`song` 默认 / `album` / `artist` / `playlist`）在各自的名称字段里做包含匹配，按资料库自己的顺序返回，默认 25 条、最多 100 条，带 `total` 和 `truncated` |
+| `playlists` | 读 | 列出全部歌单，最多 200 个 |
+| `now` | 读 | 正在播的那首、播放位置和播放器状态；队列为空时 `item` 是 `null` |
+| `play` | 写 | 播放一组歌曲 id、一张专辑、一位艺人或一个歌单；什么都不传就是继续播放 |
+| `pause` / `next` / `previous` | 写 | 暂停、下一首、上一首 |
+
+**只查资料库，不查 Apple Music 曲库。** `MPMediaQuery` 只看得到用户买过、同步过或者自己加进资料库的内容。搜整个 Apple Music 曲库要走 MusicKit，那是 Swift-only 的接口，还要给 App ID 另开一项服务，这一版不做。工具说明和内置 skill 里都写明了这一点，免得智能体许诺「什么歌都能放」。
+
+**为什么用系统播放器。** `systemMusicPlayer` 就是「音乐」App 自己的播放器：问「现在放的是什么」得到的是用户真在听的那首，开始播放之后切走或关掉本 App 也不会停。代价是 `play` 会替换用户在「音乐」里原有的播放队列，所以四个播放控制操作算写操作，受写入策略管，尽管资料库本身一个字节都没改。
+
+**`play` 只收 id，不收名字。** 要先 `search` 再拿 id 来播：同名专辑、重名歌单很常见，原生侧不替调用方挑（§4.5）。`search` 每种 `kind` 只比一个字段，因为一个 predicate 只能指定一个属性，多个 predicate 之间只有「与」；要做「标题或艺人」就得自己合并两次查询并决定顺序，那已经是在排序了。
+
+**维护时要知道的坑：**
+
+- persistent id 是 64 位整数，经常超过 2^53。两个方向都用十进制字符串传，传数字会被拒绝并说明原因——四舍五入之后的 id 可能恰好是另一首歌。
+- 专辑和艺人在 MediaPlayer 里不是独立记录，只是歌曲的分组，id 和名称取自分组的代表曲目（`albumPersistentID` / `artistPersistentID`）。歌单是独立记录。
+- `songs` 里只要有一个 id 找不到，整次 `play` 就报错并列出这些 id，不会只播找得到的那几首。
+- 确认框和使用记录里的摘要取自真实记录（歌单的真名和曲目数），不用调用方传来的文字；摘要只含名称和数量，不含句子（§5.4）。
+- `prepareToPlay` 的回调来自另一个进程，可能永远不来（模拟器、用户删掉了「音乐」App、未下载的歌遇上断网）。所以有 20 秒时限，到点报错。**这时队列已经被替换了**，错误消息里写明了这一点；因为返回的是错误，这一次不会进使用记录。
+- 开了随机播放时结果里不带 `first`：第一首由播放器决定，按队列顺序报第一首就是把猜测当事实。
+- `next` / `previous` 的结果只带切歌之前那首（`from`）。播放器要过一会儿才更新 `nowPlayingItem`，当场读会读到旧的，所以让调用方再调一次 `now`。
+- `currentPlaybackTime` 可能是 NaN，而 `NSJSONSerialization` 遇到 NaN 会抛异常，所以 `position` 不是有限数时给 `null`。
+- **`played` / `paused` / `skipped` 的意思是「命令发出去了」，不是「现在有声音」。** 队列为空时不带目标的 `play` 照样返回 `played: true`，只是 `item` 是 `null`；渲染出来的那句话会说「让音乐播放了，但看不到队列里有东西，用 `now` 确认」。没有在原生侧改成拒绝：队列空不空是播放器的事，而且「音乐」App 自己的队列里可能有本 App 看不到的东西。
+- 模拟器里资料库是空的，也没有「音乐」App：`search` 返回空，`playlists` 返回 5 个系统自带的智能歌单（曲目数都是 0），`now` 是 `item: null`，带 id 的 `play` 报「找不到这个 id」。真正的播放路径只能在真机上验证。
+
+#### weather：某个坐标的天气和预报（WeatherKit）
+
+三个操作，全是只读：`current`（此刻）、`hourly`（接下来 N 小时，默认 24，最多 240）、`daily`（从今天起 N 天，默认 7，最多 10）。每个都必须带 `latitude` / `longitude`。
+
+**它不读用户的位置，所以没有系统权限、没有开关、也不记使用记录。** 「这里的天气」是两步：先 `location` 拿坐标（那一步才要授权），再拿坐标来问。地名也不收 —— 把地名解析成坐标就是在几个候选里替调用方挑一个（§4.5），那是 `location geocode` / `maps search` 加上模型自己的事。好处是「成都明天下雨吗」这种问题一点隐私成本都没有。
+
+和 alarm 一样是 Swift 实现、ObjC 转发：WeatherKit 没有 ObjC 接口。`DshWeatherBridge.h` 是 ObjC 这边拥有的协议，`WeatherProvider.swift` 只管问框架、把答案摊成字典；参数校验、截到调用方要的条数、所有拒绝措辞都在 `caps_weather.m`。和 alarm 的一处不同：失败传的是 `NSError` 而不是一句话，因为下面那种失败只能靠 error domain 认出来。
+
+维护时要知道的几件事：
+
+- **出处是许可条款的要求。** 每个结果都带 `attribution: {service, legalURL}`（取自 `WeatherService.shared.attribution`），工具渲染出来的最后一行就是它，工具说明也要求模型转述预报时保留这一行。出处取不到时整次调用失败，数据不会不带出处地出去。改渲染时别把这一行弄丢。
+- **单位写死，不跟系统地区走**：°C、km/h、hPa、km、mm，随结果里的 `units` 一起出去。读数的是模型，它不知道这台手机设的是摄氏还是华氏。湿度、云量、降水概率是 0–1 的小数。
+- **时间全是 UTC，结果里 `timeZone: "UTC"` 明说。** WeatherKit 的答案不带时区（`WeatherMetadata` 只有 `date` / `expirationDate` / `location`），要写成预报地点的当地时间就得自己拿坐标反查时区，那是拼出来的，第一版不做。副作用：`daily` 每一天的 `date` 是当地零点对应的 UTC 时刻，东半球看上去早一天（上海的 11 日是 `…10T16:00:00Z`）。工具说明和渲染的表头都提醒了这一点。
+- **`condition` 是 WeatherKit 的枚举原名**（`mostlyCloudy`），不对照成别的词表；`conditionDescription` 是框架给的那句话，语言跟系统语言走。
+- **条数只截不挑。** `hourly` 向框架要「现在到 N 小时后」这个窗口，窗口两头的半个小时算不算由框架定，可能多回一条；`daily` 用框架默认的十天。`caps_weather.m` 按时间顺序留前 N 条，`total` / `truncated` 如实报。超出上限的 `hours` / `days` 是拒绝而不是悄悄夹到上限 —— 要 30 天却只拿到 10 天的模型会去描述一个它没见过的月份。
+- **没开通时的失败长得像网络抖动。** App ID 没开 WeatherKit（能力和 App Service 两处）或包里没有 `com.apple.developer.weatherkit` 时，每次请求都从一个私有 daemon 域（`WeatherDaemon.WDSJWTAuthenticatorServiceProxy.Errors`）失败，文案只有「操作无法完成」。模型照着转述成「稍后再试」会把用户送进死循环，所以 `caps_weather.m` 只认这一种（domain 或描述里有 `jwt` / `authenticat`），在前面加一句「这个版本还没开通天气，不是用户能打开的开关，重试没用」，后面仍带框架原文。其他错误一律原样透传，不另造分类。
+- **没做的**：天气预警、分钟级降水、历史对比、`precipitationAmountByType`。`DayWeather.precipitationAmount` 从 iOS 18 起被标为弃用（部署目标升到 18 时会有警告，届时换成 `precipitationAmountByType.precipitation`）。
+- **验证状态**：**没开通，所以一次真数据都没拿到过。** 模拟器上跑到的只有上面那条拒绝路径（§7.5）：约 1.5 秒后返回「这个版本还没开通天气」加框架原文。要拿到真数据，得先在开发者后台给 App ID 开通 WeatherKit（能力和 App Service 两处），在 `app/project.yml` 的 entitlements 里加上 `com.apple.developer.weatherkit: true`，再重新生成描述文件。**开通之前，能力页上天气那一行写的「始终可用」是不成立的** —— 要么先开通，要么发版前把这一行拿掉。
 
 ---
 
@@ -619,7 +759,8 @@ NSRemindersFullAccessUsageDescription
 | **二期** ✅ | 写 + 审计 | 新建走 `EKEventEditViewController`、改删走原生确认（grant 简化掉了，见 §4.3）、审计记录与查看页 |
 | **三期** ✅ | 提醒 | `reminders.*`，与 `notify` 的职责划分写进 SKILL.md |
 | **四期** ✅ | 能力对 Agent 开放，插件够得到但不承诺 | 导出 `ctx.iosNative`、`caller.mjs` 归因打标签、安装页警告按 §4.1.1 改、边界验证插件 |
-| **五期**（待定） | 健康 / 运动 / 位置 | 先过 §6.1 的决定 |
+| **五期**（部分） | 健康 / 运动 / 位置 | 位置和健康读已做，运动（CoreMotion）没做 |
+| **第三批** ✅ | 通讯录、撰写页、文件、音乐、天气 | `caps_contacts.m` / `caps_compose.m` / `caps_files.m` / `caps_music.m` / `caps_weather.m` + `WeatherProvider.swift`，五个工具，能力页五行，SKILL.md 同步。设计见 §3.2，验证见 §7.5。**天气要等 App ID 开通 WeatherKit 才有数据** |
 
 分期在执行中有三处偏离，都是有意的，记在这里免得后面的人按原表推断：
 
@@ -771,6 +912,63 @@ OCR 走的是另一条不依赖 CoreML 的管线，所以它能跑。其余三�
 
 - **`appGated`**：iOS 管不到、但确实碰用户数据的能力（剪贴板），由 App 自己把门，判断点仍在分发器里。界面上它是个 **Toggle 而不是单向的「开启」按钮**——单向按钮会让用户除了删 App 没有退路。
 - **`vision` 的路径走 `dsh_root_real`**：它能读到的文件和插件用 `fs` 能读的完全一致。不扩大任何范围，只是省下把图片发给模型。实测 `/etc/passwd` 读不到。
+
+
+### 7.5 第三批能力的实地验证（2026-11-10，模拟器）
+
+`contacts` / `compose` / `files` / `music` / `weather` 五项，iPhone 17 Pro Max 模拟器（iOS 26.4），Debug 版。不上屏的调用走调试探针直接打 addon，上屏的（授权弹窗、文件选择器）在模拟器里实际点过。
+
+**先说没验到的。** 这一批比前两批更依赖真机，下面这些在模拟器上根本走不到，到现在**没有任何地方验证过**：
+
+| 没验到的 | 为什么模拟器不行 |
+|---|---|
+| 邮件、短信的撰写页上屏，`sent` / `cancelled` / `saved` 三种结果，附件有没有带上 | 模拟器的 `canSendMail`、`canSendText` 都是假 |
+| 音乐的资料库搜索有结果的情形、`play` 真正出声、切歌、20 秒时限 | 模拟器没有资料库，也没有「音乐」App |
+| 天气的真数据、出处那一行、单位和 UTC 时间 | App ID 没开通 WeatherKit（§3.2），和模拟器无关，真机上现在也一样 |
+| iCloud 云盘和第三方文件提供方、包文档（`.pages`）、同名文件冲突 | 模拟器的「文件」里只有本机这一处 |
+| 通讯录的 `truncated: true`、完整授权（验的是「仅分享部分」那一档） | 模拟器通讯录只有几个人 |
+
+**验到的：**
+
+| 能力 | 做了什么 | 结果 |
+|---|---|---|
+| 全部 | `addon.capabilities()` | 21 项能力，五项的操作表和 §3.2 的表一致 |
+| 全部 | 不存在的操作 | `capability '<cap>' has no operation '<op>'` |
+| `contacts` `music` | 没授权时调用 | 5–36 毫秒内拒绝，**没有弹窗**（权限只能从能力页开，§4.0） |
+| `contacts` | 能力页点开启 → 系统弹窗 → 只分享 2 位联系人 | 那一行显示「仅限你分享的那几位」并带「去设置」；`search` 结果带 `access: 'limited'` 和 `note`；没分享的人查出来是空结果加那句提示 |
+| `contacts` | `search` 的参数检查 | 给两个字段或一个都不给 → 「search needs exactly one of 'name', 'phone' or 'email'…」；`limit: 0` → 「'limit' must be at least 1」 |
+| `contacts` | `get` | 整张名片；不存在的 id、没给 id 各有一条说得清的错误 |
+| `compose` | `mail` / `message` | 分别拒绝：「邮件」没有配置账户、这台设备发不了短信。不存在的附件在弹任何界面之前就被拒 |
+| `files` | `export` 一个工作区里的文件 | 系统保存页 → `{saved: true, count: 1}`，工作区里的原件还在 |
+| `files` | `pick`，不限类型 | 选中的文件落在 `/home/dsh/.ios/files/<时间>/` 下，带 `bytes`、`name`、`type: 'public.plain-text'`，引擎里读得到 |
+| `files` | `pick {types: ["pdf"], multiple: true}` | 选择器里那个 `.txt` 被过滤掉了 |
+| `files` | `types` 写成 `image`、`public.pdf`（都不是系统声明的类型） | 被拒绝并点名是哪个字符串 |
+| `files` | 选择器开着时再调一次 | 「a file picker is already open and waiting for the user…」，没有弹第二个 |
+| `files` | 点 ✕ 关掉；下滑关掉 | 两种都是 `{cancelled: true, files: []}`，都结算了，没有挂住（§4.3.2） |
+| `music` | 能力页点开启 → 系统弹窗 → 允许 | 那一行变「已开启」，并出现写入策略的选择（默认「直接执行」） |
+| `music` | `search` / `playlists` / `now` | 空结果；5 个系统智能歌单，曲目数都是 0；`{state: 'stopped', item: null}` |
+| `music` | `search` 的参数检查 | 不认识的 `kind`、没给 `query` 各有一条错误 |
+| `music` | `play {songs: ['12345']}` | 「no song in the library has id 12345, so nothing was played — not the other songs either…」 |
+| `music` | 空队列上不带目标的 `play`、`pause`、`next` | 都返回「命令已发出」，`item` / `from` 是 `null`（见下） |
+| `weather` | `current` | 约 1.5 秒后：「Weather is not enabled for this build of the app yet…」，后面带框架原文 `WeatherDaemon.WDSJWTAuthenticatorServiceProxy.Errors error 0` |
+
+**通讯录的匹配比预想的窄，这是这一轮最有用的发现。** 匹配规则完全是 Apple 的谓词，实测如下：
+
+| 按什么查 | 能中 | 不中 |
+|---|---|---|
+| `phone` | 整个号码，写法可以不同（`8885555512`、`(555) 564-8583`） | 号码的一段；同一个号码前面加了 `+1`（`+1 888 555 5512`） |
+| `email` | 整个地址，大小写不敏感 | 地址的一段 |
+| `name` | 按词的前缀，公司名也算（`bell`、`Apple`、`Kate Bell`、`Creative`） | 词中间的一段（`ohn`） |
+
+没有在原生侧把它放宽：自己拿号码去做包含匹配，就是在 Apple 的答案之外再造一套答案（§4.5）。做法是把这几条写进工具说明和内置 skill，让智能体知道拿一段号码查出来的空结果不等于「通讯录里没有这个人」。「加了国家码查不到」只在这台模拟器上看到过，真机上换一个地区设置可能不一样，没有验证。
+
+**使用记录页对过一遍。** 按名字查显示「查询词 · 命中数」（`Kate Bell · 1`、`Anna · 0`），按电话、邮箱查只显示 `phone · 1` / `email · 1`，号码和地址本身没有出现；`get` 显示那张名片的名字。和 §3.2 写的一致。
+
+**一处留着没改的取舍：音乐在空队列上的 `play`。** 返回的是 `played: true`、`item: null`，并且在使用记录里留下一条摘要为空的记录。这和「只记真发生的」不冲突 —— 命令确实发给了播放器，只是没有东西可播 —— 但那条空摘要的记录看起来像是出了错。要不要在 `item` 为空时不记，留给下一轮定。
+
+**顺带修的一处：健康那一行的按钮跳错了地方。** 请求过健康授权之后，那一行的按钮原来是「去设置」，打开的是本 App 的系统设置页，而健康的逐项授权不在那里，在「健康」App 里（头像 → 隐私 → App）。现在按钮改成「打开健康」，直接开 `x-apple-health://`，那一行的说明和页脚也跟着改了。模拟器上点过，打开的是「健康」。
+
+**界面文案三种语言都是全覆盖**（`scripts/strings-coverage.mjs`：`en` 和 `es` 都是 1594/1594）。英文界面在模拟器上逐行看过。
 
 ---
 

@@ -33,6 +33,10 @@ void dsh_native_transcribe(NSString *op, NSDictionary *args, DshNativeReply repl
 void dsh_native_health(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_homekit(NSString *op, NSDictionary *args, DshNativeReply reply);
 void dsh_native_photos(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_contacts(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_compose(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_files(NSString *op, NSDictionary *args, DshNativeReply reply);
+void dsh_native_music(NSString *op, NSDictionary *args, DshNativeReply reply);
 
 /// The locale to ask a geocoder to answer `query` in, chosen by the script the
 /// query is written in.
@@ -93,6 +97,15 @@ void DshTranscribeGrantAccess(void (^done)(BOOL granted, NSString *error));
 /// Raise the notification permission dialog, then run `done`. Only
 /// `DshNativeRequestPermission` calls this; see caps_notify.m.
 void DshNotifyGrantAccess(void (^done)(BOOL granted, NSString *error));
+
+/// Raise the contacts permission dialog, then run `done`. Only
+/// `DshNativeRequestPermission` calls this; see caps_contacts.m for why a
+/// limited selection (iOS 18) comes back granted.
+void DshContactsGrantAccess(void (^done)(BOOL granted, NSString *error));
+
+/// Raise the media-library permission dialog, then run `done`. Only
+/// `DshNativeRequestPermission` calls this; see caps_music.m.
+void DshMusicGrantAccess(void (^done)(BOOL granted, NSString *error));
 
 /// Run `block` on the main thread and return without waiting. UIKit, AVFoundation
 /// and the permission prompts all want the main thread; the engine calls us from

@@ -3,7 +3,8 @@
 #import "DshNativeCapabilities.h"
 #import "DshNativeAudit.h"
 #import "DshNativeBridge.h"
-// alarm is the one capability whose native half is Swift: AlarmKit has no
-// Objective-C surface at all, so this protocol is what the Swift provider
-// registers against. Node-free like the rest of this list.
+// alarm and weather are the capabilities whose native half is Swift: AlarmKit
+// and WeatherKit have no Objective-C surface at all, so these protocols are
+// what the Swift providers register against. Node-free like the rest of this list.
 #import "DshAlarmBridge.h"
+#import "DshWeatherBridge.h"
